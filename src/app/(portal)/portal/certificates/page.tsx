@@ -1,0 +1,70 @@
+'use client'
+
+import { MOCK_CERTIFICATES } from '@/lib/mock-data/certificates'
+import { MOCK_COURSES } from '@/lib/mock-data/courses'
+import { formatDate } from '@/lib/utils'
+import { EmptyState } from '@/components/shared/EmptyState'
+import { Award, Download, QrCode } from 'lucide-react'
+import { toast } from 'sonner'
+import { QRCodeCanvas as QRCode } from 'qrcode.react'
+
+export default function PortalCertificatesPage() {
+  const certs = MOCK_CERTIFICATES.filter(c => c.studentId === 's6' || c.studentId === 's1').slice(0, 3)
+
+  const certTypeLabel: Record<string, string> = {
+    institute: 'Institute Certificate',
+    skill_id: 'Skill ID Card',
+    nvq: 'NVQ Level 3',
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>Certificates</h1>
+        <p className="text-stone-500 text-sm mt-1">Your issued certificates and QR verification codes</p>
+      </div>
+
+      {certs.length === 0 ? (
+        <EmptyState icon={Award} title="No certificates yet" description="Certificates will be issued after successful course completion." />
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {certs.map(cert => {
+            const course = MOCK_COURSES.find(c => c.id === cert.courseId)
+            const verifyUrl = `https://verify.iiti.lk/verify/${cert.verifyToken}`
+            return (
+              <div key={cert.id} className="bg-white rounded-xl border border-stone-200 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <span className="inline-block bg-orange-100 text-orange-600 text-xs font-semibold px-2.5 py-1 rounded-full mb-2">
+                      {certTypeLabel[cert.type] || cert.type}
+                    </span>
+                    <h3 className="font-semibold text-stone-800">{course?.name}</h3>
+                    <p className="text-xs text-stone-400 mt-1 font-mono">{cert.certificateNo}</p>
+                    <p className="text-xs text-stone-400">Issued: {formatDate(cert.issuedAt)}</p>
+                  </div>
+                  <div className="bg-stone-50 rounded-xl p-2">
+                    <QRCode value={verifyUrl} size={80} level="M" />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-3 border-t border-stone-100">
+                  <button
+                    onClick={() => toast.success('Certificate downloaded (simulated)')}
+                    className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 border border-stone-200 hover:border-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </button>
+                  <button
+                    onClick={() => {navigator.clipboard.writeText(verifyUrl); toast.success('Verification link copied!')}}
+                    className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-600 border border-orange-200 hover:border-orange-300 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <QrCode className="w-3.5 h-3.5" /> Copy Verify Link
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}

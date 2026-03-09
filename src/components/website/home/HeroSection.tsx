@@ -1,0 +1,201 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { ArrowRight, ChevronDown, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+
+const HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1718506921607-8b238f2a7303?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Forklift
+  'https://images.unsplash.com/photo-1580901369227-308f6f40bdeb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8RXhjYXZhdG9yfGVufDB8fDB8fHww', // Excavator
+  'https://images.unsplash.com/photo-1621922688758-359fc864071e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8SGVhdnklMjBtYWNoaW5lcnl8ZW58MHx8MHx8fDA%3D', // Heavy machinery
+  'https://images.unsplash.com/photo-1583024011792-b165975b52f5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y29uc3RydWN0aW9uJTIwdmVoaWNsZXxlbnwwfHwwfHx8MA%3D%3D', // Construction vehicle
+  'https://images.unsplash.com/photo-1495036019936-220b29b930ea?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8Y29uc3RydWN0aW9uJTIwdmVoaWNsZXxlbnwwfHwwfHx8MA%3D%3D', // Backhoe loader
+]
+
+export function HeroSection() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length)
+    }, 5000) // Change image every 5 seconds
+    return () => clearInterval(interval)
+  }, [])
+  return (
+    <section
+      className="relative min-h-screen flex items-center overflow-hidden"
+    >
+      {/* Background Image Slideshow */}
+      <div className="absolute inset-0 z-0">
+        {HERO_IMAGES.map((image, index) => (
+          <motion.img
+            key={image}
+            src={image}
+            alt={`Heavy vehicle ${index + 1}`}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: index === currentImageIndex ? 1 : 0 }}
+            transition={{ duration: 1 }}
+          />
+        ))}
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/60 z-10" />
+        {/* Orange gradient overlay */}
+        <div
+          className="absolute inset-0 opacity-20 z-10 pointer-events-none"
+          style={{
+            background: 'linear-gradient(to right, rgba(249,115,22,0.3) 0%, transparent 60%)',
+          }}
+        />
+      </div>
+
+      {/* Original gradient background as fallback */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, #0A0A0A 0%, #1C1917 50%, #0A0A0A 100%)',
+          zIndex: -1,
+        }}
+      />
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 w-full z-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left content */}
+          <div>
+            {/* Label */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              className="flex items-center gap-2 mb-6"
+            >
+              <div className="w-8 h-0.5 bg-orange-400" />
+              <span
+                className="text-orange-400 text-xs font-semibold uppercase tracking-widest"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Sri Lanka&apos;s Premier Heavy Vehicle Training Institute
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+              className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6"
+              style={{ fontFamily: 'Outfit, sans-serif' }}
+            >
+              Train Today.
+              <br />
+              <span className="text-orange-500">Operate</span>
+              <br />
+              Tomorrow.
+            </motion.h1>
+
+            {/* Body */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.25 }}
+              className="text-stone-300 text-lg leading-relaxed max-w-xl mb-8"
+            >
+              Imasha International Training Institute offers TVEC-accredited NVQ Level 3 training
+              for Forklift, Excavator, and Backhoe Loader operations — recognized locally and internationally.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.4 }}
+              className="flex flex-wrap gap-4"
+            >
+              <Link
+                href="/apply"
+                className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-7 py-3.5 rounded-lg font-semibold text-sm transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/30"
+              >
+                Apply for a Course
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/courses"
+                className="inline-flex items-center gap-2 border border-white/30 hover:border-white/60 text-white px-7 py-3.5 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-white/10"
+              >
+                Explore Courses
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Right — floating card */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 }}
+            className="hidden lg:flex justify-center"
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full"
+              style={{ transform: 'rotate(-2deg)' }}
+            >
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Active Enrollment Open
+              </div>
+              <h3 className="text-xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                2025 Intake
+              </h3>
+              <p className="text-stone-500 text-sm mb-5">April batch now accepting applications</p>
+              <ul className="space-y-3">
+                {[
+                  '3 Programmes Available',
+                  'NVQ Level 3 Certified',
+                  '100% Placement Assistance',
+                  'TVEC & ISO Accredited',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-stone-700">
+                    <CheckCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/courses#intakes"
+                className="mt-6 flex items-center gap-1 text-sm font-semibold text-orange-500 hover:text-orange-600"
+              >
+                View Dates
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Image indicators/dots */}
+      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+        {HERO_IMAGES.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              index === currentImageIndex
+                ? 'bg-orange-500 w-8'
+                : 'bg-white/40 w-2 hover:bg-white/60'
+            }`}
+            aria-label={`Go to image ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Scroll indicator */}
+      <motion.div
+        animate={{ y: [0, 8, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+      >
+        <ChevronDown className="w-6 h-6 text-white/40" />
+      </motion.div>
+    </section>
+  )
+}

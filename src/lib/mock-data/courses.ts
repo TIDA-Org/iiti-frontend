@@ -1,0 +1,73 @@
+import { Course, CourseOutlineWeek } from '@/types/course'
+
+export const MOCK_COURSES: Course[] = [
+  {
+    id: 'c1',
+    code: 'IITI-FO-001',
+    name: 'Forklift Operator Training Programme',
+    slug: 'forklift',
+    description: 'Comprehensive forklift operation training covering safety protocols, load handling, site navigation, and TVEC examination preparation.',
+    duration: '4 Weeks',
+    durationWeeks: 4,
+    fee: 35000,
+    image: '/images/forklift-course.jpg',
+    isActive: true,
+    tvecRegistered: true,
+    nvqLevel: 3,
+    createdAt: '2020-01-01T00:00:00Z',
+  },
+  {
+    id: 'c2',
+    code: 'IITI-EX-002',
+    name: 'Excavator Operator Training Programme',
+    slug: 'excavator',
+    description: 'Master excavator controls, digging techniques, site safety, and heavy earthmoving operations aligned with NVQ Level 3 standards.',
+    duration: '6 Weeks',
+    durationWeeks: 6,
+    fee: 45000,
+    image: '/images/excavator-course.jpg',
+    isActive: true,
+    tvecRegistered: true,
+    nvqLevel: 3,
+    createdAt: '2020-01-01T00:00:00Z',
+  },
+  {
+    id: 'c3',
+    code: 'IITI-BL-003',
+    name: 'Backhoe Loader Operator Training Programme',
+    slug: 'backhoe-loader',
+    description: 'Dual-function machine operation: loader bucket and backhoe techniques, safety compliance, and industry-standard assessment.',
+    duration: '5 Weeks',
+    durationWeeks: 5,
+    fee: 40000,
+    image: '/images/backhoe-course.jpg',
+    isActive: true,
+    tvecRegistered: true,
+    nvqLevel: 3,
+    createdAt: '2020-01-01T00:00:00Z',
+  },
+]
+
+export const COURSE_OUTLINES: Record<string, CourseOutlineWeek[]> = {
+  'c1': [
+    { week: 1, title: 'Safety & Regulations', topics: ['OSHA/SLAS standards', 'Personal Protective Equipment (PPE)', 'Site hazard identification', 'Emergency procedures'] },
+    { week: 2, title: 'Machine Familiarization', topics: ['Pre-operation checklist', 'Controls and instruments', 'Engine and hydraulics overview', 'Daily maintenance basics'] },
+    { week: 3, title: 'Load Handling', topics: ['Stacking and unstacking techniques', 'Racking system operations', 'Load weight calculations', 'Stability and load center'] },
+    { week: 4, title: 'Site Operations & Assessment', topics: ['Narrow aisle maneuvering', 'Outdoor and indoor operations', 'TVEC exam preparation', 'Final practical assessment'] },
+  ],
+  'c2': [
+    { week: 1, title: 'Introduction & Safety', topics: ['Excavator types and applications', 'Safety protocols and site awareness', 'PPE and emergency procedures', 'Site preparation'] },
+    { week: 2, title: 'Machine Controls', topics: ['Hydraulic systems overview', 'Swing operations', 'Boom, arm, and bucket controls', 'Travel and positioning'] },
+    { week: 3, title: 'Digging Techniques', topics: ['Trenching operations', 'Slope cutting', 'Material handling and loading', 'Precision digging'] },
+    { week: 4, title: 'Advanced Operations', topics: ['Road construction applications', 'Utility installation support', 'Complex site operations', 'Productivity optimization'] },
+    { week: 5, title: 'Maintenance Basics', topics: ['Pre-operation inspection', 'Fluid level checks', 'Track and undercarriage care', 'Reporting defects'] },
+    { week: 6, title: 'TVEC Assessment', topics: ['Mock examination', 'Practical skills demonstration', 'Oral examination preparation', 'Certification process'] },
+  ],
+  'c3': [
+    { week: 1, title: 'Machine Overview & Safety', topics: ['Backhoe loader components', 'Dual-function controls', 'Safety regulations and PPE', 'Site hazard assessment'] },
+    { week: 2, title: 'Loader Operations', topics: ['Scooping techniques', 'Material carrying and transport', 'Dumping procedures', 'Loading trucks and hoppers'] },
+    { week: 3, title: 'Backhoe Operations', topics: ['Digging and trenching', 'Precision excavation', 'Pipe laying support', 'Utility trench work'] },
+    { week: 4, title: 'Combined Operations', topics: ['Switching between modes', 'Site productivity techniques', 'Multi-task operations', 'Efficiency best practices'] },
+    { week: 5, title: 'TVEC Examination', topics: ['Theory examination preparation', 'Practical assessment', 'Safety compliance review', 'Certification finalization'] },
+  ],
+}
