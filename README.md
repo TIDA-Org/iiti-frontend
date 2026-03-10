@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IITI Frontend
+
+A role-based student management and institute operations platform built with Next.js for Imasha International Training Institute (Pvt) Ltd — a TVEC-registered, ISO 9001:2015 certified heavy vehicle training institute based in Pannipitiya, Sri Lanka.
+
+This frontend application provides the public, students, and administrative staff with a unified digital experience covering course discovery, online enrollment, payment tracking, results, certificates, and job vacancy management.
+
+This application delivers:
+
+- Role-Based Access Control (RBAC) across Super Admin, Admin, Front Desk, and Student roles
+- Public marketing website with animated UI and online application form
+- Student self-registration and multi-step enrollment workflow
+- Admin dashboard with KPI analytics, charts, and full CRUD operations
+- Student portal with course, payment, result, and certificate access
+- Payment management with manual recording and installment scheduling
+- Results entry and bulk publish to the student portal
+- Certificate generation with QR-linked verification page
+- Job vacancy board with photo, qualifications, and application management
+- Registration offers with auto-expire logic per course
+- Intake date scheduling and adjustment with notes
+- Temporary password dispatch from admin to student
+- Online enrollment approval and suspension workflows
+- Excel-based legacy data migration tool
+- Audit log viewer and system settings panel (Super Admin)
+
+---
+
+## Tech Stack
+
+- **Next.js 14** (App Router)
+- **TypeScript**
+- **Tailwind CSS**
+- **shadcn/ui** (Radix UI)
+- **Zustand** (state management with persistence)
+- **React Hook Form + Zod** (form handling and validation)
+- **TanStack Table v8** (data tables)
+- **Recharts** (analytics charts)
+- **Framer Motion** (animations and scroll reveals)
+- **react-countup** (animated statistics)
+- **qrcode.react** (QR certificate display)
+- **Sonner** (toast notifications)
+- **Lucide React** (iconography)
+- Mock data with localStorage persistence — no backend required
+
+---
+
+## Design Philosophy
+
+An institute management system earns trust when:
+
+- roles are enforced at every level of the interface
+- restricted actions are hidden, not just blocked
+- students can access only their own data
+- administrative operations are auditable
+- the public face reflects institutional credibility
+
+This frontend is intentionally designed to:
+
+- hide navigation items the current role cannot access
+- reflect the full RBAC permission matrix in every UI decision
+- present a professional, accreditation-grade public website
+- give staff fast, clear operational feedback
+- simulate production-grade workflows without a live backend
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, or pnpm
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd iiti-frontend
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## Running the Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Navigate to:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Application Sections
 
-To learn more about Next.js, take a look at the following resources:
+This project hosts four distinct route groups within a single Next.js application:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `(public)` — Marketing website, course pages, online application, contact, job board
+- `(auth)` — Login, registration
+- `(portal)` — Student dashboard, payments, results, certificates, jobs
+- `(admin)` — Full administrative panel with all CRUD modules
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Additionally, `/verify/[token]` serves as a public QR certificate verification landing page.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Permissions-Driven UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The system enforces authorization using:
+
+- A centralized permission map in `lib/permissions.ts`
+- `<RoleGuard permission="...">` component wrapping all restricted UI elements
+- Role-filtered sidebar navigation
+- Layout-level auth guards with Zustand session state
+
+This ensures:
+
+> **No user can see or trigger an action they are not authorized to perform.**
