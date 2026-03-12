@@ -71,10 +71,7 @@ export function HeroSection() {
               className="flex items-center gap-2 mb-6"
             >
               <div className="w-8 h-0.5 bg-orange-400" />
-              <span
-                className="text-orange-400 text-xs font-semibold uppercase tracking-widest"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
+              <span className="text-orange-400 text-xs font-semibold uppercase tracking-widest">
                 Sri Lanka&apos;s Premier Heavy Vehicle Training Institute
               </span>
             </motion.div>
@@ -84,8 +81,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-              className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6"
-              style={{ fontFamily: 'Outfit, sans-serif' }}
+              className="text-5xl lg:text-7xl font-bold text-white leading-tight mb-6 tracking-tight"
             >
               Train Today.
               <br />
@@ -99,7 +95,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut', delay: 0.25 }}
-              className="text-stone-300 text-lg leading-relaxed max-w-xl mb-8"
+              className="text-white/80 text-base lg:text-lg leading-relaxed max-w-xl mb-8 font-regular"
             >
               Imasha International Training Institute offers TVEC-accredited NVQ Level 3 training
               for Forklift, Excavator, and Backhoe Loader operations — recognized locally and internationally.
@@ -143,10 +139,10 @@ export function HeroSection() {
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 Active Enrollment Open
               </div>
-              <h3 className="text-xl font-bold text-stone-800 mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <h3 className="text-xl font-semibold text-slate-900 mb-1">
                 2025 Intake
               </h3>
-              <p className="text-stone-500 text-sm mb-5">April batch now accepting applications</p>
+              <p className="text-slate-600 text-sm mb-5 font-regular">April batch now accepting applications</p>
               <ul className="space-y-3">
                 {[
                   '3 Programmes Available',
@@ -154,7 +150,7 @@ export function HeroSection() {
                   '100% Placement Assistance',
                   'TVEC & ISO Accredited',
                 ].map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm text-stone-700">
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-slate-700 font-regular">
                     <CheckCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
                     {item}
                   </li>
