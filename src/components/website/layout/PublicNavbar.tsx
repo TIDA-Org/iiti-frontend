@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -44,19 +45,17 @@ export function PublicNavbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
+          
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm" style={{ fontFamily: 'Syne, sans-serif' }}>IITI</span>
-              </div>
-              <div className="hidden sm:block">
-                <div className="text-sm font-bold text-stone-800 leading-tight" style={{ fontFamily: 'Syne, sans-serif' }}>
-                  Imasha International
-                </div>
-                <div className="text-xs text-stone-500">Training Institute</div>
-              </div>
-            </div>
+          <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+            <Image
+              src="/assets/logo.jpg"
+              alt="IITI Logo"
+              width={160}
+              height={60}
+              priority
+              className="object-contain"
+            />
           </Link>
 
           {/* Desktop Nav */}

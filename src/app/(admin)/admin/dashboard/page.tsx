@@ -1,4 +1,6 @@
-import { Users, BookOpen, CreditCard, Award, TrendingUp, Clock } from 'lucide-react'
+'use client'
+
+import { Users, BookOpen, CreditCard, Award } from 'lucide-react'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { KpiCard } from '@/components/admin/dashboard/KpiCard'
 import { RevenueChart } from '@/components/admin/dashboard/RevenueChart'
@@ -12,8 +14,13 @@ import { MOCK_ENROLLMENTS } from '@/lib/mock-data/enrollments'
 import { MOCK_PAYMENTS } from '@/lib/mock-data/payments'
 import { MOCK_CERTIFICATES } from '@/lib/mock-data/certificates'
 import { formatLKR } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
 
 export default function AdminDashboardPage() {
+
+  const { user } = useAuthStore()
+  const role = user?.role
+
   const totalStudents = MOCK_STUDENTS.length
   const activeEnrollments = MOCK_ENROLLMENTS.filter(e => e.status === 'active').length
   const pendingEnrollments = MOCK_ENROLLMENTS.filter(e => e.status === 'pending').length
@@ -22,6 +29,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
+
       <PageHeader
         title="Dashboard"
         subtitle="Overview of IITI operations and key performance indicators"
@@ -35,19 +43,31 @@ export default function AdminDashboardPage() {
         <KpiCard title="Certificates Issued" value={totalCertificates} icon={Award} trend={{ value: 5, label: 'vs last month' }} iconColor="text-purple-500" iconBg="bg-purple-50" />
       </div>
 
-      {/* Charts row */}
-      <div className="grid lg:grid-cols-3 gap-4 mb-4">
-        <div className="lg:col-span-2"><RevenueChart /></div>
-        <CoursePopularityChart />
-      </div>
-      <div className="grid lg:grid-cols-2 gap-4 mb-4">
-        <EnrollmentTrendChart />
-        <RecentActivityFeed />
-      </div>
+
+      {/* Charts (Hidden for front_desk) */}
+      {role !== 'front_desk' && (
+        <>
+          <div className="grid lg:grid-cols-3 gap-4 mb-4">
+            <div className="lg:col-span-2">
+              <RevenueChart />
+            </div>
+            <CoursePopularityChart />
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-4 mb-4">
+            <EnrollmentTrendChart />
+            <RecentActivityFeed />
+          </div>
+        </>
+      )}
+
+
+      {/* Widgets visible for all roles */}
       <div className="grid lg:grid-cols-2 gap-4">
         <PendingApprovalsWidget />
         <UpcomingIntakesWidget />
       </div>
+
     </div>
   )
 }

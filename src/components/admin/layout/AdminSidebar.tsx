@@ -44,10 +44,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Academics',
     items: [
-      { href: '/admin/courses', label: 'Courses', icon: BookOpen, roles: ['super_admin', 'admin'] },
-      { href: '/admin/intakes', label: 'Intake Dates', icon: Calendar, roles: ['super_admin', 'admin'] },
-      { href: '/admin/results', label: 'Results', icon: FileText, roles: ['super_admin', 'admin'] },
-      { href: '/admin/certificates', label: 'Certificates', icon: Award, roles: ['super_admin', 'admin'] },
+      { href: '/admin/courses', label: 'Courses', icon: BookOpen, roles: ['super_admin', 'admin', 'front_desk'] },
+      { href: '/admin/intakes', label: 'Intake Dates', icon: Calendar, roles: ['super_admin', 'admin', 'front_desk'] },
+      { href: '/admin/results', label: 'Results', icon: FileText, roles: ['super_admin', 'admin', 'front_desk'] },
+      { href: '/admin/certificates', label: 'Certificates', icon: Award, roles: ['super_admin', 'admin', 'front_desk'] },
     ],
   },
   {
@@ -60,8 +60,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Recruitment',
     items: [
-      { href: '/admin/vacancies', label: 'Job Vacancies', icon: Briefcase, roles: ['super_admin', 'admin'] },
-      { href: '/admin/offers', label: 'Offers', icon: Tag, roles: ['super_admin', 'admin'] },
+      { href: '/admin/vacancies', label: 'Job Vacancies', icon: Briefcase, roles: ['super_admin', 'admin', 'front_desk'] },
+      { href: '/admin/offers', label: 'Offers', icon: Tag, roles: ['super_admin', 'admin', 'front_desk'] },
     ],
   },
   {
