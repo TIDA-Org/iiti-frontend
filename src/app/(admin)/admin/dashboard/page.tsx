@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { KpiCard } from '@/components/admin/dashboard/KpiCard'
 import { RevenueChart } from '@/components/admin/dashboard/RevenueChart'
 import { EnrollmentTrendChart } from '@/components/admin/dashboard/EnrollmentTrendChart'
-import { CoursePopularityChart } from '@/components/admin/dashboard/CoursePopularityChart'
+// import { CoursePopularityChart } from '@/components/admin/dashboard/CoursePopularityChart'
 import { RecentActivityFeed } from '@/components/admin/dashboard/RecentActivityFeed'
 import { PendingApprovalsWidget } from '@/components/admin/dashboard/PendingApprovalsWidget'
 import { UpcomingIntakesWidget } from '@/components/admin/dashboard/UpcomingIntakesWidget'
@@ -51,7 +51,7 @@ export default function AdminDashboardPage() {
             <div className="lg:col-span-2">
               <RevenueChart />
             </div>
-            <CoursePopularityChart />
+            {/* <CoursePopularityChart /> */}
           </div>
 
           <div className="grid lg:grid-cols-2 gap-4 mb-4">
