@@ -12,7 +12,7 @@ export default function PublicJobsPage() {
 
   return (
     <div>
-      <section className="bg-gradient-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
         <ScrollReveal>
           <h1 className="text-4xl font-extrabold text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Job Opportunities</h1>
           <p className="text-stone-400 max-w-xl mx-auto">IITI connects graduates with leading employers locally and internationally.</p>
@@ -56,7 +56,7 @@ export default function PublicJobsPage() {
                           <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Deadline: {formatDate(job.deadline)}</span>
                         </div>
                       </div>
-                      <Link href="/portal/jobs" className="flex-shrink-0 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
+                      <Link href="/portal/jobs" className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
                         View
                       </Link>
                     </div>

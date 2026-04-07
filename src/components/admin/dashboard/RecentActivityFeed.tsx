@@ -23,7 +23,7 @@ export function RecentActivityFeed() {
       <div className="space-y-4">
         {ACTIVITIES.map((activity) => (
           <div key={activity.id} className="flex items-start gap-3">
-            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${typeColors[activity.type]}`} />
+            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${typeColors[activity.type]}`} />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-slate-700 leading-snug">{activity.text}</p>
               <p className="text-xs text-slate-400 mt-0.5">{formatDate(activity.time)}</p>

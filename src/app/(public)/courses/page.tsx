@@ -7,7 +7,7 @@ import { ArrowRight, Clock, Award, CheckCircle } from 'lucide-react'
 export default function CoursesPage() {
   return (
     <div>
-      <section className="bg-gradient-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
         <ScrollReveal>
           <SectionLabel light className="justify-center">Our Programmes</SectionLabel>
           <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -25,7 +25,7 @@ export default function CoursesPage() {
             {COURSES.map((course, i) => (
               <ScrollReveal key={course.id} delay={i * 0.1}>
                 <div className="bg-white rounded-2xl border border-stone-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                  <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-500" />
+                  <div className="h-2 bg-linear-to-r from-orange-500 to-amber-500" />
                   <div className="p-8">
                     <div className="flex flex-col lg:flex-row lg:items-start gap-6">
                       <div className="flex-1">
@@ -48,7 +48,7 @@ export default function CoursesPage() {
                           ))}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-3 min-w-[180px]">
+                      <div className="flex flex-col gap-3 min-w-45">
                         <div className="bg-orange-50 rounded-xl p-4 text-center">
                           <p className="text-xs text-stone-400 mb-1">Course Fee</p>
                           <p className="text-2xl font-extrabold text-orange-600" style={{ fontFamily: 'Outfit, sans-serif' }}>

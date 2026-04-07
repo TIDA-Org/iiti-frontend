@@ -46,12 +46,12 @@ export function NewsBanner() {
   if (!isVisible) return null
 
   return (
-    <div className="relative bg-gradient-to-r from-emerald-400 via-green-400 to-emerald-400 text-black">
+    <div className="relative bg-linear-to-r from-emerald-400 via-green-400 to-emerald-400 text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
         <div className="flex items-center justify-center gap-2">
           {/* Icon and content */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {/* <div className="flex-shrink-0 flex items-center justify-center">
+            {/* <div className="shrink-0 flex items-center justify-center">
               <Bell className="w-3.5 h-3.5 text-black animate-bounce" />
             </div> */}
             
@@ -76,7 +76,7 @@ export function NewsBanner() {
           {/* Right close button */}
           <button
             onClick={() => setIsVisible(false)}
-            className="flex-shrink-0 p-0.5 hover:bg-black/10 rounded-lg transition-colors duration-200"
+            className="shrink-0 p-0.5 hover:bg-black/10 rounded-lg transition-colors duration-200"
             aria-label="Close news banner"
           >
             <X className="w-3.5 h-3.5 text-black" />
@@ -101,7 +101,7 @@ export function NewsBanner() {
       </div>
 
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 via-green-400/30 to-emerald-400/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-r from-emerald-400/30 via-green-400/30 to-emerald-400/30 pointer-events-none" />
     </div>
   )
 }

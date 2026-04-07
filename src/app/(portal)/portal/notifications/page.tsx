@@ -37,7 +37,7 @@ export default function PortalNotificationsPage() {
                 onClick={() => markAsRead(notif.id)}
                 className={cn('w-full text-left flex items-start gap-4 px-6 py-4 hover:bg-stone-50 transition-colors', !notif.isRead && 'bg-orange-50')}
               >
-                <div className={cn('w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', {
+                <div className={cn('w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5', {
                   'bg-green-100': notif.type === 'success',
                   'bg-blue-100': notif.type === 'info',
                   'bg-yellow-100': notif.type === 'warning',
@@ -55,7 +55,7 @@ export default function PortalNotificationsPage() {
                   <p className="text-sm text-stone-400 mt-0.5">{notif.message}</p>
                   <p className="text-xs text-stone-300 mt-1">{formatDate(notif.createdAt)}</p>
                 </div>
-                {!notif.isRead && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full flex-shrink-0 mt-1.5" />}
+                {!notif.isRead && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full shrink-0 mt-1.5" />}
               </button>
             ))}
           </div>

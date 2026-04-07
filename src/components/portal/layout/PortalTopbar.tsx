@@ -34,7 +34,7 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 flex-shrink-0">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 shrink-0">
       {/* Hamburger button for mobile */}
       {isMobile && (
         <button

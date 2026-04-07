@@ -91,7 +91,7 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        'flex flex-col h-full transition-all duration-300 flex-shrink-0',
+        'flex flex-col h-full transition-all duration-300 shrink-0',
         sidebarCollapsed ? 'w-16' : 'w-60'
       )}
       style={{ backgroundColor: '#0F172A' }}
@@ -101,7 +101,7 @@ export function AdminSidebar() {
         'flex items-center h-16 border-b border-slate-700/50 transition-all duration-300',
         sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-4'
       )}>
-        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
           <GraduationCap className="w-4 h-4 text-white" />
         </div>
         {!sidebarCollapsed && (
@@ -113,7 +113,7 @@ export function AdminSidebar() {
         <button
           onClick={toggleSidebar}
           className={cn(
-            'text-slate-400 hover:text-white transition-colors flex-shrink-0 p-1 hover:bg-slate-700/30 rounded',
+            'text-slate-400 hover:text-white transition-colors shrink-0 p-1 hover:bg-slate-700/30 rounded',
             sidebarCollapsed ? 'absolute right-1 top-1' : ''
           )}
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -153,7 +153,7 @@ export function AdminSidebar() {
                         )}
                         title={sidebarCollapsed ? item.label : undefined}
                       >
-                        <Icon className={cn('flex-shrink-0', sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4', active && 'text-amber-400')} />
+                        <Icon className={cn('shrink-0', sidebarCollapsed ? 'w-5 h-5' : 'w-4 h-4', active && 'text-amber-400')} />
                         {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                       </Link>
                     </li>
@@ -168,7 +168,7 @@ export function AdminSidebar() {
       {/* User footer */}
       <div className="border-t border-slate-700/50 p-3">
         <div className={cn('flex items-center gap-3', sidebarCollapsed && 'justify-center')}>
-          <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
             <span className="text-amber-400 text-xs font-bold">{user ? getInitials(user.name) : 'U'}</span>
           </div>
           {!sidebarCollapsed && (
@@ -179,7 +179,7 @@ export function AdminSidebar() {
           )}
           <button
             onClick={handleLogout}
-            className="text-slate-400 hover:text-red-400 transition-colors flex-shrink-0"
+            className="text-slate-400 hover:text-red-400 transition-colors shrink-0"
             title="Logout"
           >
             <LogOut className="w-4 h-4" />

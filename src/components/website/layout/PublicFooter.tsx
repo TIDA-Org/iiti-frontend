@@ -10,7 +10,7 @@ export function PublicFooter() {
           {/* Column 1 - Branding */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
                 <span className="text-white font-bold text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>IITI</span>
               </div>
               <div>
@@ -74,19 +74,19 @@ export function PublicFooter() {
             <h4 className="text-white font-semibold text-sm mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Contact</h4>
             <ul className="space-y-3">
               <li className="flex gap-2.5 text-sm">
-                <MapPin className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{INSTITUTE_INFO.address}</span>
               </li>
               <li className="flex gap-2.5 text-sm">
-                <Phone className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{INSTITUTE_INFO.telephone}</span>
               </li>
               <li className="flex gap-2.5 text-sm">
-                <Phone className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{INSTITUTE_INFO.mobile}</span>
               </li>
               <li className="flex gap-2.5 text-sm">
-                <Mail className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
+                <Mail className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{INSTITUTE_INFO.email}</span>
               </li>
             </ul>

@@ -33,7 +33,7 @@ export function AdminTopbar() {
   const { user } = useAuthStore()
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 shrink-0">
       {sidebarCollapsed && (
         <Button
           variant="ghost"

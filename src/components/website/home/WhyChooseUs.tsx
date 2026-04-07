@@ -14,13 +14,13 @@ const FEATURES = [
 
 export function WhyChooseUs() {
   return (
-    <section className="py-28 bg-gradient-to-b from-white via-slate-50 to-white">
+    <section className="py-28 bg-linear-to-b from-white via-slate-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left visual */}
           <ScrollReveal direction="left">
             <div className="relative">
-              <Card className="aspect-[4/3] overflow-hidden border-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-900 flex items-center justify-center shadow-lg">
+              <Card className="aspect-[4/3] overflow-hidden border-0 bg-linear-to-br from-slate-800 via-slate-900 to-slate-900 flex items-center justify-center shadow-lg">
                 <div className="text-center relative z-10">
                   <div className="text-8xl font-bold text-orange-500/15">IITI</div>
                   <p className="text-slate-400 text-sm mt-3 font-regular">Training Excellence Since 2014</p>
@@ -30,7 +30,7 @@ export function WhyChooseUs() {
                 <div className="absolute -right-40 -bottom-40 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
               </Card>
               {/* Accent card */}
-              <Card className="absolute -bottom-6 -right-6 bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
+              <Card className="absolute -bottom-6 -right-6 bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
                 <div className="text-4xl font-bold tracking-tight">10+</div>
                 <div className="text-xs font-semibold opacity-90 mt-1">Years of Excellence</div>
               </Card>
@@ -54,7 +54,7 @@ export function WhyChooseUs() {
                   <ScrollReveal key={feature.title} delay={i * 0.08}>
                     <Card className="p-4 border border-slate-200/50 hover:border-orange-200/50 hover:shadow-md transition-all duration-300 group bg-white">
                       <div className="flex gap-3">
-                        <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center flex-shrink-0 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
+                        <div className="w-11 h-11 rounded-lg bg-linear-to-br from-orange-50 to-orange-100 flex items-center justify-center shrink-0 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
                           <Icon className="w-5 h-5 text-orange-600" />
                         </div>
                         <div>

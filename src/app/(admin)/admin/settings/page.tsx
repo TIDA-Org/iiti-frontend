@@ -20,7 +20,7 @@ export default function AdminSettingsPage() {
               { label: 'ISO Certificate', value: INSTITUTE_INFO.isoNumber },
             ].map(item => (
               <div key={item.label} className="flex gap-4 py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm text-slate-400 w-36 flex-shrink-0">{item.label}</span>
+                <span className="text-sm text-slate-400 w-36 shrink-0">{item.label}</span>
                 <span className="text-sm font-medium text-slate-700">{item.value}</span>
               </div>
             ))}

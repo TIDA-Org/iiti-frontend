@@ -75,7 +75,7 @@ export default function ApplyPage() {
           <div className="bg-stone-50 rounded-xl p-5 text-left text-sm space-y-2 mb-6">
             <p className="font-semibold text-stone-700 mb-3">What happens next?</p>
             {['Admin review of your application', 'Payment confirmation', 'Enrollment activation + Student ID issued', 'Portal access credentials sent to your email'].map((s, i) => (
-              <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center flex-shrink-0">{i+1}</span><span className="text-stone-600">{s}</span></div>
+              <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center shrink-0">{i+1}</span><span className="text-stone-600">{s}</span></div>
             ))}
           </div>
           <a href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">Back to Home</a>

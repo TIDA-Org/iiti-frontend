@@ -13,7 +13,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-stone-900 to-stone-800 py-20 px-4">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-2 text-sm text-stone-400 mb-6">
             <Link href="/" className="hover:text-orange-400">Home</Link>
@@ -58,7 +58,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
                       <ul className="grid sm:grid-cols-2 gap-1.5">
                         {week.topics.map((topic) => (
                           <li key={topic} className="flex items-center gap-2 text-sm text-stone-600">
-                            <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
                             {topic}
                           </li>
                         ))}
