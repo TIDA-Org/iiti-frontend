@@ -1,14 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { delay } from '@/lib/utils'
-import { MOCK_STUDENTS } from '@/lib/mock-data/students'
+import { apiGetStudents, StudentApiResponse } from '@/lib/api'
 
 const schema = z.object({
   studentId: z.string().min(1),
@@ -21,15 +20,19 @@ type FormData = z.infer<typeof schema>
 
 export default function AdminRecordPaymentPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [students, setStudents] = useState<StudentApiResponse[]>([])
   const router = useRouter()
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
+  useEffect(() => {
+    apiGetStudents(1, 100).then(res => setStudents(res.items)).catch(() => {})
+  }, [])
+
   const onSubmit = async () => {
     setIsLoading(true)
-    await delay(800)
+    // TODO: call payment recording API when backend is implemented
     setIsLoading(false)
-    toast.success('Payment recorded successfully!')
-    router.push('/admin/payments')
+    toast.info('Payment recording is not yet available.')
   }
 
   const inputClass = "w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
@@ -43,7 +46,7 @@ export default function AdminRecordPaymentPage() {
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Student *</label>
             <select {...register('studentId')} className={inputClass}>
               <option value="">Select student</option>
-              {MOCK_STUDENTS.map(s => <option key={s.id} value={s.id}>{s.fullName} ({s.studentId})</option>)}
+              {students.map(s => <option key={s.id} value={s.id}>{s.full_name} ({s.student_id})</option>)}
             </select>
           </div>
           <div>

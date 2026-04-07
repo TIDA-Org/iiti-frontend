@@ -1,4 +1,4 @@
-import { MOCK_NEWS } from '@/lib/mock-data/news'
+import { NEWS } from '@/lib/data/news'
 import { formatDate } from '@/lib/utils'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
@@ -14,7 +14,7 @@ export default function NewsPage() {
       </section>
       <section className="py-20 bg-stone-50">
         <div className="max-w-4xl mx-auto px-4 space-y-6">
-          {MOCK_NEWS.map((item, i) => (
+          {NEWS.map((item, i) => (
             <ScrollReveal key={item.id} delay={i * 0.1}>
               <div className="bg-white rounded-xl border border-stone-100 p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-2 mb-3">

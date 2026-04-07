@@ -1,6 +1,6 @@
 import { Vacancy } from '@/types/vacancy'
 
-export const MOCK_VACANCIES: Vacancy[] = [
+export const VACANCIES: Vacancy[] = [
   {
     id: 'v1', title: 'Forklift Operator', company: 'Lanka Logistics Ltd',
     location: 'Colombo Port', description: 'We are looking for a certified forklift operator to join our warehouse team. Must have NVQ Level 3 certification and at least 1 year experience.',

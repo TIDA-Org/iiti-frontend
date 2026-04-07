@@ -4,17 +4,17 @@ import { useState, useEffect } from 'react'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { Card } from '@/components/ui/card'
-import { MOCK_TESTIMONIALS } from '@/lib/mock-data/testimonials'
+import { TESTIMONIALS } from '@/lib/data/testimonials'
 
 export function TestimonialsSection() {
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrent(prev => (prev + 1) % MOCK_TESTIMONIALS.length), 5000)
+    const timer = setInterval(() => setCurrent(prev => (prev + 1) % TESTIMONIALS.length), 5000)
     return () => clearInterval(timer)
   }, [])
 
-  const t = MOCK_TESTIMONIALS[current]
+  const t = TESTIMONIALS[current]
 
   return (
     <section className="py-20 bg-gradient-to-b from-white via-slate-50 to-white">
@@ -79,7 +79,7 @@ export function TestimonialsSection() {
           <div className="flex justify-center items-center gap-4 mt-10">
             {/* Previous Button */}
             <button
-              onClick={() => setCurrent((current - 1 + MOCK_TESTIMONIALS.length) % MOCK_TESTIMONIALS.length)}
+              onClick={() => setCurrent((current - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)}
               className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 active:scale-95"
               aria-label="Previous testimonial"
             >
@@ -88,7 +88,7 @@ export function TestimonialsSection() {
 
             {/* Dot Indicators */}
             <div className="flex gap-2">
-              {MOCK_TESTIMONIALS.map((_, i) => (
+              {TESTIMONIALS.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
@@ -104,7 +104,7 @@ export function TestimonialsSection() {
 
             {/* Next Button */}
             <button
-              onClick={() => setCurrent((current + 1) % MOCK_TESTIMONIALS.length)}
+              onClick={() => setCurrent((current + 1) % TESTIMONIALS.length)}
               className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 active:scale-95"
               aria-label="Next testimonial"
             >
@@ -115,14 +115,14 @@ export function TestimonialsSection() {
           {/* Testimonial Counter */}
           <div className="text-center mt-6">
             <span className="text-xs text-slate-500 font-medium">
-              {current + 1} / {MOCK_TESTIMONIALS.length}
+              {current + 1} / {TESTIMONIALS.length}
             </span>
           </div>
         </div>
 
         {/* Additional Testimonial Cards Preview (Optional - shows more testimonials) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-16">
-          {MOCK_TESTIMONIALS.slice(0, 3).map((testimonial, idx) => (
+          {TESTIMONIALS.slice(0, 3).map((testimonial, idx) => (
             <Card
               key={testimonial.id}
               className="p-6 border border-slate-200/50 bg-white hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-pointer"

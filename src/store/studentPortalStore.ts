@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { Notification } from '@/types/notification'
-import { MOCK_NOTIFICATIONS } from '@/lib/mock-data/notifications'
 
 interface StudentPortalState {
   notifications: Notification[]
@@ -10,8 +9,8 @@ interface StudentPortalState {
 }
 
 export const useStudentPortalStore = create<StudentPortalState>((set) => ({
-  notifications: MOCK_NOTIFICATIONS,
-  unreadCount: MOCK_NOTIFICATIONS.filter(n => !n.isRead).length,
+  notifications: [],
+  unreadCount: 0,
 
   markAsRead: (id) =>
     set((state) => {

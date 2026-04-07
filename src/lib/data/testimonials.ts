@@ -8,7 +8,7 @@ export interface Testimonial {
   course: string
 }
 
-export const MOCK_TESTIMONIALS: Testimonial[] = [
+export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't1',
     name: 'Kasun Perera',

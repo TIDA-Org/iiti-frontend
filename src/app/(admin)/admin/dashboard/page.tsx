@@ -5,15 +5,11 @@ import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { KpiCard } from '@/components/admin/dashboard/KpiCard'
 import { RevenueChart } from '@/components/admin/dashboard/RevenueChart'
 import { EnrollmentTrendChart } from '@/components/admin/dashboard/EnrollmentTrendChart'
-// import { CoursePopularityChart } from '@/components/admin/dashboard/CoursePopularityChart'
 import { RecentActivityFeed } from '@/components/admin/dashboard/RecentActivityFeed'
 import { PendingApprovalsWidget } from '@/components/admin/dashboard/PendingApprovalsWidget'
 import { UpcomingIntakesWidget } from '@/components/admin/dashboard/UpcomingIntakesWidget'
-import { MOCK_STUDENTS } from '@/lib/mock-data/students'
-import { MOCK_ENROLLMENTS } from '@/lib/mock-data/enrollments'
-import { MOCK_PAYMENTS } from '@/lib/mock-data/payments'
-import { MOCK_CERTIFICATES } from '@/lib/mock-data/certificates'
-import { formatLKR } from '@/lib/utils'
+import { apiGetStudents, apiGetResults, apiGetCertificates } from '@/lib/api'
+import { useApi } from '@/hooks/useApi'
 import { useAuthStore } from '@/store/authStore'
 
 export default function AdminDashboardPage() {
@@ -21,11 +17,13 @@ export default function AdminDashboardPage() {
   const { user } = useAuthStore()
   const role = user?.role
 
-  const totalStudents = MOCK_STUDENTS.length
-  const activeEnrollments = MOCK_ENROLLMENTS.filter(e => e.status === 'active').length
-  const pendingEnrollments = MOCK_ENROLLMENTS.filter(e => e.status === 'pending').length
-  const totalRevenue = MOCK_PAYMENTS.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
-  const totalCertificates = MOCK_CERTIFICATES.filter(c => !c.isRevoked).length
+  const { data: studentsData } = useApi(() => apiGetStudents(1, 1), [])
+  const { data: resultsData } = useApi(() => apiGetResults(1, 1), [])
+  const { data: certsData } = useApi(() => apiGetCertificates(1, 1), [])
+
+  const totalStudents = studentsData?.total ?? 0
+  const totalResults = resultsData?.total ?? 0
+  const totalCertificates = certsData?.total ?? 0
 
   return (
     <div>
@@ -37,10 +35,10 @@ export default function AdminDashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KpiCard title="Total Students" value={totalStudents} icon={Users} trend={{ value: 12, label: 'vs last month' }} iconColor="text-blue-500" iconBg="bg-blue-50" />
-        <KpiCard title="Active Enrollments" value={activeEnrollments} subtitle={`${pendingEnrollments} pending approval`} icon={BookOpen} trend={{ value: 8, label: 'vs last month' }} iconColor="text-amber-500" iconBg="bg-amber-50" />
-        <KpiCard title="Revenue (YTD)" value={formatLKR(totalRevenue)} icon={CreditCard} trend={{ value: 15, label: 'vs last year' }} iconColor="text-green-500" iconBg="bg-green-50" />
-        <KpiCard title="Certificates Issued" value={totalCertificates} icon={Award} trend={{ value: 5, label: 'vs last month' }} iconColor="text-purple-500" iconBg="bg-purple-50" />
+        <KpiCard title="Total Students" value={totalStudents} icon={Users} iconColor="text-blue-500" iconBg="bg-blue-50" />
+        <KpiCard title="Results Recorded" value={totalResults} icon={BookOpen} iconColor="text-amber-500" iconBg="bg-amber-50" />
+        <KpiCard title="Certificates Issued" value={totalCertificates} icon={Award} iconColor="text-purple-500" iconBg="bg-purple-50" />
+        <KpiCard title="Active Operations" value="—" icon={CreditCard} iconColor="text-green-500" iconBg="bg-green-50" />
       </div>
 
 

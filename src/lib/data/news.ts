@@ -8,7 +8,7 @@ export interface NewsItem {
   category: 'announcement' | 'news' | 'event'
 }
 
-export const MOCK_NEWS: NewsItem[] = [
+export const NEWS: NewsItem[] = [
   {
     id: 'news1',
     title: 'April 2025 Intake Now Open',

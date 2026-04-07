@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
-import { MOCK_COURSES } from '@/lib/mock-data/courses'
+import { COURSES } from '@/lib/data/courses'
 import { ArrowRight, Clock, Award, CheckCircle } from 'lucide-react'
 
 export default function CoursesPage() {
@@ -22,7 +22,7 @@ export default function CoursesPage() {
       <section className="py-20 bg-stone-50">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid gap-8">
-            {MOCK_COURSES.map((course, i) => (
+            {COURSES.map((course, i) => (
               <ScrollReveal key={course.id} delay={i * 0.1}>
                 <div className="bg-white rounded-2xl border border-stone-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
                   <div className="h-2 bg-gradient-to-r from-orange-500 to-amber-500" />

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Menu, X, ChevronDown } from 'lucide-react'
+import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -27,6 +28,7 @@ export function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [coursesOpen, setCoursesOpen] = useState(false)
   const pathname = usePathname()
+  const { isAuthenticated, user, logout } = useAuthStore()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -105,18 +107,39 @@ export function PublicNavbar() {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md hover:bg-orange-50 transition-colors"
-            >
-              Login
-            </Link>
-            <Link
-              href="/apply"
-              className="px-5 py-2 text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-all duration-200 hover:scale-105"
-            >
-              Apply Now
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href={user?.role === 'student' ? '/portal/dashboard' : '/admin/dashboard'}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md hover:bg-orange-50 transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-stone-600 border border-stone-300 rounded-md hover:bg-stone-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md hover:bg-orange-50 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/apply"
+                  className="px-5 py-2 text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-all duration-200 hover:scale-105"
+                >
+                  Apply Now
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -169,12 +192,32 @@ export function PublicNavbar() {
             )
           )}
           <div className="flex flex-col gap-2 mt-4">
-            <Link href="/login" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md">
-              Login
-            </Link>
-            <Link href="/apply" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold bg-orange-500 text-white rounded-md">
-              Apply Now
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href={user?.role === 'student' ? '/portal/dashboard' : '/admin/dashboard'}
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => { logout(); setMobileOpen(false) }}
+                  className="w-full text-center py-2.5 text-sm font-semibold text-stone-600 border border-stone-300 rounded-md"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md">
+                  Login
+                </Link>
+                <Link href="/apply" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold bg-orange-500 text-white rounded-md">
+                  Apply Now
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

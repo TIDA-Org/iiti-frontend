@@ -1,19 +1,26 @@
-import { MOCK_CERTIFICATES } from '@/lib/mock-data/certificates'
-import { MOCK_STUDENTS } from '@/lib/mock-data/students'
-import { MOCK_COURSES } from '@/lib/mock-data/courses'
-import { MOCK_RESULTS } from '@/lib/mock-data/results'
+'use client'
+
+import { useEffect, useState, use } from 'react'
+import { apiVerify, VerifyApiResponse } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
-import { CheckCircle, XCircle, Shield } from 'lucide-react'
+import { CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { INSTITUTE_INFO } from '@/lib/constants'
 
-interface Props { params: { token: string } }
+interface Props { params: Promise<{ token: string }> }
 
 export default function VerifyCertificatePage({ params }: Props) {
-  const cert = MOCK_CERTIFICATES.find(c => c.verifyToken === params.token && !c.isRevoked)
-  const student = cert ? MOCK_STUDENTS.find(s => s.id === cert.studentId) : null
-  const course = cert ? MOCK_COURSES.find(c => c.id === cert.courseId) : null
-  const result = cert ? MOCK_RESULTS.find(r => r.id === cert.resultId) : null
+  const { token } = use(params)
+  const [data, setData] = useState<VerifyApiResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    apiVerify(token)
+      .then(setData)
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false))
+  }, [token])
 
   const certTypeLabel: Record<string, string> = { institute: 'Institute Certificate', skill_id: 'Skill ID Card', nvq: 'NVQ Level 3 Certificate' }
 
@@ -32,7 +39,12 @@ export default function VerifyCertificatePage({ params }: Props) {
           <p className="text-stone-400 text-sm">{INSTITUTE_INFO.fullName}</p>
         </div>
 
-        {cert && student && course ? (
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-xl p-12 text-center">
+            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mx-auto mb-3" />
+            <p className="text-stone-500 text-sm">Verifying certificate...</p>
+          </div>
+        ) : data && data.student && data.certificates.length > 0 ? (
           <div className="bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
             <div className="bg-green-500 p-6 text-white text-center">
               <CheckCircle className="w-12 h-12 mx-auto mb-2" />
@@ -42,12 +54,12 @@ export default function VerifyCertificatePage({ params }: Props) {
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { label: 'Student Name', value: student.fullName },
-                  { label: 'Programme', value: course.name },
-                  { label: 'Certificate Type', value: certTypeLabel[cert.type] || cert.type },
-                  { label: 'Certificate No', value: cert.certificateNo },
-                  { label: 'Issue Date', value: formatDate(cert.issuedAt) },
-                  { label: 'Grade', value: result?.finalGrade || 'Pass' },
+                  { label: 'Student Name', value: data.student.full_name },
+                  { label: 'Student ID', value: data.student.student_number },
+                  { label: 'Certificate Type', value: certTypeLabel[data.certificates[0].subtype] || data.certificates[0].subtype },
+                  { label: 'Certificate No', value: data.certificates[0].certificate_number },
+                  { label: 'Issue Date', value: formatDate(data.certificates[0].issue_date) },
+                  { label: 'Grade', value: data.results[0]?.final_grade || 'Pass' },
                 ].map(item => (
                   <div key={item.label} className="bg-stone-50 rounded-xl p-3">
                     <p className="text-xs text-stone-400 mb-0.5">{item.label}</p>

@@ -7,9 +7,9 @@ import { z } from 'zod'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { delay } from '@/lib/utils'
+import { apiCreateStudent } from '@/lib/api'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
-import { MOCK_COURSES } from '@/lib/mock-data/courses'
+import { COURSES } from '@/lib/data/courses'
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 
 const schema = z.object({
@@ -48,12 +48,29 @@ export default function AdminNewStudentPage() {
     if (ok) setStep(s => s + 1)
   }
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: FormData) => {
     setIsLoading(true)
-    await delay(800)
-    setIsLoading(false)
-    toast.success('Student registered successfully!')
-    router.push('/admin/students')
+    try {
+      await apiCreateStudent({
+        full_name: data.fullName,
+        name_with_initials: data.nameWithInitials,
+        nic_number: data.nic,
+        date_of_birth: data.dateOfBirth,
+        gender: data.gender,
+        phone_primary: data.phone,
+        email: data.email,
+        address_line1: data.addressLine1,
+        city: data.city,
+        district: data.district,
+        province: data.province,
+      })
+      toast.success('Student registered successfully!')
+      router.push('/admin/students')
+    } catch (err: any) {
+      toast.error(err?.message || 'Registration failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -99,7 +116,7 @@ export default function AdminNewStudentPage() {
                 <div><label className={labelClass}>District *</label><select {...register('district')} className={inputClass}><option value="">Select</option>{DISTRICTS.map(d => <option key={d}>{d}</option>)}</select></div>
                 <div><label className={labelClass}>Province *</label><select {...register('province')} className={inputClass}><option value="">Select</option>{PROVINCES.map(p => <option key={p}>{p}</option>)}</select></div>
               </div>
-              <div><label className={labelClass}>Course *</label><select {...register('courseId')} className={inputClass}><option value="">Select a course</option>{MOCK_COURSES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>{errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId.message}</p>}</div>
+              <div><label className={labelClass}>Course *</label><select {...register('courseId')} className={inputClass}><option value="">Select a course</option>{COURSES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>{errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId.message}</p>}</div>
               <div><label className={labelClass}>Payment Plan *</label><select {...register('paymentPlan')} className={inputClass}><option value="full">Full Payment</option><option value="installment">Installment</option></select></div>
             </div>
           )}

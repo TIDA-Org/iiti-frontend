@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuthStore } from '@/store/authStore'
-import { MOCK_VACANCIES } from '@/lib/mock-data/vacancies'
+import { VACANCIES } from '@/lib/data/vacancies'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { LogIn, Briefcase, MapPin, Globe, Calendar } from 'lucide-react'
@@ -41,7 +41,7 @@ export default function PublicJobsPage() {
             </ScrollReveal>
           ) : (
             <div className="grid gap-4">
-              {MOCK_VACANCIES.filter(v => v.isPublished).map((job) => (
+              {VACANCIES.filter(v => v.isPublished).map((job) => (
                 <ScrollReveal key={job.id}>
                   <div className="bg-white rounded-xl border border-stone-200 p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between gap-4">

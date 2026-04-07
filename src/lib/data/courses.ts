@@ -1,6 +1,6 @@
 import { Course, CourseOutlineWeek } from '@/types/course'
 
-export const MOCK_COURSES: Course[] = [
+export const COURSES: Course[] = [
   {
     id: 'c1',
     code: 'IITI-FO-001',

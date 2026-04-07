@@ -13,31 +13,24 @@ import { useAuthStore } from '@/store/authStore'
 import { INSTITUTE_INFO } from '@/lib/constants'
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  username: z.string().min(1, 'Phone number or email is required'),
   password: z.string().min(1, 'Password is required'),
   rememberMe: z.boolean().optional(),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-const DEMO_ACCOUNTS = [
-  { label: 'Super Admin', email: 'director@iiti.lk', password: 'SuperAdmin@123' },
-  { label: 'Admin', email: 'manager@iiti.lk', password: 'Admin@123' },
-  { label: 'Front Desk', email: 'reception@iiti.lk', password: 'FrontDesk@123' },
-  { label: 'Student', email: 'student@iiti.lk', password: 'Student@123' },
-]
-
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { login, isLoading, error } = useAuthStore()
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    const result = await login(data.email, data.password)
+    const result = await login(data.username, data.password)
     if (result.success) {
       toast.success('Welcome back!')
       if (result.role === 'student') {
@@ -46,11 +39,6 @@ export default function LoginPage() {
         router.push('/admin/dashboard')
       }
     }
-  }
-
-  const loginAsDemo = (email: string, password: string) => {
-    setValue('email', email)
-    setValue('password', password)
   }
 
   return (
@@ -131,17 +119,17 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
-              Email Address
+              Phone Number or Email
             </label>
 
             <input
-              {...register('email')}
-              type="email"
-              placeholder="your@email.com"
+              {...register('username')}
+              type="text"
+              placeholder="07XXXXXXXX or your@email.com"
               className="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
 
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
           </div>
 
           <div>
