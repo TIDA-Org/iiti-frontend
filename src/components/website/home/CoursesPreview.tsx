@@ -36,7 +36,7 @@ const COURSES = [
 
 export function CoursesPreview() {
   return (
-    <section className="py-28 bg-gradient-to-b from-white via-slate-50 to-white">
+    <section className="py-28 bg-linear-to-b from-white via-slate-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="text-center mb-16">
           <SectionLabel className="justify-center">Our Programmes</SectionLabel>
@@ -57,12 +57,12 @@ export function CoursesPreview() {
               <ScrollReveal key={course.href} delay={i * 0.1}>
                 <Card className="group relative overflow-hidden border border-slate-200/50 bg-white hover:border-slate-300 transition-all duration-300 hover:shadow-lg h-full flex flex-col">
                   {/* Accent line at top */}
-                  <div className={`h-1 w-full bg-gradient-to-r ${course.accentColor}`} />
+                  <div className={`h-1 w-full bg-linear-to-r ${course.accentColor}`} />
                   
                   <div className="p-8 flex flex-col flex-1">
                     {/* Icon and Badge Row */}
                     <div className="flex items-start justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${course.accentColor} flex items-center justify-center text-white shadow-sm`}>
+                      <div className={`w-12 h-12 rounded-lg bg-linear-to-br ${course.accentColor} flex items-center justify-center text-white shadow-sm`}>
                         <IconComponent className="w-6 h-6" />
                       </div>
                       <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
@@ -110,7 +110,7 @@ export function CoursesPreview() {
                   </div>
 
                   {/* Gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 to-orange-500/0 group-hover:from-orange-500/5 group-hover:to-orange-500/5 pointer-events-none transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-linear-to-br from-orange-500/0 to-orange-500/0 group-hover:from-orange-500/5 group-hover:to-orange-500/5 pointer-events-none transition-colors duration-300" />
                 </Card>
               </ScrollReveal>
             )

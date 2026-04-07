@@ -7,7 +7,7 @@ export function JobPortalTeaser() {
   return (
     <section className="grid lg:grid-cols-2 min-h-[500px]">
       {/* Left - modern dark background */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center py-20 px-8 lg:px-16 relative overflow-hidden">
+      <div className="bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center py-20 px-8 lg:px-16 relative overflow-hidden">
         {/* Decorative gradient blob */}
         <div className="absolute -right-32 -top-32 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
         
@@ -33,7 +33,7 @@ export function JobPortalTeaser() {
       </div>
 
       {/* Right - modern orange section with stats */}
-      <div className="bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center py-20 px-8 relative overflow-hidden">
+      <div className="bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center py-20 px-8 relative overflow-hidden">
         {/* Decorative gradient blob */}
         <div className="absolute -left-32 -bottom-32 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl pointer-events-none" />
         

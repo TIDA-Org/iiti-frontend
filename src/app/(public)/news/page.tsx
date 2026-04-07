@@ -6,7 +6,7 @@ import { ScrollReveal } from '@/components/shared/ScrollReveal'
 export default function NewsPage() {
   return (
     <div>
-      <section className="bg-gradient-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
         <ScrollReveal>
           <SectionLabel light className="justify-center">Latest Updates</SectionLabel>
           <h1 className="text-4xl font-extrabold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>News & Announcements</h1>

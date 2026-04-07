@@ -15,7 +15,7 @@ export default function AdminMigrationPage() {
           </button>
         </div>
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-amber-800 mb-1">Before importing</p>
             <p className="text-xs text-amber-700">Download the template, fill in student data, then upload. This will create student records in bulk. Review the preview before confirming.</p>

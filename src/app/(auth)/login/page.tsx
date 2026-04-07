@@ -42,7 +42,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-5xl grid lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl min-h-[600px]">
+    <div className="w-full max-w-5xl grid lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl min-h-150">
 
       {/* Left branded panel */}
       <div

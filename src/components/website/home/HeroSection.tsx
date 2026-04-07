@@ -151,7 +151,7 @@ export function HeroSection() {
                   'TVEC & ISO Accredited',
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2.5 text-sm text-slate-700 font-regular">
-                    <CheckCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-orange-500 shrink-0" />
                     {item}
                   </li>
                 ))}

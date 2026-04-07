@@ -18,7 +18,7 @@ export default function AboutPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-stone-900 to-stone-800 py-24 px-4">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal>
             <SectionLabel light className="justify-center">About IITI</SectionLabel>
@@ -131,7 +131,7 @@ export default function AboutPage() {
             ].map((acc) => (
               <ScrollReveal key={acc.title}>
                 <div className="bg-white rounded-2xl p-6 border border-stone-200 flex gap-5 items-start">
-                  <div className={`w-14 h-14 ${acc.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <div className={`w-14 h-14 ${acc.color} rounded-xl flex items-center justify-center shrink-0`}>
                     <CheckCircle className="w-7 h-7 text-white" />
                   </div>
                   <div>

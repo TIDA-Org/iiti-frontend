@@ -53,7 +53,7 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
     return (
       <aside className={cn('fixed left-0 top-0 h-screen -translate-x-full w-64 bg-white flex flex-col z-40 transition-transform duration-300 ease-in-out')}>
         {/* Mobile header */}
-        <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100 flex-shrink-0 md:hidden">
+        <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100 shrink-0 md:hidden">
           <span className="font-semibold text-slate-700">Menu</span>
           <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5 text-slate-600" />
@@ -61,7 +61,7 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
         </div>
 
         {/* Mobile nav */}
-        <nav className="py-3 px-3 flex-shrink-0">
+        <nav className="py-3 px-3 shrink-0">
           <ul className="space-y-0.5">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon
@@ -78,7 +78,7 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     )}
                   >
-                    <Icon className={cn('w-4 h-4 flex-shrink-0', active && 'text-orange-500')} />
+                    <Icon className={cn('w-4 h-4 shrink-0', active && 'text-orange-500')} />
                     <span className="flex-1">{item.label}</span>
                     {item.href === '/portal/notifications' && unreadCount > 0 && (
                       <span className="w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
@@ -96,9 +96,9 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
         <div className="flex-1"></div>
 
         {/* User footer */}
-        <div className="border-t border-slate-100 p-4 flex-shrink-0">
+        <div className="border-t border-slate-100 p-4 shrink-0">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
               <span className="text-orange-600 text-sm font-bold">{user ? getInitials(user.name) : 'S'}</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -120,12 +120,12 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
 
   return (
     <aside className={cn(
-      'hidden md:flex flex-col h-full bg-white border-r border-slate-200 w-64 flex-shrink-0',
+      'hidden md:flex flex-col h-full bg-white border-r border-slate-200 w-64 shrink-0',
       isMobile && isOpen && 'fixed left-0 top-0 h-screen flex flex-col z-40 max-w-xs transition-transform duration-300 ease-in-out'
     )}>
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-100 flex-shrink-0">
-        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-100 shrink-0">
+        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
           <GraduationCap className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
@@ -135,7 +135,7 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
       </div>
 
       {/* Nav */}
-      <nav className="py-4 px-3 flex-shrink-0">
+      <nav className="py-4 px-3 shrink-0">
         <ul className="space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
@@ -152,7 +152,7 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                   )}
                 >
-                  <Icon className={cn('w-4 h-4 flex-shrink-0', active && 'text-orange-500')} />
+                  <Icon className={cn('w-4 h-4 shrink-0', active && 'text-orange-500')} />
                   <span className="flex-1">{item.label}</span>
                   {item.href === '/portal/notifications' && unreadCount > 0 && (
                     <span className="w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
@@ -170,9 +170,9 @@ export function PortalSidebar({ isOpen, onClose, isMobile }: PortalSidebarProps)
       <div className="flex-1"></div>
 
       {/* User footer */}
-      <div className="border-t border-slate-100 p-4 flex-shrink-0">
+      <div className="border-t border-slate-100 p-4 shrink-0">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
             <span className="text-orange-600 text-sm font-bold">{user ? getInitials(user.name) : 'S'}</span>
           </div>
           <div className="flex-1 min-w-0">

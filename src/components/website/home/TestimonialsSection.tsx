@@ -17,7 +17,7 @@ export function TestimonialsSection() {
   const t = TESTIMONIALS[current]
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white via-slate-50 to-white">
+    <section className="py-20 bg-linear-to-b from-white via-slate-50 to-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <SectionLabel className="justify-center">Testimonials</SectionLabel>
@@ -35,7 +35,7 @@ export function TestimonialsSection() {
             <div className="p-6 md:p-8">
               {/* Quote Icon */}
               <div className="flex items-start gap-3 mb-4">
-                <Quote className="w-5 h-5 text-slate-400 flex-shrink-0 mt-1" />
+                <Quote className="w-5 h-5 text-slate-400 shrink-0 mt-1" />
               </div>
 
               {/* Rating */}
@@ -61,7 +61,7 @@ export function TestimonialsSection() {
 
               {/* Author Info */}
               <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-slate-300 to-slate-400 flex items-center justify-center shrink-0">
                   <span className="text-xs font-semibold text-white">
                     {t.name.split(' ').map(n => n[0]).join('')}
                   </span>
@@ -140,7 +140,7 @@ export function TestimonialsSection() {
                 {testimonial.quote}
               </p>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-linear-to-br from-slate-300 to-slate-400 flex items-center justify-center shrink-0">
                   <span className="text-xs font-semibold text-white">
                     {testimonial.name.split(' ').map(n => n[0]).join('')}
                   </span>

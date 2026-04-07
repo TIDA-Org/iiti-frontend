@@ -49,7 +49,7 @@ export default function PortalProfilePage() {
 
           return (
             <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6">
+              <div className="bg-linear-to-r from-orange-500 to-orange-600 p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
                     <span className="text-white font-bold text-2xl">{student.full_name[0]}</span>
@@ -65,7 +65,7 @@ export default function PortalProfilePage() {
                   const Icon = field.icon
                   return (
                     <div key={field.label} className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4 text-stone-400" />
                       </div>
                       <div>

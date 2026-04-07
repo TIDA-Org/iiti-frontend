@@ -33,7 +33,7 @@ export default function PortalDashboardPage() {
   return (
     <div>
       {/* Welcome banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 text-white">
+      <div className="bg-linear-to-r from-orange-500 to-orange-600 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 text-white">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-orange-100 text-xs md:text-sm mb-1">{getGreeting()},</p>
