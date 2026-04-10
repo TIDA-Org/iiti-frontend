@@ -8,12 +8,17 @@ import { PortalTopbar } from '@/components/portal/layout/PortalTopbar'
 import { PageLoader } from '@/components/shared/PageLoader'
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, _hasHydrated, hydrateUser } = useAuthStore()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
+    if (_hasHydrated) hydrateUser()
+  }, [_hasHydrated, hydrateUser])
+
+  useEffect(() => {
+    if (!_hasHydrated) return
     if (!isAuthenticated || !user) {
       router.replace('/login')
       return
@@ -21,7 +26,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     if (user.role !== 'student') {
       router.replace('/admin/dashboard')
     }
-  }, [isAuthenticated, user, router])
+  }, [_hasHydrated, isAuthenticated, user, router])
 
   useEffect(() => {
     // Check if mobile on mount
@@ -41,7 +46,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     setSidebarOpen(!sidebarOpen)
   }
 
-  if (!isAuthenticated || !user || user.role !== 'student') {
+  if (!_hasHydrated || !isAuthenticated || !user || user.role !== 'student') {
     return <PageLoader />
   }
 

@@ -40,9 +40,9 @@ export default function AdminCertificatesPage() {
                   <tr key={cert.id} className="hover:bg-slate-50">
                     <td className="px-5 py-3 font-mono text-xs text-amber-600 font-medium">{cert.certificate_number}</td>
                     <td className="px-5 py-3">
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{certTypeLabel[cert.subtype] || cert.subtype}</span>
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{certTypeLabel[cert.cert_subtype] || cert.cert_subtype}</span>
                     </td>
-                    <td className="px-5 py-3 text-slate-400 text-xs">{formatDate(cert.issue_date)}</td>
+                    <td className="px-5 py-3 text-slate-400 text-xs">{cert.issue_date ? formatDate(cert.issue_date) : '-'}</td>
                     <td className="px-5 py-3">
                       <StatusBadge status={cert.is_revoked ? 'inactive' : 'active'} />
                     </td>

@@ -8,10 +8,15 @@ import { AdminTopbar } from '@/components/admin/layout/AdminTopbar'
 import { PageLoader } from '@/components/shared/PageLoader'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuthStore()
+  const { user, isAuthenticated, _hasHydrated, hydrateUser } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
+    if (_hasHydrated) hydrateUser()
+  }, [_hasHydrated, hydrateUser])
+
+  useEffect(() => {
+    if (!_hasHydrated) return
     if (!isAuthenticated || !user) {
       router.replace('/login')
       return
@@ -19,9 +24,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (user.role === 'student') {
       router.replace('/portal/dashboard')
     }
-  }, [isAuthenticated, user, router])
+  }, [_hasHydrated, isAuthenticated, user, router])
 
-  if (!isAuthenticated || !user || user.role === 'student') {
+  if (!_hasHydrated || !isAuthenticated || !user || user.role === 'student') {
     return <PageLoader />
   }
 

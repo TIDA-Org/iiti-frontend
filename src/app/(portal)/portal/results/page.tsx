@@ -45,10 +45,10 @@ export default function PortalResultsPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-stone-800">Course {result.course_id}</h3>
-                    <p className="text-xs text-stone-400 mt-1">Exam date: {result.exam_date ? formatDate(result.exam_date) : '-'}</p>
+                    <p className="text-xs text-stone-400 mt-1">Status: {result.result_status || '-'}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${GRADE_COLORS[result.final_grade] || 'bg-stone-100 text-stone-700'}`}>
-                    {result.final_grade}
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${(result.final_grade && GRADE_COLORS[result.final_grade]) || 'bg-stone-100 text-stone-700'}`}>
+                    {result.final_grade || '-'}
                   </span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-3 gap-4 text-center">

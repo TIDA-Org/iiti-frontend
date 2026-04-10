@@ -52,7 +52,7 @@ export default function AdminResultsPage() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Theory</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Practical</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Grade</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Exam Date</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Score %</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Action</th>
                 </tr>
@@ -66,7 +66,7 @@ export default function AdminResultsPage() {
                     <td className="px-5 py-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${GRADE_COLORS[r.final_grade as keyof typeof GRADE_COLORS] || 'bg-stone-100'}`}>{r.final_grade}</span>
                     </td>
-                    <td className="px-5 py-3 text-slate-400 text-xs">{r.exam_date ? formatDate(r.exam_date) : '-'}</td>
+                    <td className="px-5 py-3 text-slate-700 font-mono">{r.score_percentage != null ? `${r.score_percentage}%` : '-'}</td>
                     <td className="px-5 py-3">
                       <StatusBadge status={r.is_published ? 'published' : 'pending'} />
                     </td>
