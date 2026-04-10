@@ -56,9 +56,9 @@ export default function VerifyCertificatePage({ params }: Props) {
                 {[
                   { label: 'Student Name', value: data.student.full_name },
                   { label: 'Student ID', value: data.student.student_number },
-                  { label: 'Certificate Type', value: certTypeLabel[data.certificates[0].subtype] || data.certificates[0].subtype },
+                  { label: 'Certificate Type', value: certTypeLabel[data.certificates[0].cert_subtype] || data.certificates[0].cert_subtype },
                   { label: 'Certificate No', value: data.certificates[0].certificate_number },
-                  { label: 'Issue Date', value: formatDate(data.certificates[0].issue_date) },
+                  { label: 'Issue Date', value: data.certificates[0].issue_date ? formatDate(data.certificates[0].issue_date) : '-' },
                   { label: 'Grade', value: data.results[0]?.final_grade || 'Pass' },
                 ].map(item => (
                   <div key={item.label} className="bg-stone-50 rounded-xl p-3">

@@ -17,6 +17,8 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  _hasHydrated: boolean
+  setHasHydrated: (v: boolean) => void
   login: (username: string, password: string) => Promise<{ success: boolean; role?: string }>
   logout: () => void
   clearError: () => void
@@ -30,6 +32,9 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      _hasHydrated: false,
+
+      setHasHydrated: (v: boolean) => set({ _hasHydrated: v }),
 
       login: async (username: string, password: string) => {
         set({ isLoading: true, error: null })
@@ -115,6 +120,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'iiti-auth',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
     }
   )
 )

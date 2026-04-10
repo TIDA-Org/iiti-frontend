@@ -47,23 +47,23 @@ export default function PortalCertificatesPage() {
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             {certs.map(cert => {
-              const verifyUrl = cert.qr_code_url || `${window.location.origin}/verify/${cert.id}`
+              const verifyUrl = cert.qr_code_image_url || `${window.location.origin}/verify/${cert.id}`
               return (
                 <div key={cert.id} className="bg-white rounded-xl border border-stone-200 p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <span className="inline-block bg-orange-100 text-orange-600 text-xs font-semibold px-2.5 py-1 rounded-full mb-2">
-                        {certTypeLabel[cert.subtype] || cert.subtype}
+                        {certTypeLabel[cert.cert_subtype] || cert.cert_subtype}
                       </span>
                       <h3 className="font-semibold text-stone-800">Certificate</h3>
                       <p className="text-xs text-stone-400 mt-1 font-mono">{cert.certificate_number}</p>
-                      <p className="text-xs text-stone-400">Issued: {formatDate(cert.issue_date)}</p>
+                      <p className="text-xs text-stone-400">Issued: {cert.issue_date ? formatDate(cert.issue_date) : '-'}</p>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-3 border-t border-stone-100">
-                    {cert.certificate_url && (
+                    {cert.certificate_pdf_url && (
                       <a
-                        href={cert.certificate_url}
+                        href={cert.certificate_pdf_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 border border-stone-200 hover:border-stone-300 px-3 py-1.5 rounded-lg transition-colors"
