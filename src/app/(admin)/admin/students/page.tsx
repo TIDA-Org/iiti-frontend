@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { apiGetStudents, StudentApiResponse, StudentListApiResponse } from '@/lib/api'
+import { apiGetStudents, StudentApiResponse, StudentListApiResponse } from '@/lib/api/students'
 import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'

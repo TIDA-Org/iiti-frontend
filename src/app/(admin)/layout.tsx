@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { AdminSidebar } from '@/components/admin/layout/AdminSidebar'
@@ -10,6 +10,7 @@ import { PageLoader } from '@/components/shared/PageLoader'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, _hasHydrated, hydrateUser } = useAuthStore()
   const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (_hasHydrated) hydrateUser()
@@ -32,9 +33,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <AdminSidebar />
+      <AdminSidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          className="fixed inset-0 bg-slate-900/35 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AdminTopbar />
+        <AdminTopbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

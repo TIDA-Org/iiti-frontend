@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { apiLogin, apiLogout } from '@/lib/api/auth'
+import { ApiError, clearTokens, getAccessToken } from '@/lib/api/core'
+import { apiGetMyProfile } from '@/lib/api/students'
 import { AuthUser } from '@/types/auth'
-import { apiLogin, apiLogout, apiGetMyProfile, clearTokens, getAccessToken, ApiError } from '@/lib/api'
 import { jwtDecode } from 'jwt-decode'
 
 interface JwtPayload {

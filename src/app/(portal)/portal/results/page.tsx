@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiGetMyResults, ResultApiResponse } from '@/lib/api'
+import { apiGetMyResults, ResultApiResponse } from '@/lib/api/results'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { formatDate } from '@/lib/utils'
 import { EmptyState } from '@/components/shared/EmptyState'

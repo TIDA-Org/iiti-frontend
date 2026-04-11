@@ -1,10 +1,14 @@
 'use client'
 
-import { apiGetCertificates, CertificateListApiResponse, CertificateApiResponse } from '@/lib/api'
+import {
+  apiGetCertificates,
+  CertificateApiResponse,
+  CertificateListApiResponse,
+} from '@/lib/api/certificates'
 import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
-import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { Eye } from 'lucide-react'

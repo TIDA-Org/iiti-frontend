@@ -1,14 +1,22 @@
 'use client'
 
-import { useState } from 'react'
-import { apiGetCourses, apiGetCourseCategories, apiCreateCourse, apiUpdateCourse, CourseApiResponse, CourseCategoryApiResponse } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import {
+  apiCreateCourse,
+  apiGetCourseCategories,
+  apiGetCourses,
+  apiUpdateCourse,
+  CourseApiResponse,
+  CourseCategoryApiResponse,
+} from '@/lib/api/courses'
 import { useApi } from '@/hooks/useApi'
+import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/lib/utils'
-import { BookOpen, Plus, X, Pencil, Check } from 'lucide-react'
+import { BookOpen, Check, Pencil, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const courseTypeLabel: Record<string, string> = {
@@ -32,6 +40,16 @@ export default function AdminCoursesPage() {
   const [editTotalFee, setEditTotalFee] = useState<number>(0)
   const [editNvqLevel, setEditNvqLevel] = useState('')
   const [editActive, setEditActive] = useState(true)
+  const { hasPermission } = usePermissionAccess()
+
+  const canCreateCourse = hasPermission('courses.create')
+  const canEditCourse = hasPermission('courses.edit')
+
+  useEffect(() => {
+    if (!canEditCourse && editingCourse) {
+      setEditingCourse(null)
+    }
+  }, [canEditCourse, editingCourse])
 
   const { data: courses, isLoading, error, refetch } = useApi<CourseApiResponse[]>(
     () => apiGetCourses(),
@@ -120,20 +138,22 @@ export default function AdminCoursesPage() {
         title="Courses"
         subtitle={courses ? `${list.length} training programmes` : 'Loading...'}
         actions={
-          <button
-            onClick={() => {
-              setShowForm(!showForm)
-              if (!showForm) setEditingCourse(null)
-            }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-          >
-            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {showForm ? 'Cancel' : 'Add Course'}
-          </button>
+          canCreateCourse ? (
+            <button
+              onClick={() => {
+                setShowForm(!showForm)
+                if (!showForm) setEditingCourse(null)
+              }}
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+            >
+              {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {showForm ? 'Cancel' : 'Add Course'}
+            </button>
+          ) : null
         }
       />
 
-      {editingCourse && (
+      {canEditCourse && editingCourse && (
         <div className="bg-white rounded-xl border-2 border-amber-300 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-700">Edit Course — <span className="text-amber-600">{editingCourse.name}</span></h3>
@@ -207,7 +227,7 @@ export default function AdminCoursesPage() {
         </div>
       )}
 
-      {showForm && (
+      {canCreateCourse && showForm && (
         <form onSubmit={handleCreate} className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">New Course</h3>
           <div className="grid md:grid-cols-2 gap-4">
@@ -276,7 +296,7 @@ export default function AdminCoursesPage() {
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NVQ</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Created</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>
+                    {canEditCourse && <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -298,15 +318,17 @@ export default function AdminCoursesPage() {
                         <StatusBadge status={course.is_active ? 'active' : 'inactive'} />
                       </td>
                       <td className="px-5 py-3 text-slate-400 text-xs">{formatDate(course.created_at)}</td>
-                      <td className="px-5 py-3">
-                        <button
-                          onClick={() => startEdit(course)}
-                          className="text-amber-500 hover:text-amber-600 transition-colors"
-                          title="Edit course"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </td>
+                      {canEditCourse && (
+                        <td className="px-5 py-3">
+                          <button
+                            onClick={() => startEdit(course)}
+                            className="text-amber-500 hover:text-amber-600 transition-colors"
+                            title="Edit course"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

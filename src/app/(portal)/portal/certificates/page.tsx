@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiGetMyCertificates, CertificateApiResponse } from '@/lib/api'
+import { apiGetMyCertificates, CertificateApiResponse } from '@/lib/api/certificates'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { formatDate } from '@/lib/utils'
 import { EmptyState } from '@/components/shared/EmptyState'

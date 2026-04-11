@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell, Sun, Moon, ChevronRight } from 'lucide-react'
+import { Bell, Sun, Moon, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
@@ -28,23 +28,21 @@ function Breadcrumb() {
   )
 }
 
-export function AdminTopbar() {
-  const { theme, setTheme, sidebarCollapsed, toggleSidebar } = useUIStore()
+export function AdminTopbar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
+  const { theme, setTheme } = useUIStore()
   const { user } = useAuthStore()
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 shrink-0">
-      {sidebarCollapsed && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-          title="Expand sidebar"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onOpenMobileMenu}
+        className="md:hidden text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+        title="Open menu"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
       <div className="flex-1 min-w-0">
         <Breadcrumb />
       </div>

@@ -1,11 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { apiGetResults, apiPublishResult, ResultListApiResponse, ResultApiResponse } from '@/lib/api'
+import {
+  apiGetResults,
+  apiPublishResult,
+  ResultApiResponse,
+  ResultListApiResponse,
+} from '@/lib/api/results'
 import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
-import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
 import { GRADE_COLORS } from '@/lib/constants'
 import { toast } from 'sonner'

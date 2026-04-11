@@ -8,7 +8,9 @@ import { EnrollmentTrendChart } from '@/components/admin/dashboard/EnrollmentTre
 import { RecentActivityFeed } from '@/components/admin/dashboard/RecentActivityFeed'
 import { PendingApprovalsWidget } from '@/components/admin/dashboard/PendingApprovalsWidget'
 import { UpcomingIntakesWidget } from '@/components/admin/dashboard/UpcomingIntakesWidget'
-import { apiGetStudents, apiGetResults, apiGetCertificates } from '@/lib/api'
+import { apiGetStudents } from '@/lib/api/students'
+import { apiGetResults } from '@/lib/api/results'
+import { apiGetCertificates } from '@/lib/api/certificates'
 import { useApi } from '@/hooks/useApi'
 import { useAuthStore } from '@/store/authStore'
 

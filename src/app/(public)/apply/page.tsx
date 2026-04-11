@@ -1,33 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
-import { delay, generateId } from '@/lib/utils'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
 import { SectionLabel } from '@/components/shared/SectionLabel'
-
-const COURSES = [
-  { id: 'c1', name: 'Forklift Operator Training Programme', fee: 35000 },
-  { id: 'c2', name: 'Excavator Operator Training Programme', fee: 45000 },
-  { id: 'c3', name: 'Backhoe Loader Operator Training Programme', fee: 40000 },
-]
+import { useApi } from '@/hooks/useApi'
+import { apiGetCourses } from '@/lib/api/courses'
+import { apiSelfRegisterStudent } from '@/lib/api/students'
+import {
+  extractSriLankanNicDetails,
+  isValidSriLankanNic,
+  isValidSriLankanPhone,
+  normalizeSriLankanPhone,
+} from '@/lib/validators'
 
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   nameWithInitials: z.string().min(2, 'Name with initials is required'),
-  nic: z.string().min(9, 'Valid NIC is required'),
+  nic: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine(
+      isValidSriLankanNic,
+      'Invalid NIC format. Use 9 digits + V/X (old) or 12 digits (new).',
+    ),
   dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  gender: z.enum(['male', 'female']),
-  phone: z.string().min(9, 'Phone number is required'),
+  gender: z.enum(['male', 'female', 'other'], { message: 'Please select a gender' }),
+  phone: z
+    .string()
+    .trim()
+    .refine(isValidSriLankanPhone, 'Invalid phone. Use 07XXXXXXXX or +947XXXXXXXX.'),
   email: z.string().email('Valid email required'),
   addressLine1: z.string().min(5, 'Address is required'),
   city: z.string().min(2, 'City is required'),
-  district: z.string().min(1, 'District is required'),
-  province: z.string().min(1, 'Province is required'),
+  district: z.string().refine((value) => DISTRICTS.includes(value), 'Please select a district'),
+  province: z.string().refine((value) => PROVINCES.includes(value), 'Please select a province'),
 })
 
 const step2Schema = z.object({
@@ -35,28 +47,204 @@ const step2Schema = z.object({
   paymentMethod: z.enum(['full', 'installment']),
 })
 
-type Step1Data = z.infer<typeof step1Schema>
+type Step1Input = z.input<typeof step1Schema>
+type Step1Output = z.output<typeof step1Schema>
 type Step2Data = z.infer<typeof step2Schema>
+type Lang = 'en' | 'si'
+
+const COPY: Record<Lang, Record<string, string>> = {
+  en: {
+    onlineApplication: 'Online Application',
+    applyForCourse: 'Apply for a Course',
+    personalInfo: 'Personal Info',
+    courseAndPayment: 'Course & Payment',
+    reviewAndSubmit: 'Review & Submit',
+    personalInformation: 'Personal Information',
+    fullName: 'Full Name *',
+    nameWithInitials: 'Name with Initials *',
+    nicNumber: 'NIC Number *',
+    dateOfBirth: 'Date of Birth *',
+    gender: 'Gender *',
+    phone: 'Phone *',
+    email: 'Email *',
+    addressLine1: 'Address Line 1 *',
+    city: 'City *',
+    district: 'District *',
+    province: 'Province *',
+    select: 'Select',
+    male: 'Male',
+    female: 'Female',
+    other: 'Other',
+    continue: 'Continue',
+    courseSelectionPayment: 'Course Selection & Payment',
+    selectProgramme: 'Select Programme(s) *',
+    paymentMethod: 'Payment Method *',
+    fullPayment: 'Full Payment',
+    fullPaymentDesc: 'Pay the full amount at once',
+    installment: 'Installment Plan',
+    installmentDesc: 'Spread payments over 2-4 months',
+    back: 'Back',
+    noCourses: 'No active courses available right now.',
+    reviewSubmit: 'Review & Submit',
+    personalInformationCard: 'Personal Information',
+    courseSelectionCard: 'Course Selection',
+    edit: 'Edit',
+    name: 'Name:',
+    nic: 'NIC:',
+    phoneLabel: 'Phone:',
+    emailLabel: 'Email:',
+    cityLabel: 'City:',
+    payment: 'Payment:',
+    submitting: 'Submitting...',
+    submitApplication: 'Submit Application',
+    applicationSubmitted: 'Application Submitted!',
+    reference: 'Your application reference:',
+    followUp: 'We will contact you within 2 business days.',
+    whatNext: 'What happens next?',
+    next1: 'Admin review of your application',
+    next2: 'Payment confirmation',
+    next3: 'Enrollment activation + Student ID issued',
+    next4: 'Portal access credentials sent to your email',
+    backHome: 'Back to Home',
+    language: 'Language',
+  },
+  si: {
+    onlineApplication: 'මාර්ගගත අයදුම්පත',
+    applyForCourse: 'පාඨමාලාවක් සඳහා අයදුම් කරන්න',
+    personalInfo: 'පෞද්ගලික තොරතුරු',
+    courseAndPayment: 'පාඨමාලාව සහ ගෙවීම',
+    reviewAndSubmit: 'සමාලෝචනය සහ යැවීම',
+    personalInformation: 'පෞද්ගලික තොරතුරු',
+    fullName: 'සම්පූර්ණ නම *',
+    nameWithInitials: 'මුල් අකුරු සමඟ නම *',
+    nicNumber: 'ජා.හැ. අංකය *',
+    dateOfBirth: 'උපන් දිනය *',
+    gender: 'ස්ත්‍රී/පුරුෂ භාවය *',
+    phone: 'දුරකථන අංකය *',
+    email: 'විද්‍යුත් තැපෑල *',
+    addressLine1: 'ලිපිනය (පළමු පේළිය) *',
+    city: 'නගරය *',
+    district: 'දිස්ත්‍රික්කය *',
+    province: 'පළාත *',
+    select: 'තෝරන්න',
+    male: 'පුරුෂ',
+    female: 'ස්ත්‍රී',
+    other: 'වෙනත්',
+    continue: 'ඉදිරියට',
+    courseSelectionPayment: 'පාඨමාලා තේරීම සහ ගෙවීම',
+    selectProgramme: 'පාඨමාලා(ව) තෝරන්න *',
+    paymentMethod: 'ගෙවීම් ක්‍රමය *',
+    fullPayment: 'සම්පූර්ණ ගෙවීම',
+    fullPaymentDesc: 'මුළු මුදල එකවර ගෙවන්න',
+    installment: 'කොටස් වාරික',
+    installmentDesc: 'මාස 2-4 අතර වාරික ගෙවන්න',
+    back: 'ආපසු',
+    noCourses: 'දැනට සක්‍රීය පාඨමාලා නොමැත.',
+    reviewSubmit: 'සමාලෝචනය සහ යැවීම',
+    personalInformationCard: 'පෞද්ගලික තොරතුරු',
+    courseSelectionCard: 'පාඨමාලා තේරීම',
+    edit: 'සංස්කරණය',
+    name: 'නම:',
+    nic: 'ජා.හැ. අංකය:',
+    phoneLabel: 'දුරකථනය:',
+    emailLabel: 'විද්‍යුත් තැපෑල:',
+    cityLabel: 'නගරය:',
+    payment: 'ගෙවීම:',
+    submitting: 'යවමින්...',
+    submitApplication: 'අයදුම්පත යවන්න',
+    applicationSubmitted: 'අයදුම්පත සාර්ථකව යවා ඇත!',
+    reference: 'ඔබගේ යොමු අංකය:',
+    followUp: 'වැඩිදුර සඳහා වැඩ දිනයන් 2ක් තුළ අපි ඔබව සම්බන්ධ කරමු.',
+    whatNext: 'ඊළඟට සිදුවන්නේ කුමක්ද?',
+    next1: 'ඔබගේ අයදුම්පත පරිපාලන සමාලෝචනය',
+    next2: 'ගෙවීම් තහවුරු කිරීම',
+    next3: 'ලියාපදිංචිය සක්‍රීය කර සිසුවාගේ අංකය නිකුත් කිරීම',
+    next4: 'පෝර්ටල් පිවිසුම් තොරතුරු විද්‍යුත් තැපෑලට යැවීම',
+    backHome: 'මුල් පිටුවට',
+    language: 'භාෂාව',
+  },
+}
 
 export default function ApplyPage() {
+  const [lang, setLang] = useState<Lang>('en')
   const [step, setStep] = useState(1)
-  const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
+  const [step1Data, setStep1Data] = useState<Step1Output | null>(null)
   const [step2Data, setStep2Data] = useState<Step2Data | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [refNo] = useState(`APP-2025-${Math.floor(Math.random() * 9000) + 1000}`)
+  const [refNo, setRefNo] = useState('')
 
-  const form1 = useForm<Step1Data>({ resolver: zodResolver(step1Schema) })
+  const { data: coursesData } = useApi(() => apiGetCourses(), [])
+  const courses = (coursesData || []).filter((c) => c.is_active)
+  const t = useMemo(() => COPY[lang], [lang])
+
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? window.localStorage.getItem('apply-lang') : null
+    if (saved === 'en' || saved === 'si') {
+      setLang(saved)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('apply-lang', lang)
+    }
+  }, [lang])
+
+  const form1 = useForm<Step1Input, unknown, Step1Output>({
+    resolver: zodResolver(step1Schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+  })
   const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema), defaultValues: { courses: [], paymentMethod: 'full' } })
 
-  const onStep1 = (data: Step1Data) => { setStep1Data(data); setStep(2) }
+  const nicValue = form1.watch('nic')
+
+  useEffect(() => {
+    if (!nicValue || !isValidSriLankanNic(nicValue)) {
+      return
+    }
+
+    const details = extractSriLankanNicDetails(nicValue)
+    form1.setValue('dateOfBirth', details.dateOfBirth, { shouldValidate: true })
+    form1.setValue('gender', details.gender, { shouldValidate: true })
+  }, [form1, nicValue])
+
+  const onStep1 = (data: Step1Output) => { setStep1Data(data); setStep(2) }
   const onStep2 = (data: Step2Data) => { setStep2Data(data); setStep(3) }
 
   const onSubmit = async () => {
+    if (!step1Data || !step2Data) return
+
     setIsLoading(true)
-    await delay(1000)
-    setIsLoading(false)
-    setSubmitted(true)
+    try {
+      const selectedCourses = courses.filter((course) => step2Data.courses.includes(course.id))
+      const isDoingNvq = selectedCourses.some((course) => course.course_type === 'nvq_course' || course.has_nvq_option)
+
+      const student = await apiSelfRegisterStudent({
+        full_name: step1Data.fullName,
+        name_for_certificate: step1Data.nameWithInitials,
+        nic_number: step1Data.nic,
+        date_of_birth: step1Data.dateOfBirth,
+        gender: step1Data.gender,
+        address_line1: step1Data.addressLine1,
+        city: step1Data.city,
+        district: step1Data.district,
+        province: step1Data.province,
+        phone_primary: normalizeSriLankanPhone(step1Data.phone),
+        email: step1Data.email,
+        preferred_language: lang,
+        is_doing_nvq: isDoingNvq,
+        has_previous_nvq: false,
+      })
+
+      setRefNo(student.student_number || student.id)
+      setSubmitted(true)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit application')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const inputClass = "w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -69,16 +257,16 @@ export default function ApplyPage() {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>Application Submitted!</h2>
-          <p className="text-stone-500 mb-4">Your application reference: <span className="font-mono font-bold text-orange-600">{refNo}</span></p>
-          <p className="text-stone-400 text-sm mb-8">We will contact you within 2 business days.</p>
+          <h2 className="text-2xl font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>{t.applicationSubmitted}</h2>
+          <p className="text-stone-500 mb-4">{t.reference} <span className="font-mono font-bold text-orange-600">{refNo}</span></p>
+          <p className="text-stone-400 text-sm mb-8">{t.followUp}</p>
           <div className="bg-stone-50 rounded-xl p-5 text-left text-sm space-y-2 mb-6">
-            <p className="font-semibold text-stone-700 mb-3">What happens next?</p>
-            {['Admin review of your application', 'Payment confirmation', 'Enrollment activation + Student ID issued', 'Portal access credentials sent to your email'].map((s, i) => (
+            <p className="font-semibold text-stone-700 mb-3">{t.whatNext}</p>
+            {[t.next1, t.next2, t.next3, t.next4].map((s, i) => (
               <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center shrink-0">{i+1}</span><span className="text-stone-600">{s}</span></div>
             ))}
           </div>
-          <a href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">Back to Home</a>
+          <a href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">{t.backHome}</a>
         </div>
       </div>
     )
@@ -88,13 +276,18 @@ export default function ApplyPage() {
     <div className="min-h-screen bg-stone-50 py-16 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
-          <SectionLabel className="justify-center">Online Application</SectionLabel>
-          <h1 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>Apply for a Course</h1>
+          <SectionLabel className="justify-center">{t.onlineApplication}</SectionLabel>
+          <h1 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{t.applyForCourse}</h1>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-stone-200 px-3 py-1.5 bg-white">
+            <span className="text-xs text-stone-500 font-medium">{t.language}</span>
+            <button type="button" onClick={() => setLang('en')} className={`text-xs px-2 py-0.5 rounded ${lang === 'en' ? 'bg-orange-500 text-white' : 'text-stone-600 hover:bg-stone-100'}`}>EN</button>
+            <button type="button" onClick={() => setLang('si')} className={`text-xs px-2 py-0.5 rounded ${lang === 'si' ? 'bg-orange-500 text-white' : 'text-stone-600 hover:bg-stone-100'}`}>සිං</button>
+          </div>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-0 mb-10">
-          {['Personal Info', 'Course & Payment', 'Review & Submit'].map((label, i) => (
+          {[t.personalInfo, t.courseAndPayment, t.reviewAndSubmit].map((label, i) => (
             <div key={label} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step > i + 1 ? 'bg-green-500 text-white' : step === i + 1 ? 'bg-orange-500 text-white' : 'bg-stone-200 text-stone-400'}`}>
@@ -110,50 +303,51 @@ export default function ApplyPage() {
         <div className="bg-white rounded-2xl border border-stone-100 p-8 shadow-sm">
           {step === 1 && (
             <form onSubmit={form1.handleSubmit(onStep1)} className="space-y-4">
-              <h2 className="text-lg font-bold text-stone-800 mb-5">Personal Information</h2>
+              <h2 className="text-lg font-bold text-stone-800 mb-5">{t.personalInformation}</h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className={labelClass}>Full Name *</label><input {...form1.register('fullName')} className={inputClass} />{form1.formState.errors.fullName && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.fullName.message}</p>}</div>
-                <div><label className={labelClass}>Name with Initials *</label><input {...form1.register('nameWithInitials')} className={inputClass} />{form1.formState.errors.nameWithInitials && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nameWithInitials.message}</p>}</div>
-                <div><label className={labelClass}>NIC Number *</label><input {...form1.register('nic')} className={inputClass} />{form1.formState.errors.nic && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nic.message}</p>}</div>
-                <div><label className={labelClass}>Date of Birth *</label><input {...form1.register('dateOfBirth')} type="date" className={inputClass} />{form1.formState.errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.dateOfBirth.message}</p>}</div>
-                <div><label className={labelClass}>Gender *</label><select {...form1.register('gender')} className={inputClass + ' bg-white'}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
-                <div><label className={labelClass}>Phone *</label><input {...form1.register('phone')} className={inputClass} />{form1.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.phone.message}</p>}</div>
+                <div><label className={labelClass}>{t.fullName}</label><input {...form1.register('fullName')} className={inputClass} />{form1.formState.errors.fullName && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.fullName.message}</p>}</div>
+                <div><label className={labelClass}>{t.nameWithInitials}</label><input {...form1.register('nameWithInitials')} className={inputClass} />{form1.formState.errors.nameWithInitials && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nameWithInitials.message}</p>}</div>
+                <div><label className={labelClass}>{t.nicNumber}</label><input {...form1.register('nic')} className={inputClass} />{form1.formState.errors.nic && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nic.message}</p>}</div>
+                <div><label className={labelClass}>{t.dateOfBirth}</label><input {...form1.register('dateOfBirth')} type="date" readOnly className={inputClass + ' bg-stone-50'} />{form1.formState.errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.dateOfBirth.message}</p>}</div>
+                <div><label className={labelClass}>{t.gender}</label><select {...form1.register('gender')} className={inputClass + ' bg-white'}><option value="">{t.select}</option><option value="male">{t.male}</option><option value="female">{t.female}</option><option value="other">{t.other}</option></select>{form1.formState.errors.gender && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.gender.message}</p>}</div>
+                <div><label className={labelClass}>{t.phone}</label><input {...form1.register('phone')} className={inputClass} />{form1.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.phone.message}</p>}</div>
               </div>
-              <div><label className={labelClass}>Email *</label><input {...form1.register('email')} type="email" className={inputClass} />{form1.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.email.message}</p>}</div>
-              <div><label className={labelClass}>Address Line 1 *</label><input {...form1.register('addressLine1')} className={inputClass} /></div>
+              <div><label className={labelClass}>{t.email}</label><input {...form1.register('email')} type="email" className={inputClass} />{form1.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.email.message}</p>}</div>
+              <div><label className={labelClass}>{t.addressLine1}</label><input {...form1.register('addressLine1')} className={inputClass} />{form1.formState.errors.addressLine1 && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.addressLine1.message}</p>}</div>
               <div className="grid sm:grid-cols-3 gap-4">
-                <div><label className={labelClass}>City *</label><input {...form1.register('city')} className={inputClass} /></div>
-                <div><label className={labelClass}>District *</label><select {...form1.register('district')} className={inputClass + ' bg-white'}><option value="">Select</option>{DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
-                <div><label className={labelClass}>Province *</label><select {...form1.register('province')} className={inputClass + ' bg-white'}><option value="">Select</option>{PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+                <div><label className={labelClass}>{t.city}</label><input {...form1.register('city')} className={inputClass} />{form1.formState.errors.city && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.city.message}</p>}</div>
+                <div><label className={labelClass}>{t.district}</label><select {...form1.register('district')} className={inputClass + ' bg-white'}><option value="">{t.select}</option>{DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}</select>{form1.formState.errors.district && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.district.message}</p>}</div>
+                <div><label className={labelClass}>{t.province}</label><select {...form1.register('province')} className={inputClass + ' bg-white'}><option value="">{t.select}</option>{PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}</select>{form1.formState.errors.province && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.province.message}</p>}</div>
               </div>
               <button type="submit" className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors mt-4">
-                Continue <ArrowRight className="w-4 h-4" />
+                {t.continue} <ArrowRight className="w-4 h-4" />
               </button>
             </form>
           )}
 
           {step === 2 && (
             <form onSubmit={form2.handleSubmit(onStep2)} className="space-y-6">
-              <h2 className="text-lg font-bold text-stone-800 mb-5">Course Selection & Payment</h2>
+              <h2 className="text-lg font-bold text-stone-800 mb-5">{t.courseSelectionPayment}</h2>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-3">Select Programme(s) *</label>
+                <label className="block text-sm font-medium text-stone-700 mb-3">{t.selectProgramme}</label>
                 <div className="space-y-2">
-                  {COURSES.map(c => (
+                  {courses.map(c => (
                     <label key={c.id} className="flex items-center gap-3 p-4 border border-stone-200 rounded-xl cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-colors">
                       <input {...form2.register('courses')} type="checkbox" value={c.id} className="w-4 h-4 text-orange-500 rounded" />
                       <div className="flex-1">
-                        <p className="font-medium text-stone-700 text-sm">{c.name}</p>
-                        <p className="text-xs text-stone-400">LKR {c.fee.toLocaleString()}</p>
+                        <p className="font-medium text-stone-700 text-sm">{lang === 'si' ? (c.name_si || c.name) : c.name}</p>
+                        <p className="text-xs text-stone-400">LKR {c.total_fee.toLocaleString()}</p>
                       </div>
                     </label>
                   ))}
                 </div>
+                {courses.length === 0 && <p className="text-slate-500 text-xs mt-2">{t.noCourses}</p>}
                 {form2.formState.errors.courses && <p className="text-red-500 text-xs mt-1">{form2.formState.errors.courses.message}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-3">Payment Method *</label>
+                <label className="block text-sm font-medium text-stone-700 mb-3">{t.paymentMethod}</label>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {[{ v: 'full', l: 'Full Payment', d: 'Pay the full amount at once' }, { v: 'installment', l: 'Installment Plan', d: 'Spread payments over 2-4 months' }].map(opt => (
+                  {[{ v: 'full', l: t.fullPayment, d: t.fullPaymentDesc }, { v: 'installment', l: t.installment, d: t.installmentDesc }].map(opt => (
                     <label key={opt.v} className="flex items-start gap-3 p-4 border border-stone-200 rounded-xl cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-colors">
                       <input {...form2.register('paymentMethod')} type="radio" value={opt.v} className="mt-0.5 w-4 h-4 text-orange-500" />
                       <div><p className="font-medium text-stone-700 text-sm">{opt.l}</p><p className="text-xs text-stone-400">{opt.d}</p></div>
@@ -163,10 +357,10 @@ export default function ApplyPage() {
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(1)} className="flex items-center gap-2 border border-stone-200 text-stone-600 px-5 py-3 rounded-xl font-semibold text-sm transition-colors hover:border-stone-300">
-                  <ArrowLeft className="w-4 h-4" /> Back
+                  <ArrowLeft className="w-4 h-4" /> {t.back}
                 </button>
                 <button type="submit" className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">
-                  Continue <ArrowRight className="w-4 h-4" />
+                  {t.continue} <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </form>
@@ -174,45 +368,45 @@ export default function ApplyPage() {
 
           {step === 3 && step1Data && step2Data && (
             <div>
-              <h2 className="text-lg font-bold text-stone-800 mb-5">Review & Submit</h2>
+              <h2 className="text-lg font-bold text-stone-800 mb-5">{t.reviewSubmit}</h2>
               <div className="space-y-4 mb-6">
                 <div className="bg-stone-50 rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
-                    <p className="font-semibold text-stone-700 text-sm">Personal Information</p>
-                    <button onClick={() => setStep(1)} className="text-xs text-orange-500 hover:text-orange-600">Edit</button>
+                    <p className="font-semibold text-stone-700 text-sm">{t.personalInformationCard}</p>
+                    <button onClick={() => setStep(1)} className="text-xs text-orange-500 hover:text-orange-600">{t.edit}</button>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-y-2 text-sm">
-                    <div><span className="text-stone-400">Name: </span><span className="text-stone-700">{step1Data.fullName}</span></div>
-                    <div><span className="text-stone-400">NIC: </span><span className="text-stone-700">{step1Data.nic}</span></div>
-                    <div><span className="text-stone-400">Phone: </span><span className="text-stone-700">{step1Data.phone}</span></div>
-                    <div><span className="text-stone-400">Email: </span><span className="text-stone-700">{step1Data.email}</span></div>
-                    <div><span className="text-stone-400">City: </span><span className="text-stone-700">{step1Data.city}, {step1Data.district}</span></div>
+                    <div><span className="text-stone-400">{t.name} </span><span className="text-stone-700">{step1Data.fullName}</span></div>
+                    <div><span className="text-stone-400">{t.nic} </span><span className="text-stone-700">{step1Data.nic}</span></div>
+                    <div><span className="text-stone-400">{t.phoneLabel} </span><span className="text-stone-700">{step1Data.phone}</span></div>
+                    <div><span className="text-stone-400">{t.emailLabel} </span><span className="text-stone-700">{step1Data.email}</span></div>
+                    <div><span className="text-stone-400">{t.cityLabel} </span><span className="text-stone-700">{step1Data.city}, {step1Data.district}</span></div>
                   </div>
                 </div>
                 <div className="bg-stone-50 rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
-                    <p className="font-semibold text-stone-700 text-sm">Course Selection</p>
-                    <button onClick={() => setStep(2)} className="text-xs text-orange-500 hover:text-orange-600">Edit</button>
+                    <p className="font-semibold text-stone-700 text-sm">{t.courseSelectionCard}</p>
+                    <button onClick={() => setStep(2)} className="text-xs text-orange-500 hover:text-orange-600">{t.edit}</button>
                   </div>
                   <div className="space-y-1 text-sm">
                     {step2Data.courses.map(cId => {
-                      const c = COURSES.find(x => x.id === cId)
-                      return c ? <p key={cId} className="text-stone-700">{c.name}</p> : null
+                      const c = courses.find(x => x.id === cId)
+                      return c ? <p key={cId} className="text-stone-700">{lang === 'si' ? (c.name_si || c.name) : c.name}</p> : null
                     })}
-                    <p className="text-stone-500 mt-2">Payment: <span className="capitalize font-medium text-stone-700">{step2Data.paymentMethod}</span></p>
+                    <p className="text-stone-500 mt-2">{t.payment} <span className="capitalize font-medium text-stone-700">{step2Data.paymentMethod}</span></p>
                   </div>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(2)} className="flex items-center gap-2 border border-stone-200 text-stone-600 px-5 py-3 rounded-xl font-semibold text-sm hover:border-stone-300">
-                  <ArrowLeft className="w-4 h-4" /> Back
+                  <ArrowLeft className="w-4 h-4" /> {t.back}
                 </button>
                 <button
                   onClick={onSubmit}
                   disabled={isLoading}
                   className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white py-3 rounded-xl font-semibold text-sm transition-colors"
                 >
-                  {isLoading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Submitting...</span> : 'Submit Application'}
+                  {isLoading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{t.submitting}</span> : t.submitApplication}
                 </button>
               </div>
             </div>
