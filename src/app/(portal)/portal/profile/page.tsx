@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiGetMyProfile, StudentApiResponse } from '@/lib/api'
+import { apiGetMyProfile, StudentApiResponse } from '@/lib/api/students'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { formatDate } from '@/lib/utils'
 import { User, Phone, Mail, MapPin, Calendar } from 'lucide-react'

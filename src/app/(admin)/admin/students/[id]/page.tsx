@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, use } from 'react'
-import { apiGetStudent, StudentApiResponse } from '@/lib/api'
+import { apiGetStudent, StudentApiResponse } from '@/lib/api/students'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { formatDate } from '@/lib/utils'

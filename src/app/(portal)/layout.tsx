@@ -12,6 +12,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (_hasHydrated) hydrateUser()
@@ -53,7 +54,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
-      <PortalSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+      <PortalSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isMobile={isMobile}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+      />
       
       {/* Overlay for mobile */}
       {sidebarOpen && isMobile && (

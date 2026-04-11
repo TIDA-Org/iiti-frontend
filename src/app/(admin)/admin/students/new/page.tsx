@@ -8,13 +8,13 @@ import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
-  apiCreateEnrollment,
-  apiCreateStudent,
-  apiGetBatches,
-  apiGetCourses,
   BatchApiResponse,
   CourseApiResponse,
-} from '@/lib/api'
+  apiGetBatches,
+  apiGetCourses,
+} from '@/lib/api/courses'
+import { apiCreateEnrollment } from '@/lib/api/enrollments'
+import { apiCreateStudent } from '@/lib/api/students'
 import { useApi } from '@/hooks/useApi'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
 import {
@@ -23,7 +23,7 @@ import {
   isValidSriLankanPhone,
   normalizeSriLankanPhone,
 } from '@/lib/validators'
-import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 
 const normalizedOptionalPhone = z.union([
   z.literal(''),

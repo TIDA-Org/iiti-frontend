@@ -1,14 +1,22 @@
 'use client'
 
-import { useState } from 'react'
-import { apiGetStaffUsers, apiCreateStaffUser, apiUpdateStaffUser, apiDeleteStaffUser, StaffListApiResponse, StaffApiResponse } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import {
+  apiCreateStaffUser,
+  apiDeleteStaffUser,
+  apiGetStaffUsers,
+  apiUpdateStaffUser,
+  StaffApiResponse,
+  StaffListApiResponse,
+} from '@/lib/api/users'
 import { useApi } from '@/hooks/useApi'
+import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/lib/utils'
-import { Users, Plus, Trash2, Pencil, X, Check, KeyRound } from 'lucide-react'
+import { Check, KeyRound, Pencil, Plus, Trash2, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminUsersPage() {
@@ -24,6 +32,17 @@ export default function AdminUsersPage() {
   const [editPhone, setEditPhone] = useState('')
   const [editActive, setEditActive] = useState(true)
   const [editLanguage, setEditLanguage] = useState('en')
+  const { hasPermission } = usePermissionAccess()
+
+  const canCreateUser = hasPermission('users.create')
+  const canEditUser = hasPermission('users.edit')
+  const canDeleteUser = hasPermission('users.delete')
+
+  useEffect(() => {
+    if (!canEditUser && editingUser) {
+      setEditingUser(null)
+    }
+  }, [canEditUser, editingUser])
 
   const { data, isLoading, error, refetch } = useApi<StaffListApiResponse>(
     () => apiGetStaffUsers(1, 100),
@@ -123,18 +142,20 @@ export default function AdminUsersPage() {
         title="Staff Users"
         subtitle={data ? `${data.total} staff accounts` : 'Loading...'}
         actions={
-          <button
-            onClick={() => { setShowForm(!showForm); setEditingUser(null) }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-          >
-            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {showForm ? 'Cancel' : 'Add Staff'}
-          </button>
+          canCreateUser ? (
+            <button
+              onClick={() => { setShowForm(!showForm); setEditingUser(null) }}
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+            >
+              {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {showForm ? 'Cancel' : 'Add Staff'}
+            </button>
+          ) : null
         }
       />
 
       {/* Create Form */}
-      {showForm && (
+      {canCreateUser && showForm && (
         <form onSubmit={handleCreate} className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">New Staff User</h3>
           <div className="grid md:grid-cols-2 gap-4">
@@ -173,7 +194,7 @@ export default function AdminUsersPage() {
       )}
 
       {/* Edit Panel */}
-      {editingUser && (
+      {canEditUser && editingUser && (
         <div className="bg-white rounded-xl border-2 border-amber-300 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-700">Edit Staff User — <span className="text-amber-600">{editingUser.full_name}</span></h3>
@@ -257,7 +278,7 @@ export default function AdminUsersPage() {
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Role</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Joined</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>
+                    {(canEditUser || canDeleteUser) && <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -275,25 +296,31 @@ export default function AdminUsersPage() {
                         <StatusBadge status={user.is_active ? 'active' : 'inactive'} />
                       </td>
                       <td className="px-5 py-3 text-slate-400 text-xs">{formatDate(user.created_at)}</td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => startEdit(user)}
-                            className="text-amber-500 hover:text-amber-600 transition-colors"
-                            title="Edit staff user"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.id, user.full_name)}
-                            disabled={deleting === user.id}
-                            className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                            title="Delete staff user"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+                      {(canEditUser || canDeleteUser) && (
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            {canEditUser && (
+                              <button
+                                onClick={() => startEdit(user)}
+                                className="text-amber-500 hover:text-amber-600 transition-colors"
+                                title="Edit staff user"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                            )}
+                            {canDeleteUser && (
+                              <button
+                                onClick={() => handleDelete(user.id, user.full_name)}
+                                disabled={deleting === user.id}
+                                className="text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                                title="Delete staff user"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

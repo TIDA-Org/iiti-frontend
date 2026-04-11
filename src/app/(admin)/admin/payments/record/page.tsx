@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { apiGetStudents, StudentApiResponse } from '@/lib/api'
+import { apiGetStudents, StudentApiResponse } from '@/lib/api/students'
 
 const schema = z.object({
   studentId: z.string().min(1),

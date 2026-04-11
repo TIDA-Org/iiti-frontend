@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, use } from 'react'
-import { apiVerify, VerifyApiResponse } from '@/lib/api'
+import { apiVerify, VerifyApiResponse } from '@/lib/api/verify'
 import { formatDate } from '@/lib/utils'
 import { CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react'
 import Link from 'next/link'
