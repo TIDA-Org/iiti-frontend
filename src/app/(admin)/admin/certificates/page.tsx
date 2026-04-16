@@ -10,7 +10,6 @@ import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
-import Link from 'next/link'
 import { Eye } from 'lucide-react'
 
 export default function AdminCertificatesPage() {
@@ -51,9 +50,20 @@ export default function AdminCertificatesPage() {
                       <StatusBadge status={cert.is_revoked ? 'inactive' : 'active'} />
                     </td>
                     <td className="px-5 py-3">
-                      <Link href={`/admin/certificates/${cert.id}`} className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium">
-                        <Eye className="w-3.5 h-3.5" /> View
-                      </Link>
+                      {cert.certificate_pdf_url ? (
+                        <a
+                          href={cert.certificate_pdf_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-slate-300 font-medium cursor-not-allowed" title="Certificate PDF is not available">
+                          <Eye className="w-3.5 h-3.5" /> View
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
