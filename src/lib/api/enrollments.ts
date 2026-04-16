@@ -28,8 +28,9 @@ export async function apiCreateEnrollment(data: Record<string, unknown>): Promis
   return apiFetch('/enrollments', { method: 'POST', body: JSON.stringify(data) })
 }
 
-export async function apiGetEnrollments(): Promise<EnrollmentApiResponse[]> {
-  return apiFetch('/enrollments')
+export async function apiGetEnrollments(studentId?: string): Promise<EnrollmentApiResponse[]> {
+  const params = studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''
+  return apiFetch(`/enrollments${params}`)
 }
 
 export async function apiGetMyEnrollments(): Promise<EnrollmentApiResponse[]> {
