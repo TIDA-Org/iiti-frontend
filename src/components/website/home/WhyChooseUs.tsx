@@ -50,59 +50,55 @@ export function WhyChooseUs() {
           {/* Left visual */}
           <ScrollReveal direction="left">
             <div className="relative">
-              <Card className="aspect-4/3 overflow-hidden border-0 bg-slate-950 shadow-lg">
-                <div className="relative h-full overflow-hidden rounded-[1.75rem] bg-slate-950 p-3 sm:p-4">
-                  <div className="relative h-full overflow-hidden rounded-[1.35rem] bg-slate-900">
-                    {CARD_IMAGES.map((image, index) => (
-                      <div
-                        key={image.src}
-                        className={`absolute inset-0 transition-opacity duration-700 ${
-                          index === activeImageIndex ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      >
-                        <img
-                          src={image.src}
-                          alt={image.alt}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-slate-950/88 via-slate-950/22 to-slate-950/10" />
-                      </div>
-                    ))}
+              <Card className="relative aspect-4/3 overflow-hidden border-0 bg-slate-950 shadow-lg">
+                {CARD_IMAGES.map((image, index) => (
+                  <div
+                    key={image.src}
+                    className={`absolute inset-0 transition-opacity duration-700 ${
+                      index === activeImageIndex ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  >
+                    <img
+                      src={image.src}
+                      alt={image.alt}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-950/88 via-slate-950/22 to-slate-950/10" />
+                  </div>
+                ))}
 
-                    <div className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white backdrop-blur-sm sm:left-6 sm:top-6">
-                      {CARD_IMAGES[activeImageIndex].eyebrow}
+                <div className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-white backdrop-blur-sm sm:left-6 sm:top-6">
+                  {CARD_IMAGES[activeImageIndex].eyebrow}
+                </div>
+
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                  <div className="max-w-md">
+                    <div className="text-3xl font-bold tracking-tight text-white sm:text-4xl">IITI</div>
+                    <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80 font-regular sm:text-[15px]">
+                      {CARD_IMAGES[activeImageIndex].description}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-end justify-between gap-4">
+                    <div>
+                      <div className="text-lg font-semibold leading-tight text-white sm:text-xl">
+                        {CARD_IMAGES[activeImageIndex].title}
+                      </div>
                     </div>
 
-                    <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-                      <div className="max-w-md">
-                        <div className="text-3xl font-bold tracking-tight text-white sm:text-4xl">IITI</div>
-                        <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/80 font-regular sm:text-[15px]">
-                          {CARD_IMAGES[activeImageIndex].description}
-                        </p>
-                      </div>
-
-                      <div className="mt-5 flex items-end justify-between gap-4">
-                        <div>
-                          <div className="text-lg font-semibold leading-tight text-white sm:text-xl">
-                            {CARD_IMAGES[activeImageIndex].title}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 shrink-0">
-                          {CARD_IMAGES.map((image, index) => (
-                            <button
-                              key={image.src}
-                              onClick={() => setActiveImageIndex(index)}
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                index === activeImageIndex
-                                  ? 'w-8 bg-orange-500'
-                                  : 'w-2 bg-white/40 hover:bg-white/60'
-                              }`}
-                              aria-label={`Show image ${index + 1}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                    <div className="flex shrink-0 gap-2">
+                      {CARD_IMAGES.map((image, index) => (
+                        <button
+                          key={image.src}
+                          onClick={() => setActiveImageIndex(index)}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            index === activeImageIndex
+                              ? 'w-8 bg-orange-500'
+                              : 'w-2 bg-white/40 hover:bg-white/60'
+                          }`}
+                          aria-label={`Show image ${index + 1}`}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>

@@ -1,70 +1,116 @@
 'use client'
 
-import { useAuthStore } from '@/store/authStore'
-import { VACANCIES } from '@/lib/data/vacancies'
-import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
-import { LogIn, Briefcase, MapPin, Globe, Calendar } from 'lucide-react'
+import { Briefcase, Calendar, LogIn, MapPin } from 'lucide-react'
+
+import { DataLoader } from '@/components/shared/DataLoader'
+import { EmptyState } from '@/components/shared/EmptyState'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
+import { useApi } from '@/hooks/useApi'
+import { apiGetPublishedVacancies } from '@/lib/api/jobs'
+import { formatDate } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
+
+function stripHtml(value: string) {
+  return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
 
 export default function PublicJobsPage() {
   const { isAuthenticated } = useAuthStore()
+  const { data, isLoading, error, refetch } = useApi(() => apiGetPublishedVacancies(), [])
+  const vacancies = data || []
 
   return (
     <div>
-      <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 px-4 py-20 text-center">
         <ScrollReveal>
-          <h1 className="text-4xl font-extrabold text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Job Opportunities</h1>
-          <p className="text-stone-400 max-w-xl mx-auto">IITI connects graduates with leading employers locally and internationally.</p>
+          <h1 className="mb-4 text-4xl font-extrabold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            Job Opportunities
+          </h1>
+          <p className="mx-auto max-w-xl text-stone-400">
+            IITI connects graduates with leading employers locally and internationally through active vacancy listings.
+          </p>
         </ScrollReveal>
       </section>
 
-      <section className="py-20 bg-stone-50">
-        <div className="max-w-4xl mx-auto px-4">
-          {!isAuthenticated ? (
+      <section className="bg-stone-50 py-20">
+        <div className="mx-auto max-w-5xl px-4">
+          {!isAuthenticated && (
             <ScrollReveal>
-              <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center shadow-sm">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-5">
-                  <Briefcase className="w-8 h-8 text-orange-500" />
+              <div className="mb-8 rounded-2xl border border-orange-200 bg-orange-50/70 p-6 text-center shadow-sm">
+                <h2 className="text-xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                  Browse Jobs Publicly, Sign In to Apply
+                </h2>
+                <p className="mx-auto mt-3 max-w-2xl text-sm text-stone-600">
+                  Published vacancies are visible here for everyone. IITI students can sign in to view full portal details and apply directly.
+                </p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                  <Link href="/login" className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                    <LogIn className="h-4 w-4" />
+                    Sign In to Apply
+                  </Link>
+                  <Link href="/apply" className="rounded-lg border border-orange-300 px-5 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-100">
+                    Become a Student
+                  </Link>
                 </div>
-                <h2 className="text-2xl font-bold text-stone-800 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>Exclusive for IITI Students</h2>
-                <p className="text-stone-500 mb-8 max-w-md mx-auto">
-                  This section is available to registered IITI students only. Log in to view all available job vacancies and apply directly.
-                </p>
-                <Link href="/login" className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-7 py-3 rounded-lg font-semibold transition-colors">
-                  <LogIn className="w-4 h-4" /> Sign In to View Jobs
-                </Link>
-                <p className="mt-4 text-sm text-stone-400">
-                  Not a student yet? <Link href="/apply" className="text-orange-500 hover:text-orange-600 font-medium">Apply for a course</Link>
-                </p>
               </div>
             </ScrollReveal>
-          ) : (
-            <div className="grid gap-4">
-              {VACANCIES.filter(v => v.isPublished).map((job) => (
-                <ScrollReveal key={job.id}>
-                  <div className="bg-white rounded-xl border border-stone-200 p-6 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-stone-800">{job.title}</h3>
-                          {job.isInternational && <span className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full"><Globe className="w-3 h-3" />{job.country}</span>}
+          )}
+
+          <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+            {vacancies.length === 0 ? (
+              <EmptyState
+                icon={Briefcase}
+                title="No published vacancies"
+                description="Open job opportunities will appear here once they are published by the admin team."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {vacancies.map((job) => (
+                  <ScrollReveal key={job.id}>
+                    <div className="rounded-xl border border-stone-200 bg-white p-6 transition-shadow hover:shadow-md">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-semibold text-stone-800">{job.title}</h3>
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                              {job.vacancy_status}
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-orange-600">{job.company_name}</p>
+                          <div className="mt-2 flex flex-wrap gap-4 text-xs text-stone-500">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {job.location || 'Location not specified'}
+                            </span>
+                            {job.application_deadline && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Deadline: {formatDate(job.application_deadline)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-stone-600">
+                            {stripHtml(job.description)}
+                          </p>
                         </div>
-                        <p className="text-orange-600 font-medium text-sm">{job.company}</p>
-                        <div className="flex flex-wrap gap-4 text-xs text-stone-400 mt-2">
-                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.location}</span>
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Deadline: {formatDate(job.deadline)}</span>
+
+                        <div className="flex shrink-0 flex-col gap-2 lg:items-end">
+                          {job.salary_range && <div className="text-sm font-semibold text-slate-700">{job.salary_range}</div>}
+                          <Link
+                            href={isAuthenticated ? `/portal/jobs/${job.id}` : '/login'}
+                            className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+                          >
+                            {isAuthenticated ? 'View Details' : 'Sign In to Apply'}
+                          </Link>
                         </div>
                       </div>
-                      <Link href="/portal/jobs" className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
-                        View
-                      </Link>
                     </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          )}
+                  </ScrollReveal>
+                ))}
+              </div>
+            )}
+          </DataLoader>
         </div>
       </section>
     </div>
