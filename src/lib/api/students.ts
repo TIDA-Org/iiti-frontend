@@ -146,15 +146,15 @@ export async function apiUploadStudentPhoto(studentId: string, file: File): Prom
   })
 }
 
-export async function apiAddGuarantors(studentId: string, guarantors: Record<string, unknown>[]): Promise<unknown> {
+export async function apiAddGuarantors(studentId: string, guarantors: Record<string, unknown>[]): Promise<GuarantorApiResponse[]> {
   return apiFetch(`/students/${studentId}/guarantors`, { method: 'POST', body: JSON.stringify(guarantors) })
 }
 
-export async function apiGetGuarantors(studentId: string): Promise<unknown> {
+export async function apiGetGuarantors(studentId: string): Promise<GuarantorApiResponse[]> {
   return apiFetch(`/students/${studentId}/guarantors`)
 }
 
-export async function apiUploadStudentDocument(studentId: string, docType: string, file: File): Promise<unknown> {
+export async function apiUploadStudentDocument(studentId: string, docType: string, file: File): Promise<StudentDocumentApiResponse> {
   const formData = new FormData()
   formData.append('file', file)
   return apiFetch(`/students/${studentId}/documents?doc_type=${encodeURIComponent(docType)}`, {
@@ -164,10 +164,10 @@ export async function apiUploadStudentDocument(studentId: string, docType: strin
   })
 }
 
-export async function apiGetStudentDocuments(studentId: string): Promise<unknown> {
+export async function apiGetStudentDocuments(studentId: string): Promise<StudentDocumentApiResponse[]> {
   return apiFetch(`/students/${studentId}/documents`)
 }
 
-export async function apiVerifyStudentDocument(studentId: string, documentId: string, data: { is_verified: boolean; notes?: string }): Promise<unknown> {
+export async function apiVerifyStudentDocument(studentId: string, documentId: string, data: { is_verified: boolean; notes?: string }): Promise<StudentDocumentApiResponse> {
   return apiFetch(`/students/${studentId}/documents/${documentId}/verify`, { method: 'PUT', body: JSON.stringify(data) })
 }
