@@ -6,11 +6,11 @@ import { ArrowRight, ChevronDown, CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1718506921607-8b238f2a7303?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', // Forklift
-  'https://images.unsplash.com/photo-1580901369227-308f6f40bdeb?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8RXhjYXZhdG9yfGVufDB8fDB8fHww', // Excavator
-  'https://images.unsplash.com/photo-1621922688758-359fc864071e?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8SGVhdnklMjBtYWNoaW5lcnl8ZW58MHx8MHx8fDA%3D', // Heavy machinery
-  'https://images.unsplash.com/photo-1583024011792-b165975b52f5?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y29uc3RydWN0aW9uJTIwdmVoaWNsZXxlbnwwfHwwfHx8MA%3D%3D', // Construction vehicle
-  'https://images.unsplash.com/photo-1495036019936-220b29b930ea?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8Y29uc3RydWN0aW9uJTIwdmVoaWNsZXxlbnwwfHwwfHx8MA%3D%3D', // Backhoe loader
+  '/images/hero/DSC07563.jpg',
+  '/images/hero/DSC07577.jpg',
+  '/images/hero/DSC07657.jpg',
+  '/images/hero/DSC07664.jpg',
+  '/images/hero/DSC07666.jpg',
 ]
 
 export function HeroSection() {
@@ -24,7 +24,7 @@ export function HeroSection() {
   }, [])
   return (
     <section
-      className="relative min-h-screen flex items-center overflow-hidden"
+      className="relative flex min-h-[calc(100svh-7rem)] items-center overflow-hidden lg:min-h-[calc(100svh-6.75rem)]"
     >
       {/* Background Image Slideshow */}
       <div className="absolute inset-0 z-0">
@@ -59,7 +59,7 @@ export function HeroSection() {
         }}
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-0 w-full z-20">
+      <div className="relative z-20 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-18 lg:px-8 lg:py-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <div>
@@ -169,7 +169,7 @@ export function HeroSection() {
       </div>
 
       {/* Image indicators/dots */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+      <div className="absolute bottom-18 left-1/2 z-20 flex -translate-x-1/2 gap-2 sm:bottom-20 lg:bottom-16">
         {HERO_IMAGES.map((_, index) => (
           <button
             key={index}
@@ -188,7 +188,7 @@ export function HeroSection() {
       <motion.div
         animate={{ y: [0, 8, 0] }}
         transition={{ repeat: Infinity, duration: 1.5 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+        className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 sm:bottom-6"
       >
         <ChevronDown className="w-6 h-6 text-white/40" />
       </motion.div>

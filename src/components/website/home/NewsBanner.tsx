@@ -2,63 +2,45 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X } from 'lucide-react'
-
-const NEWS_ITEMS = [
-  {
-    id: 1,
-    title: 'New Batch Starting April 2025 - Limited Seats Available',
-    description: 'Enroll now for our Forklift, Excavator, and Backhoe Loader training programs',
-  },
-  {
-    id: 2,
-    title: 'Recent Graduate Placement - 98% Success Rate This Quarter',
-    description: 'Our graduates are securing positions within 2-3 weeks of certification',
-  },
-  {
-    id: 3,
-    title: 'International Opportunities - GCC Placements Open',
-    description: 'Join our successful graduates working across Middle East employers',
-  },
-  {
-    id: 4,
-    title: 'Early Bird Discount - Register Before March 31st',
-    description: 'Get 15% off on all training programs with early registration',
-  },
-]
+import { X } from 'lucide-react'
+import { useApi } from '@/hooks/useApi'
+import { apiGetPublicAnnouncements } from '@/lib/api/website'
 
 export function NewsBanner() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
+  const { data } = useApi(() => apiGetPublicAnnouncements(), [])
+  const newsItems = data || []
 
   useEffect(() => {
-    if (!isVisible) return
+    if (!isVisible || newsItems.length <= 1) return
 
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % NEWS_ITEMS.length)
+      setCurrentIndex((prev) => (prev + 1) % newsItems.length)
     }, 5000)
 
     return () => clearInterval(timer)
-  }, [isVisible])
+  }, [isVisible, newsItems.length])
 
-  const currentNews = NEWS_ITEMS[currentIndex]
+  useEffect(() => {
+    if (currentIndex >= newsItems.length) {
+      setCurrentIndex(0)
+    }
+  }, [currentIndex, newsItems.length])
 
-  if (!isVisible) return null
+  if (!isVisible || newsItems.length === 0) return null
+
+  const currentNews = newsItems[currentIndex]
 
   return (
     <div className="relative bg-linear-to-r from-emerald-400 via-green-400 to-emerald-400 text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5">
         <div className="flex items-center justify-center gap-2">
-          {/* Icon and content */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {/* <div className="shrink-0 flex items-center justify-center">
-              <Bell className="w-3.5 h-3.5 text-black animate-bounce" />
-            </div> */}
-            
             <div className="flex-1 min-w-0 text-center">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={currentIndex}
+                  key={currentNews.id}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
@@ -73,7 +55,6 @@ export function NewsBanner() {
             </div>
           </div>
 
-          {/* Right close button */}
           <button
             onClick={() => setIsVisible(false)}
             className="shrink-0 p-0.5 hover:bg-black/10 rounded-lg transition-colors duration-200"
@@ -83,11 +64,10 @@ export function NewsBanner() {
           </button>
         </div>
 
-        {/* Progress dots - centered */}
         <div className="flex justify-center gap-1 mt-1">
-          {NEWS_ITEMS.map((_, i) => (
+          {newsItems.map((item, i) => (
             <button
-              key={i}
+              key={item.id}
               onClick={() => setCurrentIndex(i)}
               className={`h-0.5 rounded-full transition-all duration-300 ${
                 i === currentIndex
@@ -100,7 +80,6 @@ export function NewsBanner() {
         </div>
       </div>
 
-      {/* Animated background gradient */}
       <div className="absolute inset-0 bg-linear-to-r from-emerald-400/30 via-green-400/30 to-emerald-400/30 pointer-events-none" />
     </div>
   )
