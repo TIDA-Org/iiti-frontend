@@ -1,27 +1,40 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useApi } from '@/hooks/useApi'
+import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
 import { useAuthStore } from '@/store/authStore'
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
-  {
-    label: 'Courses',
-    dropdown: [
-      { href: '/courses/forklift', label: 'Forklift Operator Training' },
-      { href: '/courses/excavator', label: 'Excavator Operator Training' },
-      { href: '/courses/backhoe-loader', label: 'Backhoe Loader Training' },
-    ],
-  },
+  { label: 'Courses', hasDropdown: true },
   { href: '/jobs', label: 'Jobs' },
   { href: '/contact', label: 'Contact' },
 ]
+
+function resolvePublicCourseHref(course: CourseApiResponse) {
+  const source = `${course.course_code} ${course.short_name || ''} ${course.name}`.toLowerCase()
+
+  if (source.includes('fork') || source.includes('forklift')) {
+    return '/courses/forklift'
+  }
+
+  if (source.includes('excavator')) {
+    return '/courses/excavator'
+  }
+
+  if (source.includes('backhoe') || source.includes('jcb')) {
+    return '/courses/backhoe-loader'
+  }
+
+  return '/courses'
+}
 
 export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -29,6 +42,22 @@ export function PublicNavbar() {
   const [coursesOpen, setCoursesOpen] = useState(false)
   const pathname = usePathname()
   const { isAuthenticated, user, logout } = useAuthStore()
+  const { data: coursesData } = useApi(() => apiGetCourses(), [])
+
+  const courseDropdownItems = useMemo(() => {
+    const activeCourses = (coursesData || []).filter((course) => course.is_active)
+
+    if (activeCourses.length === 0) {
+      return [{ href: '/courses', label: 'All Programmes' }]
+    }
+
+    return activeCourses
+      .sort((left, right) => left.display_order - right.display_order)
+      .map((course) => ({
+        href: resolvePublicCourseHref(course),
+        label: course.name,
+      }))
+  }, [coursesData])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
@@ -63,7 +92,7 @@ export function PublicNavbar() {
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-1">
             {NAV_LINKS.map((link) =>
-              link.dropdown ? (
+              link.hasDropdown ? (
                 <div key="courses" className="relative group">
                   <button
                     className={cn(
@@ -77,9 +106,9 @@ export function PublicNavbar() {
                     <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform duration-200" />
                   </button>
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-xl shadow-xl border border-stone-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    {link.dropdown.map((item) => (
+                    {courseDropdownItems.map((item) => (
                       <Link
-                        key={item.href}
+                        key={`${item.href}-${item.label}`}
                         href={item.href}
                         className="block px-4 py-3 text-sm text-stone-700 hover:text-orange-500 hover:bg-orange-50 first:rounded-t-xl last:rounded-b-xl transition-colors"
                       >
@@ -156,7 +185,7 @@ export function PublicNavbar() {
       {mobileOpen && (
         <div className="lg:hidden bg-white border-t border-stone-100 px-4 pb-4">
           {NAV_LINKS.map((link) =>
-            link.dropdown ? (
+            link.hasDropdown ? (
               <div key="courses-mobile">
                 <button
                   onClick={() => setCoursesOpen(!coursesOpen)}
@@ -167,9 +196,9 @@ export function PublicNavbar() {
                 </button>
                 {coursesOpen && (
                   <div className="pl-4 space-y-1">
-                    {link.dropdown.map((item) => (
+                    {courseDropdownItems.map((item) => (
                       <Link
-                        key={item.href}
+                        key={`${item.href}-${item.label}`}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
                         className="block py-2 text-sm text-stone-600 hover:text-orange-500"

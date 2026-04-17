@@ -1,9 +1,19 @@
+'use client'
+
 import Link from 'next/link'
 import { Phone } from 'lucide-react'
-import { INSTITUTE_INFO } from '@/lib/constants'
+
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
+import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 export function ContactCta() {
+  const { settings } = usePublicSiteSettings()
+  const contactItems = [
+    { type: 'phone', value: settings.contactPhone },
+    { type: 'phone', value: settings.whatsappNumber },
+    { type: 'address', value: settings.contactAddress },
+  ].filter((item) => Boolean(item.value))
+
   return (
     <section className="py-20 bg-white border-b-4 border-orange-500">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -32,11 +42,16 @@ export function ContactCta() {
             </Link>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-stone-500">
-            <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-orange-400" /> {INSTITUTE_INFO.telephone}</span>
-            <span>|</span>
-            <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-orange-400" /> {INSTITUTE_INFO.mobile}</span>
-            <span>|</span>
-            <span>{INSTITUTE_INFO.address}</span>
+            {contactItems.map((item, index) => (
+              <div key={`${item.type}-${item.value}-${index}`} className="contents">
+                {index > 0 && <span className="text-stone-300">|</span>}
+                {item.type === 'phone' ? (
+                  <span className="flex items-center gap-1.5"><Phone className="w-4 h-4 text-orange-400" /> {item.value}</span>
+                ) : (
+                  <span>{item.value}</span>
+                )}
+              </div>
+            ))}
           </div>
         </ScrollReveal>
       </div>
