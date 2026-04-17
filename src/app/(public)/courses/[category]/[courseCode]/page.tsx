@@ -1,8 +1,36 @@
-﻿export default function Page() {
+﻿'use client'
+
+import { use } from 'react'
+
+import { DataLoader } from '@/components/shared/DataLoader'
+import { CourseApiDetailContent } from '@/components/website/courses/CourseApiDetailContent'
+import { useApi } from '@/hooks/useApi'
+import { apiGetCourse, apiGetCourses } from '@/lib/api/courses'
+
+interface Props {
+  params: Promise<{ category: string; courseCode: string }>
+}
+
+export default function Page({ params }: Props) {
+  const { category, courseCode } = use(params)
+  const { data, isLoading, error, refetch } = useApi(async () => {
+    const courses = await apiGetCourses()
+    const matchedCourse = courses.find((course) => {
+      const categoryMatches = (course.category?.slug || 'programmes').toLowerCase() === category.toLowerCase()
+      const codeMatches = course.course_code.toLowerCase() === courseCode.toLowerCase()
+      return categoryMatches && codeMatches
+    })
+
+    if (!matchedCourse) {
+      throw new Error('Course not found')
+    }
+
+    return apiGetCourse(matchedCourse.id)
+  }, [category, courseCode])
+
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-semibold">Coming Soon</h1>
-      <p className="mt-2 text-sm text-muted-foreground">This route is scaffolded for Phase 2: /courses/[category]/[courseCode]</p>
-    </main>
-  );
+    <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+      {data ? <CourseApiDetailContent course={data} /> : null}
+    </DataLoader>
+  )
 }

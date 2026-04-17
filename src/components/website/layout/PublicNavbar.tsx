@@ -8,6 +8,7 @@ import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
+import { getPublicCourseHref } from '@/lib/public-course-routes'
 import { useAuthStore } from '@/store/authStore'
 
 const NAV_LINKS = [
@@ -17,24 +18,6 @@ const NAV_LINKS = [
   { href: '/jobs', label: 'Jobs' },
   { href: '/contact', label: 'Contact' },
 ]
-
-function resolvePublicCourseHref(course: CourseApiResponse) {
-  const source = `${course.course_code} ${course.short_name || ''} ${course.name}`.toLowerCase()
-
-  if (source.includes('fork') || source.includes('forklift')) {
-    return '/courses/forklift'
-  }
-
-  if (source.includes('excavator')) {
-    return '/courses/excavator'
-  }
-
-  if (source.includes('backhoe') || source.includes('jcb')) {
-    return '/courses/backhoe-loader'
-  }
-
-  return '/courses'
-}
 
 export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -54,7 +37,7 @@ export function PublicNavbar() {
     return activeCourses
       .sort((left, right) => left.display_order - right.display_order)
       .map((course) => ({
-        href: resolvePublicCourseHref(course),
+        href: getPublicCourseHref(course),
         label: course.name,
       }))
   }, [coursesData])

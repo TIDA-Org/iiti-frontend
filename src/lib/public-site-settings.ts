@@ -12,6 +12,8 @@ export interface PublicSiteSettings {
   contactEmail: string
   contactAddress: string
   googleMapsUrl: string
+  googleMapsEmbedUrl: string
+  googleMapsLink: string
   facebookUrl: string
   youtubeUrl: string
   whatsappNumber: string
@@ -20,6 +22,49 @@ export interface PublicSiteSettings {
 
 const DEFAULT_MAP_EMBED_URL =
   'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.9!2d79.9!3d6.84!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTAnMjQuMCJOIDc5wrA1NCcwMC4wIkU!5e0!3m2!1sen!2slk!4v1'
+
+function buildGoogleMapsQueryUrl(value: string) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`
+}
+
+function normalizeGoogleMapsLink(rawValue: string, address: string) {
+  if (rawValue) return rawValue
+  if (address) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  return 'https://maps.google.com/'
+}
+
+function normalizeGoogleMapsEmbedUrl(rawValue: string, address: string) {
+  if (!rawValue) {
+    return address ? buildGoogleMapsQueryUrl(address) : DEFAULT_MAP_EMBED_URL
+  }
+
+  if (rawValue.includes('/maps/embed') || rawValue.includes('output=embed')) {
+    return rawValue
+  }
+
+  try {
+    const url = new URL(rawValue)
+    const hostname = url.hostname.replace(/^www\./, '')
+
+    if (hostname === 'google.com' || hostname === 'maps.google.com') {
+      const query = url.searchParams.get('q') || url.searchParams.get('query')
+      if (query) return buildGoogleMapsQueryUrl(query)
+
+      const placeMatch = url.pathname.match(/\/maps\/place\/(.+?)(\/|$)/)
+      if (placeMatch?.[1]) {
+        return buildGoogleMapsQueryUrl(decodeURIComponent(placeMatch[1]).replace(/\+/g, ' '))
+      }
+    }
+
+    if (hostname === 'maps.app.goo.gl') {
+      return address ? buildGoogleMapsQueryUrl(address) : DEFAULT_MAP_EMBED_URL
+    }
+  } catch {
+    // Treat non-URL strings as plain text place queries below.
+  }
+
+  return buildGoogleMapsQueryUrl(rawValue)
+}
 
 function getNonEmptyValue(value: string | null | undefined, fallback: string) {
   const trimmed = value?.trim()
@@ -30,6 +75,8 @@ export function buildPublicSiteSettings(settings: SiteSettingApiResponse[] | nul
   const settingsByKey = mapSettingsByKey(settings || [])
 
   const whatsappNumber = (settingsByKey.whatsapp_number?.value || '').trim()
+  const contactAddress = getNonEmptyValue(settingsByKey.contact_address?.value, INSTITUTE_INFO.address)
+  const rawGoogleMapsValue = (settingsByKey.google_maps_url?.value || '').trim()
 
   return {
     instituteName: getNonEmptyValue(settingsByKey.institute_name?.value, INSTITUTE_INFO.fullName),
@@ -40,8 +87,10 @@ export function buildPublicSiteSettings(settings: SiteSettingApiResponse[] | nul
     contactPhone: getNonEmptyValue(settingsByKey.contact_phone?.value, INSTITUTE_INFO.telephone),
     mobilePhone: whatsappNumber,
     contactEmail: getNonEmptyValue(settingsByKey.contact_email?.value, INSTITUTE_INFO.email),
-    contactAddress: getNonEmptyValue(settingsByKey.contact_address?.value, INSTITUTE_INFO.address),
-    googleMapsUrl: getNonEmptyValue(settingsByKey.google_maps_url?.value, DEFAULT_MAP_EMBED_URL),
+    contactAddress,
+    googleMapsUrl: rawGoogleMapsValue,
+    googleMapsEmbedUrl: normalizeGoogleMapsEmbedUrl(rawGoogleMapsValue, contactAddress),
+    googleMapsLink: normalizeGoogleMapsLink(rawGoogleMapsValue, contactAddress),
     facebookUrl: getNonEmptyValue(settingsByKey.facebook_url?.value, ''),
     youtubeUrl: getNonEmptyValue(settingsByKey.youtube_url?.value, ''),
     whatsappNumber,
