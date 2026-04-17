@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -8,6 +9,7 @@ import {
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
+import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
 
@@ -42,10 +44,21 @@ export function PortalSidebar({
   const { user, logout } = useAuthStore()
   const { unreadCount } = useStudentPortalStore()
   const router = useRouter()
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      setLogoutDialogOpen(false)
+      if (isMobile) {
+        onClose()
+      }
+      router.push('/login')
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   const handleNavClick = () => {
@@ -150,7 +163,7 @@ export function PortalSidebar({
             </div>
           )}
           <button
-            onClick={handleLogout}
+            onClick={() => setLogoutDialogOpen(true)}
             title="Sign Out"
             className={cn(
               'text-slate-400 hover:text-red-500 transition-colors shrink-0',
@@ -161,6 +174,14 @@ export function PortalSidebar({
           </button>
         </div>
       </div>
+
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+        portalLabel="Student Portal"
+      />
     </aside>
   )
 }

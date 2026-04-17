@@ -16,15 +16,13 @@ export function NotificationDropdown() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative" />}>
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center">
               {unreadCount}
             </span>
           )}
-        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="px-4 py-3 border-b border-stone-100">

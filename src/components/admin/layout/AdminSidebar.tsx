@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiGetRoles } from '@/lib/api/roles'
+import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { useRouter } from 'next/navigation'
@@ -178,6 +179,8 @@ export function AdminSidebar({
   const { user, logout } = useAuthStore()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const router = useRouter()
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
   const [permissionCodes, setPermissionCodes] = useState<Set<string> | null>(null)
   const [permissionRevision, setPermissionRevision] = useState(0)
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
@@ -197,10 +200,16 @@ export function AdminSidebar({
     return initial
   })
 
-  const handleLogout = () => {
-    logout()
-    onCloseMobile()
-    router.push('/login')
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      setLogoutDialogOpen(false)
+      onCloseMobile()
+      router.push('/login')
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   const closeMobileIfNeeded = () => {
@@ -408,7 +417,7 @@ export function AdminSidebar({
             </div>
           )}
           <button
-            onClick={handleLogout}
+            onClick={() => setLogoutDialogOpen(true)}
             className="text-slate-400 hover:text-red-500 transition-colors shrink-0"
             title="Logout"
           >
@@ -416,6 +425,14 @@ export function AdminSidebar({
           </button>
         </div>
       </div>
+
+      <LogoutConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={handleLogout}
+        loading={loggingOut}
+        portalLabel="Admin Portal"
+      />
     </aside>
   )
 }
