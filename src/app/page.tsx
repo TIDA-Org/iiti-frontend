@@ -1,5 +1,6 @@
 import { PublicNavbar } from '@/components/website/layout/PublicNavbar'
 import { PublicFooter } from '@/components/website/layout/PublicFooter'
+import { PublicSiteSettingsProvider } from '@/components/website/layout/PublicSiteSettingsProvider'
 import { NewsBanner } from '@/components/website/home/NewsBanner'
 import { HeroSection } from '@/components/website/home/HeroSection'
 import { AccreditationBadges } from '@/components/website/home/AccreditationBadges'
@@ -13,7 +14,7 @@ import { ContactCta } from '@/components/website/home/ContactCta'
 
 export default function HomePage() {
   return (
-    <>
+    <PublicSiteSettingsProvider>
       <NewsBanner />
       <PublicNavbar />
       <main>
@@ -28,6 +29,6 @@ export default function HomePage() {
         <ContactCta />
       </main>
       <PublicFooter />
-    </>
+    </PublicSiteSettingsProvider>
   )
 }

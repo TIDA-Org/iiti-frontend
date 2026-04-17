@@ -1,7 +1,12 @@
+'use client'
+
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
-import { INSTITUTE_INFO } from '@/lib/constants'
+
+import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 export function AccreditationBadges() {
+  const { settings } = usePublicSiteSettings()
+
   return (
     <section className="py-8 border-y border-stone-200 bg-stone-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,7 +18,7 @@ export function AccreditationBadges() {
               </div>
               <div>
                 <div className="font-semibold text-stone-800 text-sm">ISO 9001:2015 Certified</div>
-                <div className="text-stone-500 text-xs">Certificate No. {INSTITUTE_INFO.isoNumber}</div>
+                <div className="text-stone-500 text-xs">Certificate No. {settings.isoCertification}</div>
               </div>
             </div>
           </ScrollReveal>
@@ -25,7 +30,7 @@ export function AccreditationBadges() {
               </div>
               <div>
                 <div className="font-semibold text-stone-800 text-sm">TVEC Registered Institute</div>
-                <div className="text-stone-500 text-xs">Registration No. {INSTITUTE_INFO.tvecRegNo}</div>
+                <div className="text-stone-500 text-xs">Registration No. {settings.tvecAccreditation}</div>
               </div>
             </div>
           </ScrollReveal>

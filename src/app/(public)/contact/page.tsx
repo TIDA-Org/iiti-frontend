@@ -7,9 +7,9 @@ import { z } from 'zod'
 import { MapPin, Phone, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { delay } from '@/lib/utils'
-import { INSTITUTE_INFO } from '@/lib/constants'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
+import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 const schema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -23,6 +23,7 @@ type FormData = z.infer<typeof schema>
 
 export default function ContactPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const { settings } = usePublicSiteSettings()
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   const onSubmit = async () => {
@@ -52,9 +53,9 @@ export default function ContactPage() {
             <div className="space-y-6">
               <ScrollReveal>
                 {[
-                  { icon: MapPin, title: 'Location', lines: [INSTITUTE_INFO.address] },
-                  { icon: Phone, title: 'Phone', lines: [INSTITUTE_INFO.telephone, INSTITUTE_INFO.mobile] },
-                  { icon: Mail, title: 'Email', lines: [INSTITUTE_INFO.email] },
+                  { icon: MapPin, title: 'Location', lines: [settings.contactAddress] },
+                  { icon: Phone, title: 'Phone', lines: [settings.contactPhone, settings.mobilePhone].filter(Boolean) },
+                  { icon: Mail, title: 'Email', lines: [settings.contactEmail] },
                 ].map((info) => {
                   const Icon = info.icon
                   return (
@@ -73,7 +74,7 @@ export default function ContactPage() {
               <ScrollReveal delay={0.1}>
                 <div className="rounded-2xl overflow-hidden border border-stone-200">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.9!2d79.9!3d6.84!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTAnMjQuMCJOIDc5wrA1NCcwMC4wIkU!5e0!3m2!1sen!2slk!4v1"
+                    src={settings.googleMapsUrl}
                     width="100%"
                     height="250"
                     style={{ border: 0 }}

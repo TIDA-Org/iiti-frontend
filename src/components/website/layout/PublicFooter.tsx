@@ -1,8 +1,13 @@
+'use client'
+
 import Link from 'next/link'
 import { MapPin, Phone, Mail } from 'lucide-react'
-import { INSTITUTE_INFO } from '@/lib/constants'
+
+import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 export function PublicFooter() {
+  const { settings } = usePublicSiteSettings()
+
   return (
     <footer style={{ backgroundColor: '#0A0A0A' }} className="text-stone-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
@@ -15,13 +20,12 @@ export function PublicFooter() {
               </div>
               <div>
                 <div className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                  Imasha International
+                  {settings.instituteName}
                 </div>
-                <div className="text-stone-500 text-xs">Training Institute (Pvt) Ltd</div>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-stone-400 mb-4">
-              {INSTITUTE_INFO.tagline}
+              {settings.tagline}
             </p>
             <div className="flex gap-3">
               <div className="px-3 py-1.5 bg-stone-800 rounded text-xs text-stone-300">ISO 9001:2015</div>
@@ -75,24 +79,26 @@ export function PublicFooter() {
             <ul className="space-y-3">
               <li className="flex gap-2.5 text-sm">
                 <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>{INSTITUTE_INFO.address}</span>
+                <span>{settings.contactAddress}</span>
               </li>
               <li className="flex gap-2.5 text-sm">
                 <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>{INSTITUTE_INFO.telephone}</span>
+                <span>{settings.contactPhone}</span>
               </li>
-              <li className="flex gap-2.5 text-sm">
-                <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>{INSTITUTE_INFO.mobile}</span>
-              </li>
+              {settings.whatsappNumber && (
+                <li className="flex gap-2.5 text-sm">
+                  <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                  <span>{settings.whatsappNumber}</span>
+                </li>
+              )}
               <li className="flex gap-2.5 text-sm">
                 <Mail className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>{INSTITUTE_INFO.email}</span>
+                <span>{settings.contactEmail}</span>
               </li>
             </ul>
             <div className="mt-4 space-y-1">
-              <p className="text-xs text-stone-500">TVEC Reg: {INSTITUTE_INFO.tvecRegNo}</p>
-              <p className="text-xs text-stone-500">ISO: {INSTITUTE_INFO.isoNumber}</p>
+              <p className="text-xs text-stone-500">TVEC Reg: {settings.tvecAccreditation}</p>
+              <p className="text-xs text-stone-500">ISO: {settings.isoCertification}</p>
             </div>
           </div>
         </div>

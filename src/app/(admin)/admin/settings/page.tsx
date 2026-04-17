@@ -1,33 +1,256 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import { Globe2, Lock, RotateCcw, Save } from 'lucide-react'
+import { toast } from 'sonner'
+
 import { PageHeader } from '@/components/admin/layout/PageHeader'
-import { INSTITUTE_INFO } from '@/lib/constants'
+import { DataLoader } from '@/components/shared/DataLoader'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { useApi } from '@/hooks/useApi'
+import { apiBulkUpdateSettings, apiGetAllSettings, SiteSettingApiResponse } from '@/lib/api/settings'
+import { useAuthStore } from '@/store/authStore'
+import { cn } from '@/lib/utils'
+
+const CATEGORY_COPY: Record<string, string> = {
+  general: 'Public institute identity, contact details, and core profile values used across the platform.',
+  payment: 'Bank details and fee-related defaults used by enrollments, receipts, and public payment instructions.',
+  sms: 'Global SMS gateway switches and sender defaults used by background notification tasks.',
+  social: 'Public social and map links surfaced on the website and contact experiences.',
+  documents: 'Internal prefixes and verification settings used for generated records and document numbering.',
+}
+
+function buildDraftMap(groups: { settings: SiteSettingApiResponse[] }[]) {
+  return Object.fromEntries(
+    groups.flatMap((group) => group.settings.map((setting) => [setting.key, setting.value ?? ''])),
+  )
+}
+
+function formatCategoryLabel(category: string) {
+  return category.charAt(0).toUpperCase() + category.slice(1)
+}
+
+function shouldUseTextarea(setting: SiteSettingApiResponse) {
+  return setting.key.includes('address') || setting.key.includes('maps') || (setting.value?.length || 0) > 90
+}
 
 export default function AdminSettingsPage() {
+  const { user } = useAuthStore()
+  const { data, isLoading, error, refetch } = useApi(apiGetAllSettings, [])
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const canEdit = user?.role === 'super_admin'
+
+  const initialSettings = useMemo(() => (data ? buildDraftMap(data) : {}), [data])
+  const categories = useMemo(() => data?.map((group) => group.category) || [], [data])
+  const currentGroup = useMemo(
+    () => data?.find((group) => group.category === selectedCategory) || data?.[0] || null,
+    [data, selectedCategory],
+  )
+  const changedSettings = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(drafts).filter(([key, value]) => (initialSettings[key] ?? '') !== value),
+      ),
+    [drafts, initialSettings],
+  )
+  const dirtyCount = Object.keys(changedSettings).length
+
+  useEffect(() => {
+    if (!data) return
+    setDrafts(buildDraftMap(data))
+    setSelectedCategory((current) => {
+      if (current && data.some((group) => group.category === current)) {
+        return current
+      }
+      return data[0]?.category || ''
+    })
+  }, [data])
+
+  function updateDraft(key: string, value: string) {
+    setDrafts((current) => ({ ...current, [key]: value }))
+  }
+
+  function resetDrafts() {
+    setDrafts(initialSettings)
+  }
+
+  async function handleSaveAll() {
+    if (!canEdit) {
+      toast.error('Only Super Admin can edit settings.')
+      return
+    }
+
+    if (dirtyCount === 0) {
+      toast.info('No setting changes to save.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await apiBulkUpdateSettings(changedSettings)
+      toast.success(`Saved ${dirtyCount} setting${dirtyCount === 1 ? '' : 's'}.`)
+      await refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
-    <div className="max-w-2xl">
-      <PageHeader title="Settings" subtitle="Institute configuration (Super Admin only)" />
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
-        <div>
-          <h3 className="font-semibold text-slate-700 mb-4">Institute Information</h3>
-          <div className="grid gap-4">
-            {[
-              { label: 'Full Name', value: INSTITUTE_INFO.fullName },
-              { label: 'Short Name', value: INSTITUTE_INFO.shortName },
-              { label: 'Address', value: INSTITUTE_INFO.address },
-              { label: 'Telephone', value: INSTITUTE_INFO.telephone },
-              { label: 'Mobile', value: INSTITUTE_INFO.mobile },
-              { label: 'Email', value: INSTITUTE_INFO.email },
-              { label: 'TVEC Reg No', value: INSTITUTE_INFO.tvecRegNo },
-              { label: 'ISO Certificate', value: INSTITUTE_INFO.isoNumber },
-            ].map(item => (
-              <div key={item.label} className="flex gap-4 py-2 border-b border-slate-50 last:border-0">
-                <span className="text-sm text-slate-400 w-36 shrink-0">{item.label}</span>
-                <span className="text-sm font-medium text-slate-700">{item.value}</span>
-              </div>
-            ))}
+    <div>
+      <PageHeader
+        title="Settings"
+        subtitle="Live institute configuration from the backend settings module"
+        actions={
+          <>
+            <Button variant="outline" onClick={resetDrafts} disabled={saving || dirtyCount === 0}>
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+            <Button onClick={handleSaveAll} disabled={saving || dirtyCount === 0 || !canEdit}>
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving...' : `Save Changes${dirtyCount > 0 ? ` (${dirtyCount})` : ''}`}
+            </Button>
+          </>
+        }
+      />
+
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">Site Settings</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Admins can review all settings. Super Admin can update values and push them to the backend with one bulk save.
+            </p>
+          </div>
+          <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
+            {canEdit ? 'Editing enabled for Super Admin.' : 'Read-only mode. Your role can view but cannot edit.'}
           </div>
         </div>
-        <p className="text-xs text-slate-400">To update institute information, please contact the system administrator.</p>
       </div>
+
+      <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+        {categories.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+            No site settings were returned by the backend.
+          </div>
+        ) : (
+          <div className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
+            <aside className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div className="space-y-1">
+                {categories.map((category) => {
+                  const isActive = category === currentGroup?.category
+                  const count = data?.find((group) => group.category === category)?.settings.length || 0
+
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setSelectedCategory(category)}
+                      className={cn(
+                        'w-full rounded-xl border px-4 py-3 text-left transition-colors',
+                        isActive
+                          ? 'border-orange-200 bg-orange-50 text-orange-700'
+                          : 'border-transparent bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium">{formatCategoryLabel(category)}</span>
+                        <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500 ring-1 ring-slate-200">
+                          {count}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">{CATEGORY_COPY[category] || 'Settings group from backend configuration.'}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </aside>
+
+            {currentGroup && (
+              <section className="rounded-2xl border border-slate-200 bg-white p-6">
+                <div className="mb-6 flex flex-col gap-3 border-b border-slate-100 pb-5 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-800">{formatCategoryLabel(currentGroup.category)}</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {CATEGORY_COPY[currentGroup.category] || 'Update the values in this configuration group.'}
+                    </p>
+                  </div>
+                  <div className="text-xs text-slate-400">{currentGroup.settings.length} settings in this category</div>
+                </div>
+
+                <div className="space-y-4">
+                  {currentGroup.settings.map((setting) => {
+                    const currentValue = drafts[setting.key] ?? ''
+                    const isDirty = currentValue !== (initialSettings[setting.key] ?? '')
+
+                    return (
+                      <div key={setting.key} className={cn('rounded-2xl border p-4 transition-colors', isDirty ? 'border-orange-200 bg-orange-50/40' : 'border-slate-200 bg-slate-50/40')}>
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="max-w-xl">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-medium text-slate-800">{setting.label}</h4>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+                                {setting.value_type}
+                              </span>
+                              <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', setting.is_public ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600')}>
+                                {setting.is_public ? <Globe2 className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                                {setting.is_public ? 'Public' : 'Internal'}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs text-slate-400">Key: {setting.key}</p>
+                          </div>
+
+                          <div className="w-full lg:max-w-md">
+                            {setting.value_type === 'boolean' ? (
+                              <label className={cn('flex items-center justify-between rounded-xl border px-4 py-3 text-sm', canEdit ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-100')}>
+                                <span className="text-slate-600">
+                                  {currentValue === 'true' ? 'Enabled' : 'Disabled'}
+                                </span>
+                                <input
+                                  type="checkbox"
+                                  checked={currentValue === 'true'}
+                                  disabled={!canEdit}
+                                  onChange={(event) => updateDraft(setting.key, event.target.checked ? 'true' : 'false')}
+                                  className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                                />
+                              </label>
+                            ) : shouldUseTextarea(setting) ? (
+                              <Textarea
+                                value={currentValue}
+                                disabled={!canEdit}
+                                rows={4}
+                                onChange={(event) => updateDraft(setting.key, event.target.value)}
+                                placeholder={`Enter ${setting.label.toLowerCase()}`}
+                                className="bg-white"
+                              />
+                            ) : (
+                              <Input
+                                type={setting.value_type === 'number' ? 'number' : 'text'}
+                                value={currentValue}
+                                disabled={!canEdit}
+                                onChange={(event) => updateDraft(setting.key, event.target.value)}
+                                placeholder={`Enter ${setting.label.toLowerCase()}`}
+                                className="bg-white"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+      </DataLoader>
     </div>
   )
 }
