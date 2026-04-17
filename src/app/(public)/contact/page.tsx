@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { MapPin, Phone, Mail } from 'lucide-react'
+import { MapPin, Phone, Mail, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { delay } from '@/lib/utils'
 import { SectionLabel } from '@/components/shared/SectionLabel'
@@ -72,9 +73,18 @@ export default function ContactPage() {
                 })}
               </ScrollReveal>
               <ScrollReveal delay={0.1}>
-                <div className="rounded-2xl overflow-hidden border border-stone-200">
+                <div className="relative rounded-2xl overflow-hidden border border-stone-200 bg-white">
+                  <Link
+                    href={settings.googleMapsLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-orange-600 shadow-sm ring-1 ring-stone-200 transition-colors hover:bg-orange-50"
+                  >
+                    Open in Maps
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
                   <iframe
-                    src={settings.googleMapsUrl}
+                    src={settings.googleMapsEmbedUrl}
                     width="100%"
                     height="250"
                     style={{ border: 0 }}

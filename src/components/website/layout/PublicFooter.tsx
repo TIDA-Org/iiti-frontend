@@ -1,12 +1,40 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, Phone, Mail } from 'lucide-react'
+import { MapPin, Phone, Mail, Facebook, Youtube, MessageCircle } from 'lucide-react'
 
 import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
+function buildWhatsAppHref(value: string) {
+  const normalized = value.replace(/\D/g, '')
+  return normalized ? `https://wa.me/${normalized}` : '#'
+}
+
 export function PublicFooter() {
   const { settings } = usePublicSiteSettings()
+  const socialLinks = [
+    settings.facebookUrl
+      ? {
+          href: settings.facebookUrl,
+          label: 'Facebook',
+          icon: Facebook,
+        }
+      : null,
+    settings.youtubeUrl
+      ? {
+          href: settings.youtubeUrl,
+          label: 'YouTube',
+          icon: Youtube,
+        }
+      : null,
+    settings.whatsappNumber
+      ? {
+          href: buildWhatsAppHref(settings.whatsappNumber),
+          label: 'WhatsApp',
+          icon: MessageCircle,
+        }
+      : null,
+  ].filter(Boolean)
 
   return (
     <footer style={{ backgroundColor: '#0A0A0A' }} className="text-stone-400">
@@ -31,6 +59,29 @@ export function PublicFooter() {
               <div className="px-3 py-1.5 bg-stone-800 rounded text-xs text-stone-300">ISO 9001:2015</div>
               <div className="px-3 py-1.5 bg-stone-800 rounded text-xs text-stone-300">TVEC Reg</div>
             </div>
+            {socialLinks.length > 0 && (
+              <div className="mt-5">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Social Media</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {socialLinks.map((item) => {
+                    const Icon = item.icon
+
+                    return (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg border border-stone-800 bg-stone-900 px-3 py-2 text-sm text-stone-300 transition-colors hover:border-orange-500/40 hover:text-orange-400"
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Column 2 - Quick Links */}
