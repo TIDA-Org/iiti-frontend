@@ -66,17 +66,17 @@ export function CertificatesSection() {
             const Icon = cert.icon
             return (
               <ScrollReveal key={cert.key || cert.title} delay={i * 0.12}>
-                <div className="bg-stone-900 border border-stone-800 hover:border-orange-500/40 rounded-2xl p-8 text-center transition-colors duration-300 group">
+                <div className="group flex h-full min-h-88 flex-col rounded-2xl border border-stone-800 bg-stone-900 p-8 text-center transition-colors duration-300 hover:border-orange-500/40">
                   <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mx-auto mb-5 group-hover:bg-orange-500/20 transition-colors">
                     <Icon className="w-8 h-8 text-orange-400" />
                   </div>
                   <h3
-                    className="text-lg font-bold text-white mb-3"
+                    className="mb-4 flex min-h-14 items-center justify-center text-lg font-bold text-white"
                     style={{ fontFamily: 'Outfit, sans-serif' }}
                   >
                     {cert.title}
                   </h3>
-                  <p className="text-stone-400 text-sm leading-relaxed">{cert.description}</p>
+                  <p className="mx-auto mt-auto max-w-sm text-sm leading-relaxed text-stone-400">{cert.description}</p>
                 </div>
               </ScrollReveal>
             )
