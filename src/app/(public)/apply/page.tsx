@@ -18,6 +18,10 @@ import {
   normalizeSriLankanPhone,
 } from '@/lib/validators'
 
+const optionalEmailSchema = z
+  .union([z.string().trim().email('Valid email required'), z.literal('')])
+  .transform((value) => (value === '' ? undefined : value))
+
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
   nameWithInitials: z.string().min(2, 'Name with initials is required'),
@@ -35,7 +39,7 @@ const step1Schema = z.object({
     .string()
     .trim()
     .refine(isValidSriLankanPhone, 'Invalid phone. Use 07XXXXXXXX or +947XXXXXXXX.'),
-  email: z.string().email('Valid email required'),
+  email: optionalEmailSchema,
   addressLine1: z.string().min(5, 'Address is required'),
   city: z.string().min(2, 'City is required'),
   district: z.string().refine((value) => DISTRICTS.includes(value), 'Please select a district'),
@@ -66,7 +70,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     dateOfBirth: 'Date of Birth *',
     gender: 'Gender *',
     phone: 'Phone *',
-    email: 'Email *',
+    email: 'Email',
     addressLine1: 'Address Line 1 *',
     city: 'City *',
     district: 'District *',
@@ -104,7 +108,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     next1: 'Admin review of your application',
     next2: 'Payment confirmation',
     next3: 'Enrollment activation + Student ID issued',
-    next4: 'Portal access credentials sent to your email',
+    next4: 'Portal access credentials shared through your provided contact details',
     backHome: 'Back to Home',
     language: 'Language',
   },
@@ -121,7 +125,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     dateOfBirth: 'උපන් දිනය *',
     gender: 'ස්ත්‍රී/පුරුෂ භාවය *',
     phone: 'දුරකථන අංකය *',
-    email: 'විද්‍යුත් තැපෑල *',
+    email: 'විද්‍යුත් තැපෑල',
     addressLine1: 'ලිපිනය (පළමු පේළිය) *',
     city: 'නගරය *',
     district: 'දිස්ත්‍රික්කය *',
@@ -159,7 +163,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     next1: 'ඔබගේ අයදුම්පත පරිපාලන සමාලෝචනය',
     next2: 'ගෙවීම් තහවුරු කිරීම',
     next3: 'ලියාපදිංචිය සක්‍රීය කර සිසුවාගේ අංකය නිකුත් කිරීම',
-    next4: 'පෝර්ටල් පිවිසුම් තොරතුරු විද්‍යුත් තැපෑලට යැවීම',
+    next4: 'ඔබ ලබාදුන් සම්බන්ධතා තොරතුරු හරහා පෝර්ටල් පිවිසුම් විස්තර ලබාදීම',
     backHome: 'මුල් පිටුවට',
     language: 'භාෂාව',
   },
@@ -232,7 +236,7 @@ export default function ApplyPage() {
         district: step1Data.district,
         province: step1Data.province,
         phone_primary: normalizeSriLankanPhone(step1Data.phone),
-        email: step1Data.email,
+        email: step1Data.email || null,
         preferred_language: lang,
         is_doing_nvq: isDoingNvq,
         has_previous_nvq: false,
@@ -379,7 +383,7 @@ export default function ApplyPage() {
                     <div><span className="text-stone-400">{t.name} </span><span className="text-stone-700">{step1Data.fullName}</span></div>
                     <div><span className="text-stone-400">{t.nic} </span><span className="text-stone-700">{step1Data.nic}</span></div>
                     <div><span className="text-stone-400">{t.phoneLabel} </span><span className="text-stone-700">{step1Data.phone}</span></div>
-                    <div><span className="text-stone-400">{t.emailLabel} </span><span className="text-stone-700">{step1Data.email}</span></div>
+                    {step1Data.email ? <div><span className="text-stone-400">{t.emailLabel} </span><span className="text-stone-700">{step1Data.email}</span></div> : null}
                     <div><span className="text-stone-400">{t.cityLabel} </span><span className="text-stone-700">{step1Data.city}, {step1Data.district}</span></div>
                   </div>
                 </div>

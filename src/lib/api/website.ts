@@ -97,12 +97,38 @@ export interface WebsiteCertificatesSectionApiResponse {
   items: WebsiteCertificateItemApiResponse[]
 }
 
+export interface WebsiteMetricItemApiResponse {
+  key: string
+  value: string
+  label: string
+  label_si: string | null
+}
+
+export interface WebsiteJobsTeaserApiResponse {
+  eyebrow: string
+  eyebrow_si: string | null
+  title: string
+  title_highlight: string | null
+  title_si: string | null
+  title_highlight_si: string | null
+  description: string
+  description_si: string | null
+  cta_label: string
+  cta_label_si: string | null
+  cta_href: string
+  metrics: WebsiteMetricItemApiResponse[]
+}
+
 export async function apiGetWebsiteStats(): Promise<WebsiteStatApiResponse[]> {
   return apiFetch('/website/stats')
 }
 
 export async function apiGetWebsiteCertificates(): Promise<WebsiteCertificatesSectionApiResponse> {
   return apiFetch('/website/certificates')
+}
+
+export async function apiGetWebsiteJobsTeaser(): Promise<WebsiteJobsTeaserApiResponse> {
+  return apiFetch('/website/jobs-teaser')
 }
 
 export async function apiGetPublicAnnouncements(): Promise<AnnouncementApiResponse[]> {
