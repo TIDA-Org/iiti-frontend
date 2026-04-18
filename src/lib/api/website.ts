@@ -75,8 +75,34 @@ export interface WebsiteStatApiResponse {
   suffix: string
 }
 
+export interface WebsiteCertificateItemApiResponse {
+  key: string
+  title: string
+  title_si: string | null
+  description: string
+  description_si: string | null
+}
+
+export interface WebsiteCertificatesSectionApiResponse {
+  eyebrow: string
+  eyebrow_si: string | null
+  title: string
+  title_highlight: string | null
+  title_si: string | null
+  title_highlight_si: string | null
+  description: string
+  description_si: string | null
+  verify_button_label: string
+  verify_button_label_si: string | null
+  items: WebsiteCertificateItemApiResponse[]
+}
+
 export async function apiGetWebsiteStats(): Promise<WebsiteStatApiResponse[]> {
   return apiFetch('/website/stats')
+}
+
+export async function apiGetWebsiteCertificates(): Promise<WebsiteCertificatesSectionApiResponse> {
+  return apiFetch('/website/certificates')
 }
 
 export async function apiGetPublicAnnouncements(): Promise<AnnouncementApiResponse[]> {
