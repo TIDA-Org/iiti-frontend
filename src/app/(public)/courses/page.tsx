@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight, CheckCircle, Clock, Loader2 } from 'lucide-react'
 
@@ -21,9 +22,33 @@ import { cn, formatLKR } from '@/lib/utils'
 
 export default function CoursesPage() {
   return (
-    <CourseLanguageProvider>
-      <CoursesPageContent />
-    </CourseLanguageProvider>
+    <Suspense fallback={<CoursesPageFallback />}>
+      <CourseLanguageProvider>
+        <CoursesPageContent />
+      </CourseLanguageProvider>
+    </Suspense>
+  )
+}
+
+function CoursesPageFallback() {
+  return (
+    <div>
+      <section className="bg-linear-to-br from-stone-900 to-stone-800 px-4 py-20 text-center">
+        <ScrollReveal>
+          <SectionLabel light className="justify-center">Our Programmes</SectionLabel>
+          <h1 className="mb-4 text-4xl font-extrabold text-white lg:text-5xl" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            All Training Programmes
+          </h1>
+        </ScrollReveal>
+      </section>
+
+      <section className="bg-stone-50 py-20">
+        <div className="mx-auto flex max-w-6xl items-center justify-center px-4 text-slate-500">
+          <Loader2 className="mr-3 h-5 w-5 animate-spin text-orange-500" />
+          Loading courses...
+        </div>
+      </section>
+    </div>
   )
 }
 

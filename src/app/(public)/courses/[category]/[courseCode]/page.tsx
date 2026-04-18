@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { use } from 'react'
+import { Suspense, use } from 'react'
 
 import { DataLoader } from '@/components/shared/DataLoader'
 import { CourseLanguageProvider } from '@/components/website/courses/CourseLanguageProvider'
@@ -30,10 +30,12 @@ export default function Page({ params }: Props) {
   }, [category, courseCode])
 
   return (
-    <CourseLanguageProvider>
-      <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
-        {data ? <CourseApiDetailContent course={data} /> : null}
-      </DataLoader>
-    </CourseLanguageProvider>
+    <Suspense fallback={null}>
+      <CourseLanguageProvider>
+        <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+          {data ? <CourseApiDetailContent course={data} /> : null}
+        </DataLoader>
+      </CourseLanguageProvider>
+    </Suspense>
   )
 }
