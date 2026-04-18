@@ -3,6 +3,7 @@
 import { use } from 'react'
 
 import { DataLoader } from '@/components/shared/DataLoader'
+import { CourseLanguageProvider } from '@/components/website/courses/CourseLanguageProvider'
 import { CourseApiDetailContent } from '@/components/website/courses/CourseApiDetailContent'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourse, apiGetCourses } from '@/lib/api/courses'
@@ -29,8 +30,10 @@ export default function Page({ params }: Props) {
   }, [category, courseCode])
 
   return (
-    <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
-      {data ? <CourseApiDetailContent course={data} /> : null}
-    </DataLoader>
+    <CourseLanguageProvider>
+      <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+        {data ? <CourseApiDetailContent course={data} /> : null}
+      </DataLoader>
+    </CourseLanguageProvider>
   )
 }

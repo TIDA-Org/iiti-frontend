@@ -67,6 +67,18 @@ export interface ContentSectionApiResponse {
   updated_at: string
 }
 
+export interface WebsiteStatApiResponse {
+  key: string
+  label: string
+  label_si: string | null
+  value: number
+  suffix: string
+}
+
+export async function apiGetWebsiteStats(): Promise<WebsiteStatApiResponse[]> {
+  return apiFetch('/website/stats')
+}
+
 export async function apiGetPublicAnnouncements(): Promise<AnnouncementApiResponse[]> {
   return apiFetch('/website/announcements')
 }

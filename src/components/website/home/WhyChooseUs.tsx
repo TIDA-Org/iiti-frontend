@@ -1,10 +1,13 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Award, Users, Briefcase, FileCheck, Building, Clock } from 'lucide-react'
+
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
 import { Card } from '@/components/ui/card'
+import { useApi } from '@/hooks/useApi'
+import { apiGetContentSection, apiGetWebsiteStats } from '@/lib/api/website'
 
 const CARD_IMAGES = [
   {
@@ -23,7 +26,7 @@ const CARD_IMAGES = [
   },
 ]
 
-const FEATURES = [
+const DEFAULT_FEATURES = [
   { icon: Award, title: 'TVEC & ISO 9001:2015 Accredited Training', desc: 'Nationally recognized certifications meeting international quality standards.' },
   { icon: Users, title: 'Experienced Certified Instructors', desc: 'Learn from industry professionals with years of hands-on experience.' },
   { icon: Briefcase, title: '100% Job Placement Assistance', desc: 'We connect graduates with leading employers locally and internationally.' },
@@ -32,8 +35,65 @@ const FEATURES = [
   { icon: Clock, title: 'Flexible Intake Schedules', desc: 'Multiple batch start dates throughout the year to fit your schedule.' },
 ]
 
+const FEATURE_ICONS = [Award, Users, Briefcase, FileCheck, Building, Clock] as const
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+}
+
+function stripHtml(value: string) {
+  return decodeHtml(value.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim()
+}
+
+function extractWhyChooseFeatures(content: string | null | undefined) {
+  if (!content) return []
+
+  const subsectionMatch = content.match(/<h2[^>]*>\s*Why Choose IITI\s*<\/h2>([\s\S]*)/i)
+  const subsection = subsectionMatch?.[1] || ''
+  const listMatch = subsection.match(/<ul[^>]*>([\s\S]*?)<\/ul>/i)
+  if (!listMatch) return []
+
+  return Array.from(listMatch[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi))
+    .map((match) => {
+      const itemHtml = match[1].replace(/^[^\w<]*/u, '').trim()
+      const strongMatch = itemHtml.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i)
+      const title = stripHtml(strongMatch?.[1] || '')
+      const plainText = stripHtml(itemHtml)
+      const description = plainText
+        .replace(title, '')
+        .replace(/^[\s:–—-]+/, '')
+        .trim()
+
+      if (!title) return null
+      return { title, desc: description }
+    })
+    .filter((item): item is { title: string; desc: string } => item !== null)
+}
+
 export function WhyChooseUs() {
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const { data: whyChooseContent } = useApi(() => apiGetContentSection('other'), [])
+  const { data: stats } = useApi(() => apiGetWebsiteStats(), [])
+
+  const features = useMemo(() => {
+    const parsed = extractWhyChooseFeatures(whyChooseContent?.content)
+    if (parsed.length === 0) return DEFAULT_FEATURES
+
+    return parsed.slice(0, FEATURE_ICONS.length).map((feature, index) => ({
+      ...feature,
+      icon: FEATURE_ICONS[index],
+    }))
+  }, [whyChooseContent])
+
+  const yearsStat = stats?.find((item) => item.key === 'years_of_excellence')
+  const yearsValue = yearsStat?.value ?? 10
+  const yearsSuffix = yearsStat?.suffix ?? '+'
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -105,8 +165,8 @@ export function WhyChooseUs() {
               </Card>
               {/* Accent card */}
               <Card className="absolute -bottom-6 -right-6 bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
-                <div className="text-4xl font-bold tracking-tight">10+</div>
-                <div className="text-xs font-semibold opacity-90 mt-1">Years of Excellence</div>
+                <div className="text-4xl font-bold tracking-tight">{yearsValue}{yearsSuffix}</div>
+                <div className="text-xs font-semibold opacity-90 mt-1">{yearsStat?.label || 'Years of Excellence'}</div>
               </Card>
             </div>
           </ScrollReveal>
@@ -122,7 +182,7 @@ export function WhyChooseUs() {
               </h2>
             </ScrollReveal>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {FEATURES.map((feature, i) => {
+              {features.map((feature, i) => {
                 const Icon = feature.icon
                 return (
                   <ScrollReveal key={feature.title} delay={i * 0.08}>
