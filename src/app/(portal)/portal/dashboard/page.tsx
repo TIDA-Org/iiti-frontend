@@ -31,6 +31,15 @@ function formatCurrency(amount: number) {
   return `LKR ${amount.toLocaleString()}`
 }
 
+function getEnrollmentRemaining(enrollment: {
+  enrollment_status: string
+  total_fee_at_enrollment?: number
+  amount_paid?: number
+}) {
+  if (enrollment.enrollment_status === 'completed') return 0
+  return Math.max((enrollment.total_fee_at_enrollment || 0) - (enrollment.amount_paid || 0), 0)
+}
+
 export default function PortalDashboardPage() {
   const { user } = useAuthStore()
   const { notifications } = useStudentPortalStore()
@@ -96,8 +105,7 @@ export default function PortalDashboardPage() {
 
   const enrolledCount = enrollments?.length || 0
   const outstandingBalance = (enrollments || []).reduce((sum, item) => {
-    const remaining = Math.max((item.total_fee_at_enrollment || 0) - (item.amount_paid || 0), 0)
-    return sum + remaining
+    return sum + getEnrollmentRemaining(item)
   }, 0)
 
   const recentNotifications = notifications.slice(0, 4)
@@ -240,7 +248,7 @@ export default function PortalDashboardPage() {
             <div className="space-y-3">
               {recentEnrollments.map((enrollment, index) => {
                 const course = recentCourseMap?.[enrollment.course_id]
-                const remaining = Math.max((enrollment.total_fee_at_enrollment || 0) - (enrollment.amount_paid || 0), 0)
+                const remaining = getEnrollmentRemaining(enrollment)
                 return (
                   <div key={enrollment.id} className="rounded-2xl border border-slate-200 bg-linear-to-r from-white to-slate-50 p-4 transition-colors hover:border-orange-200">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
