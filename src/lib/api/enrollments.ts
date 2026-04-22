@@ -2,6 +2,7 @@ import { apiFetch } from './core'
 
 export interface EnrollmentApiResponse {
   id: string
+  enrollment_number: string
   student_id: string
   course_id: string
   batch_id: string | null

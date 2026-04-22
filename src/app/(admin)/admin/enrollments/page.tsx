@@ -52,6 +52,17 @@ const formatLkr = (value: unknown): string => {
   return `LKR ${amount.toLocaleString()}`
 }
 
+const getDisplayedAmountPaid = (enrollment: {
+  enrollment_status: string
+  amount_paid: number
+  total_fee_at_enrollment: number
+}) => {
+  if (enrollment.enrollment_status === 'completed') {
+    return enrollment.total_fee_at_enrollment || 0
+  }
+  return enrollment.amount_paid || 0
+}
+
 export default function AdminEnrollmentsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -84,8 +95,12 @@ export default function AdminEnrollmentsPage() {
     [],
   )
 
-  const enrollments = data || []
-  const courses = coursesData || []
+  const [enrollments, setEnrollments] = useState<EnrollmentApiResponse[]>([])
+  const courses = useMemo(() => coursesData || [], [coursesData])
+
+  useEffect(() => {
+    setEnrollments(data || [])
+  }, [data])
 
   const studentNameById = useMemo(() => new Map(students.map((student) => [student.id, student.full_name])), [students])
   const courseNameById = useMemo(() => new Map(courses.map((course) => [course.id, course.name])), [courses])
@@ -143,9 +158,17 @@ export default function AdminEnrollmentsPage() {
   const handleStatusChange = async (id: string, status: string) => {
     setUpdatingId(id)
     try {
-      await apiUpdateEnrollmentStatus(id, status)
+      const updatedEnrollment = await apiUpdateEnrollmentStatus(id, status)
+      setEnrollments((current) => current.map((item) => (item.id === id ? updatedEnrollment : item)))
+      setDetail((current) => {
+        if (!current || current.id !== id) return current
+        return {
+          ...current,
+          enrollment_status: updatedEnrollment.enrollment_status,
+        }
+      })
       toast.success('Enrollment status updated')
-      refetch()
+      await refetch()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update enrollment status')
     } finally {
@@ -156,10 +179,11 @@ export default function AdminEnrollmentsPage() {
   const handleCreateEnrollment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setCreating(true)
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
 
     try {
-      await apiCreateEnrollment({
+      const createdEnrollment = await apiCreateEnrollment({
         student_id: formData.get('student_id') as string,
         course_id: formData.get('course_id') as string,
         batch_id: (formData.get('batch_id') as string) || null,
@@ -171,11 +195,12 @@ export default function AdminEnrollmentsPage() {
         custom_fee: (formData.get('custom_fee') as string) ? Number(formData.get('custom_fee')) : null,
         notes: (formData.get('notes') as string) || null,
       })
+      setEnrollments((current) => [createdEnrollment, ...current])
       toast.success('Enrollment created successfully')
       setShowCreateForm(false)
       setCreateCourseId('')
-      e.currentTarget.reset()
-      refetch()
+      form.reset()
+      await refetch()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create enrollment')
     } finally {
@@ -213,18 +238,21 @@ export default function AdminEnrollmentsPage() {
     if (!retakeEnrollment) return
 
     setCreatingRetake(true)
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     try {
-      await apiCreateRetake(retakeEnrollment.id, {
+      const createdRetake = await apiCreateRetake(retakeEnrollment.id, {
         batch_id: (formData.get('batch_id') as string) || null,
         duration_option_id: (formData.get('duration_option_id') as string)
           ? Number(formData.get('duration_option_id'))
           : null,
         notes: (formData.get('notes') as string) || null,
       })
+      setEnrollments((current) => [createdRetake, ...current])
       toast.success('Retake enrollment created')
       setRetakeEnrollment(null)
-      refetch()
+      form.reset()
+      await refetch()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create retake')
     } finally {
@@ -356,12 +384,12 @@ export default function AdminEnrollmentsPage() {
                 <tbody className="divide-y divide-slate-50">
                   {enrollments.map((enrollment) => (
                     <tr key={enrollment.id} className="hover:bg-slate-50">
-                      <td className="px-5 py-3 font-mono text-xs text-amber-600">{enrollment.id.slice(0, 8)}...</td>
+                      <td className="px-5 py-3 font-mono text-xs text-amber-600">{enrollment.enrollment_number || `${enrollment.id.slice(0, 8)}...`}</td>
                       <td className="px-5 py-3 text-slate-700">{studentNameById.get(enrollment.student_id) || enrollment.student_id.slice(0, 8)}</td>
                       <td className="px-5 py-3 text-slate-700">{courseNameById.get(enrollment.course_id) || enrollment.course_id.slice(0, 8)}</td>
                       <td className="px-5 py-3 text-slate-700 capitalize">{enrollment.payment_plan}</td>
                       <td className="px-5 py-3 text-slate-700 font-mono">{enrollment.total_fee_at_enrollment.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-slate-700 font-mono">{enrollment.amount_paid.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-700 font-mono">{getDisplayedAmountPaid(enrollment).toLocaleString()}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[enrollment.enrollment_status] || 'bg-slate-100 text-slate-700'}`}>
                           {statusLabel[enrollment.enrollment_status] || enrollment.enrollment_status}
@@ -422,12 +450,13 @@ export default function AdminEnrollmentsPage() {
               <button onClick={() => setDetail(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-5 grid sm:grid-cols-2 gap-4 text-sm">
+              <div><span className="text-slate-400">Enrollment No:</span> <span className="text-slate-700 font-mono">{detail.enrollment_number}</span></div>
               <div><span className="text-slate-400">Student:</span> <span className="text-slate-700">{studentNameById.get(detail.student_id) || detail.student_id}</span></div>
               <div><span className="text-slate-400">Course:</span> <span className="text-slate-700">{courseNameById.get(detail.course_id) || detail.course_id}</span></div>
               <div><span className="text-slate-400">Status:</span> <span className="text-slate-700">{statusLabel[detail.enrollment_status] || detail.enrollment_status}</span></div>
               <div><span className="text-slate-400">Payment Plan:</span> <span className="text-slate-700 capitalize">{detail.payment_plan}</span></div>
               <div><span className="text-slate-400">Enrollment Date:</span> <span className="text-slate-700">{formatDate(detail.enrollment_date)}</span></div>
-              <div><span className="text-slate-400">Amount Paid:</span> <span className="text-slate-700">{formatLkr(detail.amount_paid)}</span></div>
+              <div><span className="text-slate-400">Amount Paid:</span> <span className="text-slate-700">{formatLkr(getDisplayedAmountPaid(detail))}</span></div>
               <div><span className="text-slate-400">Total Fee:</span> <span className="text-slate-700">{formatLkr(detail.total_fee_at_enrollment)}</span></div>
               <div><span className="text-slate-400">Retake:</span> <span className="text-slate-700">{detail.is_retake ? 'Yes' : 'No'}</span></div>
               {detail.fee_breakdown && (
@@ -466,7 +495,7 @@ export default function AdminEnrollmentsPage() {
               <button onClick={() => setRetakeEnrollment(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
             </div>
             <form onSubmit={handleCreateRetake} className="p-5 space-y-4">
-              <p className="text-sm text-slate-500">Retake for {studentNameById.get(retakeEnrollment.student_id) || retakeEnrollment.student_id.slice(0, 8)} in {courseNameById.get(retakeEnrollment.course_id) || retakeEnrollment.course_id.slice(0, 8)}.</p>
+              <p className="text-sm text-slate-500">Retake for {studentNameById.get(retakeEnrollment.student_id) || retakeEnrollment.student_id.slice(0, 8)} in {courseNameById.get(retakeEnrollment.course_id) || retakeEnrollment.course_id.slice(0, 8)} ({retakeEnrollment.enrollment_number}).</p>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Batch</label>
                 <select name="batch_id" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" disabled={loadingRetakeBatches}>
