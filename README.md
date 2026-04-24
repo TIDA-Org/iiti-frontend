@@ -87,6 +87,25 @@ cd iiti-frontend
 npm install
 ```
 
+### 3. Configure Environment
+
+Create a local env file from template:
+
+```bash
+copy .env.example .env.local
+```
+
+Set the backend API URL used by server-side proxy routes:
+
+```env
+API_BASE_URL=http://localhost:8000/api/v1
+```
+
+Security notes:
+- Use `API_BASE_URL` (server-side only), not `NEXT_PUBLIC_API_URL`.
+- Do not commit `.env.local`.
+- Keep credentials/secrets out of frontend public env vars.
+
 ---
 
 ## Running the Server

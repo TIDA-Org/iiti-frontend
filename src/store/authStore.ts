@@ -1,18 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { apiLogin, apiLogout } from '@/lib/api/auth'
-import { ApiError, clearTokens, getAccessToken } from '@/lib/api/core'
+import { apiGetSession, apiLogin, apiLogout } from '@/lib/api/auth'
+import { ApiError } from '@/lib/api/core'
 import { apiGetMyProfile } from '@/lib/api/students'
 import { AuthUser } from '@/types/auth'
-import { jwtDecode } from 'jwt-decode'
-
-interface JwtPayload {
-  account_id: string
-  account_type: string
-  username: string
-  role_slug?: string
-  exp: number
-}
 
 interface AuthState {
   user: AuthUser | null
@@ -22,7 +13,7 @@ interface AuthState {
   _hasHydrated: boolean
   setHasHydrated: (v: boolean) => void
   login: (username: string, password: string) => Promise<{ success: boolean; role?: string }>
-  logout: () => void
+  logout: () => Promise<void>
   clearError: () => void
   hydrateUser: () => Promise<void>
 }
@@ -43,40 +34,34 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const response = await apiLogin(username, password)
-
-          // Decode the access token to get user info
-          const decoded = jwtDecode<JwtPayload>(response.access_token)
           const isStudent = response.account_type === 'student'
 
           let authUser: AuthUser
 
           if (isStudent) {
-            // Fetch student profile to get name and student number
             try {
               const profile = await apiGetMyProfile()
               authUser = {
                 id: response.account_id,
                 name: profile.full_name,
-                email: profile.email || decoded.username,
+                email: profile.email || response.username,
                 role: 'student',
                 studentId: profile.student_number,
               }
             } catch {
-              // Fallback if profile fetch fails
               authUser = {
                 id: response.account_id,
-                name: decoded.username,
-                email: decoded.username,
+                name: response.username,
+                email: response.username,
                 role: 'student',
               }
             }
           } else {
-            // Staff user - get role from JWT
-            const role = decoded.role_slug || 'admin'
+            const role = response.role_slug || 'admin'
             authUser = {
               id: response.account_id,
-              name: decoded.username,
-              email: decoded.username,
+              name: response.username,
+              email: response.username,
               role: role as AuthUser['role'],
             }
           }
@@ -94,28 +79,59 @@ export const useAuthStore = create<AuthState>()(
         try {
           await apiLogout()
         } catch {
-          // Ensure logout completes even if API call fails
+          // Clear local auth state even if the logout request fails.
         }
-        clearTokens()
         set({ user: null, isAuthenticated: false, error: null })
       },
 
       clearError: () => set({ error: null }),
 
       hydrateUser: async () => {
-        const token = getAccessToken()
-        if (!token || !get().isAuthenticated) return
-
         try {
-          const decoded = jwtDecode<JwtPayload>(token)
-          // Check token expiry
-          if (decoded.exp * 1000 < Date.now()) {
-            clearTokens()
-            set({ user: null, isAuthenticated: false })
+          const session = await apiGetSession()
+
+          if (session.account_type === 'student') {
+            try {
+              const profile = await apiGetMyProfile()
+              set({
+                user: {
+                  id: session.account_id,
+                  name: profile.full_name,
+                  email: profile.email || session.username,
+                  role: 'student',
+                  studentId: profile.student_number,
+                },
+                isAuthenticated: true,
+                error: null,
+              })
+              return
+            } catch {
+              set({
+                user: {
+                  id: session.account_id,
+                  name: session.username,
+                  email: session.username,
+                  role: 'student',
+                },
+                isAuthenticated: true,
+                error: null,
+              })
+              return
+            }
           }
+
+          set({
+            user: {
+              id: session.account_id,
+              name: session.username,
+              email: session.username,
+              role: (session.role_slug || 'admin') as AuthUser['role'],
+            },
+            isAuthenticated: true,
+            error: null,
+          })
         } catch {
-          clearTokens()
-          set({ user: null, isAuthenticated: false })
+          set({ user: null, isAuthenticated: false, error: null })
         }
       },
     }),

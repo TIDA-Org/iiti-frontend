@@ -23,7 +23,6 @@ import {
   FileText,
   Wallet,
   ClipboardList,
-  BadgeCheck,
 } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
@@ -37,6 +36,18 @@ function statusClass(status: string) {
 
 function toLabel(value: string) {
   return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function getEnrollmentRemaining(enrollment: {
+  enrollment_status: string
+  total_fee_at_enrollment?: number
+  amount_paid?: number
+}) {
+  // Exclude completed and withdrawn enrollments from outstanding balance
+  if (enrollment.enrollment_status === 'completed' || enrollment.enrollment_status === 'withdrawn') {
+    return 0
+  }
+  return Math.max((enrollment.total_fee_at_enrollment || 0) - (enrollment.amount_paid || 0), 0)
 }
 
 export default function AdminStudentDetailPage({ params }: Props) {
@@ -104,9 +115,10 @@ export default function AdminStudentDetailPage({ params }: Props) {
     const list = enrollments || []
     const total = list.length
     const active = list.filter((item) => item.enrollment_status === 'active').length
-    const due = list.reduce((sum, item) => sum + Math.max(item.total_fee_at_enrollment - item.amount_paid, 0), 0)
+    const completed = list.filter((item) => item.enrollment_status === 'completed').length
+    const due = list.reduce((sum, item) => sum + getEnrollmentRemaining(item), 0)
     const unverifiedDocs = (documents || []).filter((item) => !item.is_verified).length
-    return { total, active, due, unverifiedDocs }
+    return { total, active, completed, due, unverifiedDocs }
   }, [documents, enrollments])
 
   const refreshAll = () => {
@@ -184,7 +196,7 @@ export default function AdminStudentDetailPage({ params }: Props) {
             </div>
 
             <div className="xl:col-span-2 space-y-6">
-              <div className="grid md:grid-cols-4 gap-3">
+              <div className="grid md:grid-cols-5 gap-3">
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <p className="text-xs text-slate-500">Enrollments</p>
                   <p className="text-xl font-bold text-slate-800 mt-1">{enrollmentsLoading ? '...' : summary.total}</p>
@@ -201,6 +213,10 @@ export default function AdminStudentDetailPage({ params }: Props) {
                   <p className="text-xs text-slate-500">Outstanding</p>
                   <p className="text-xl font-bold text-slate-800 mt-1">LKR {summary.due.toLocaleString()}</p>
                 </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <p className="text-xs text-slate-500">Completed</p>
+                  <p className="text-xl font-bold text-blue-700 mt-1">{enrollmentsLoading ? '...' : summary.completed}</p>
+                </div>
               </div>
 
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -216,7 +232,7 @@ export default function AdminStudentDetailPage({ params }: Props) {
                     {(enrollments || []).map((enrollment) => {
                       const courseName = relatedNames?.courseMap?.[enrollment.course_id] || enrollment.course_id.slice(0, 8)
                       const batchCode = enrollment.batch_id ? (relatedNames?.batchMap?.[enrollment.batch_id] || enrollment.batch_id.slice(0, 8)) : '-'
-                      const due = Math.max(enrollment.total_fee_at_enrollment - enrollment.amount_paid, 0)
+                      const due = getEnrollmentRemaining(enrollment)
                       return (
                         <div key={enrollment.id} className="px-5 py-4 grid md:grid-cols-4 gap-3 text-sm">
                           <div>
@@ -233,7 +249,11 @@ export default function AdminStudentDetailPage({ params }: Props) {
                           <div>
                             <p className="text-xs text-slate-400">Financials</p>
                             <p className="text-slate-700">Paid: LKR {enrollment.amount_paid.toLocaleString()}</p>
-                            <p className="text-slate-700">Due: LKR {due.toLocaleString()}</p>
+                            {enrollment.enrollment_status === 'completed' || enrollment.enrollment_status === 'withdrawn' ? (
+                              <p className="text-slate-500 text-xs italic">No outstanding balance</p>
+                            ) : (
+                              <p className="text-slate-700">Due: LKR {due.toLocaleString()}</p>
+                            )}
                           </div>
                           <div>
                             <p className="text-xs text-slate-400">Enrolled</p>
