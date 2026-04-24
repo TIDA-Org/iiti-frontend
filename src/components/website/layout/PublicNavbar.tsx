@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Menu, X, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
@@ -24,7 +24,7 @@ export function PublicNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [coursesOpen, setCoursesOpen] = useState(false)
   const pathname = usePathname()
-  const { isAuthenticated, user, logout } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
   const { data: coursesData } = useApi(() => apiGetCourses(), [])
 
   const courseDropdownItems = useMemo(() => {
@@ -126,15 +126,8 @@ export function PublicNavbar() {
                   className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md hover:bg-orange-50 transition-colors"
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
+                  Profile
                 </Link>
-                <button
-                  onClick={() => logout()}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-stone-600 border border-stone-300 rounded-md hover:bg-stone-50 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
               </>
             ) : (
               <>
@@ -211,14 +204,8 @@ export function PublicNavbar() {
                   onClick={() => setMobileOpen(false)}
                   className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md"
                 >
-                  Dashboard
+                  Profile
                 </Link>
-                <button
-                  onClick={() => { logout(); setMobileOpen(false) }}
-                  className="w-full text-center py-2.5 text-sm font-semibold text-stone-600 border border-stone-300 rounded-md"
-                >
-                  Logout
-                </button>
               </>
             ) : (
               <>
