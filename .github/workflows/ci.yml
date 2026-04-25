@@ -7,7 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  # ── Quality gate ─────────────────────────────────────────────────────────────
+  # This job is referenced by the GitHub branch-protection rule on `main`.
+  # Vercel will only promote a deployment to Production after this passes.
+  quality:
+    name: Lint, Type-check & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -17,9 +21,16 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
 
       - name: Build
         run: npm run build

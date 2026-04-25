@@ -6,7 +6,7 @@ import { BadgeInfo, BookOpen, CalendarDays, ChevronRight } from 'lucide-react'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useApi } from '@/hooks/useApi'
-import { apiGetCourses } from '@/lib/api/courses'
+import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
 import { apiGetMyEnrollments } from '@/lib/api/enrollments'
 
 function formatDate(value: string) {
@@ -35,8 +35,8 @@ export default function PortalCoursesPage() {
   } = useApi(() => apiGetCourses(), [])
 
   const courseById = useMemo(() => {
-    const map = new Map<string, (typeof courses)[number]>()
-    ;(courses || []).forEach((course) => map.set(course.id, course))
+    const map = new Map<string, CourseApiResponse>()
+    ;(courses ?? []).forEach((course) => map.set(course.id, course))
     return map
   }, [courses])
 

@@ -22,15 +22,11 @@ export function NewsBanner() {
     return () => clearInterval(timer)
   }, [isVisible, newsItems.length])
 
-  useEffect(() => {
-    if (currentIndex >= newsItems.length) {
-      setCurrentIndex(0)
-    }
-  }, [currentIndex, newsItems.length])
+  const safeIndex = newsItems.length > 0 ? currentIndex % newsItems.length : 0
 
   if (!isVisible || newsItems.length === 0) return null
 
-  const currentNews = newsItems[currentIndex]
+  const currentNews = newsItems[safeIndex]
 
   return (
     <div className="relative bg-linear-to-r from-emerald-400 via-green-400 to-emerald-400 text-black">
@@ -70,7 +66,7 @@ export function NewsBanner() {
               key={item.id}
               onClick={() => setCurrentIndex(i)}
               className={`h-0.5 rounded-full transition-all duration-300 ${
-                i === currentIndex
+                i === safeIndex
                   ? 'bg-black w-4'
                   : 'bg-black/40 w-1 hover:bg-black/60'
               }`}

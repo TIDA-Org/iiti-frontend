@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { NotificationDropdown } from '@/components/shared/NotificationDropdown'
-import { Menu, X } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface PortalTopbarProps {

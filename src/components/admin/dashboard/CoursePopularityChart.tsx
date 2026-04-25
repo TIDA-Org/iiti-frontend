@@ -18,7 +18,13 @@ export function CoursePopularityChart() {
           <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
             {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
           </Pie>
-          <Tooltip formatter={(v: number) => [`${v}%`, 'Share']} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} />
+          <Tooltip
+            formatter={(value) => {
+              const numericValue = typeof value === 'number' ? value : Number(value)
+              return [`${Number.isFinite(numericValue) ? numericValue : 0}%`, 'Share']
+            }}
+            contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+          />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px' }} />
         </PieChart>
       </ResponsiveContainer>

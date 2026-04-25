@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import Link from 'next/link'
-import { BarChart3, Users, CreditCard, Award } from 'lucide-react'
+import { Users, CreditCard, Award } from 'lucide-react'
 
 const REPORTS = [
   { href: '/admin/reports/enrollments', title: 'Enrollment Report', desc: 'Monthly and yearly enrollment statistics by course and batch.', icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },

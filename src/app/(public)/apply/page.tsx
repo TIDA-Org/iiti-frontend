@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -270,7 +271,7 @@ export default function ApplyPage() {
               <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center shrink-0">{i+1}</span><span className="text-stone-600">{s}</span></div>
             ))}
           </div>
-          <a href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">{t.backHome}</a>
+          <Link href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">{t.backHome}</Link>
         </div>
       </div>
     )

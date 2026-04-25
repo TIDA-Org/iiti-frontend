@@ -13,12 +13,11 @@ export default function VerifyCertificatePage({ params }: Props) {
   const { token } = use(params)
   const [data, setData] = useState<VerifyApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     apiVerify(token)
       .then(setData)
-      .catch(() => setNotFound(true))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [token])
 

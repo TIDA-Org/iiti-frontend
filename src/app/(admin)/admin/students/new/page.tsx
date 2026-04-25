@@ -25,6 +25,10 @@ import {
 } from '@/lib/validators'
 import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback
+}
+
 const normalizedOptionalPhone = z.union([
   z.literal(''),
   z
@@ -237,13 +241,13 @@ export default function AdminNewStudentPage() {
           notes: data.enrollmentNotes || null,
         })
         toast.success('Student and enrollment created successfully!')
-      } catch (enrollmentError: any) {
-        toast.warning(enrollmentError?.message || 'Student created, but enrollment creation failed.')
+      } catch (enrollmentError: unknown) {
+        toast.warning(getErrorMessage(enrollmentError, 'Student created, but enrollment creation failed.'))
       }
 
       router.push('/admin/students')
-    } catch (err: any) {
-      toast.error(err?.message || 'Registration failed')
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Registration failed'))
     } finally {
       setIsLoading(false)
     }

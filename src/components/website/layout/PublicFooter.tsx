@@ -10,6 +10,12 @@ function buildWhatsAppHref(value: string) {
   return normalized ? `https://wa.me/${normalized}` : '#'
 }
 
+interface SocialLink {
+  href: string
+  label: string
+  icon: typeof Facebook
+}
+
 export function PublicFooter() {
   const { settings } = usePublicSiteSettings()
   const socialLinks = [
@@ -34,7 +40,7 @@ export function PublicFooter() {
           icon: MessageCircle,
         }
       : null,
-  ].filter(Boolean)
+  ].filter((item): item is SocialLink => item !== null)
 
   return (
     <footer style={{ backgroundColor: '#0A0A0A' }} className="text-stone-400">

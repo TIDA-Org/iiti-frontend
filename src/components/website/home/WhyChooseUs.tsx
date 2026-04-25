@@ -118,6 +118,7 @@ export function WhyChooseUs() {
                       index === activeImageIndex ? 'opacity-100' : 'opacity-0'
                     }`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={image.src}
                       alt={image.alt}

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Languages } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -25,20 +25,25 @@ export function CourseLanguageProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [lang, setLang] = useState<CourseLanguage>('en')
+  const [preferredLang, setPreferredLang] = useState<CourseLanguage>(() => {
+    if (typeof window === 'undefined') {
+      return 'en'
+    }
 
-  useEffect(() => {
+    const savedValue = window.localStorage.getItem(COURSE_LANGUAGE_STORAGE_KEY)
+    return isCourseLanguage(savedValue) ? savedValue : 'en'
+  })
+
+  const queryLang = useMemo(() => {
     const queryValue = searchParams.get(COURSE_LANGUAGE_QUERY_PARAM)
-    if (isCourseLanguage(queryValue)) {
-      setLang((current) => (current === queryValue ? current : queryValue))
-      return
-    }
-
-    const savedValue = typeof window !== 'undefined' ? window.localStorage.getItem(COURSE_LANGUAGE_STORAGE_KEY) : null
-    if (isCourseLanguage(savedValue)) {
-      setLang((current) => (current === savedValue ? current : savedValue))
-    }
+    return isCourseLanguage(queryValue) ? queryValue : null
   }, [searchParams])
+
+  const lang = queryLang ?? preferredLang
+
+  const setLang = useCallback((nextLang: CourseLanguage) => {
+    setPreferredLang(nextLang)
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -66,7 +71,7 @@ export function CourseLanguageProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CourseLanguageContextValue>(
     () => ({ lang, setLang, copy: COURSE_COPY[lang] }),
-    [lang],
+    [lang, setLang],
   )
 
   return <CourseLanguageContext.Provider value={value}>{children}</CourseLanguageContext.Provider>

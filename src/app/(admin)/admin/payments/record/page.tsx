@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { apiGetStudents, StudentApiResponse } from '@/lib/api/students'
 
@@ -21,8 +20,7 @@ type FormData = z.infer<typeof schema>
 export default function AdminRecordPaymentPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [students, setStudents] = useState<StudentApiResponse[]>([])
-  const router = useRouter()
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
     apiGetStudents(1, 100).then(res => setStudents(res.items)).catch(() => {})
@@ -46,7 +44,7 @@ export default function AdminRecordPaymentPage() {
             <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Student *</label>
             <select {...register('studentId')} className={inputClass}>
               <option value="">Select student</option>
-              {students.map(s => <option key={s.id} value={s.id}>{s.full_name} ({s.student_id})</option>)}
+              {students.map(s => <option key={s.id} value={s.id}>{s.full_name} ({s.student_number})</option>)}
             </select>
           </div>
           <div>

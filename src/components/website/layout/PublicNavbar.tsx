@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, X, ChevronDown, LayoutDashboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
-import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
+import { apiGetCourses } from '@/lib/api/courses'
 import { getPublicCourseHref } from '@/lib/public-course-routes'
 import { useAuthStore } from '@/store/authStore'
 

@@ -13,6 +13,8 @@ type RouteContext = {
   params: Promise<{ path: string[] }>
 }
 
+const BACKEND_TIMEOUT_MS = 15000
+
 function buildProxyHeaders(request: NextRequest, accessToken?: string) {
   const headers = new Headers(request.headers)
   headers.delete('host')
@@ -37,6 +39,17 @@ async function buildRequestBody(request: NextRequest) {
   return body.byteLength > 0 ? body : undefined
 }
 
+async function fetchWithTimeout(target: string, init: RequestInit) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS)
+
+  try {
+    return await fetch(target, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function forwardRequest(
   request: NextRequest,
   path: string[],
@@ -45,7 +58,7 @@ async function forwardRequest(
 ) {
   const target = `${getBackendApiBaseUrl()}/${path.join('/')}${request.nextUrl.search}`
 
-  return fetch(target, {
+  return fetchWithTimeout(target, {
     method: request.method,
     headers: buildProxyHeaders(request, accessToken),
     body,
@@ -62,6 +75,13 @@ function toNextResponse(response: Response) {
   return response.arrayBuffer().then((body) => new NextResponse(body, { status: response.status, headers }))
 }
 
+function backendUnavailableResponse() {
+  return NextResponse.json(
+    { error: { code: 'backend_unavailable', message: 'Backend service is unavailable. Please try again.' } },
+    { status: 502 },
+  )
+}
+
 async function handle(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
   const pathString = path.join('/')
@@ -70,7 +90,12 @@ async function handle(request: NextRequest, context: RouteContext) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value
   const requestBody = await buildRequestBody(request)
 
-  let backendResponse = await forwardRequest(request, path, requestBody, accessToken)
+  let backendResponse: Response
+  try {
+    backendResponse = await forwardRequest(request, path, requestBody, accessToken)
+  } catch {
+    return backendUnavailableResponse()
+  }
 
   const canRefresh =
     backendResponse.status === 401 &&
@@ -81,7 +106,11 @@ async function handle(request: NextRequest, context: RouteContext) {
     const refreshedTokens = await refreshWithToken(refreshToken)
 
     if (refreshedTokens) {
-      backendResponse = await forwardRequest(request, path, requestBody, refreshedTokens.access_token)
+      try {
+        backendResponse = await forwardRequest(request, path, requestBody, refreshedTokens.access_token)
+      } catch {
+        return backendUnavailableResponse()
+      }
       const response = await toNextResponse(backendResponse)
       applyAuthCookies(response, refreshedTokens)
       return response
@@ -91,7 +120,12 @@ async function handle(request: NextRequest, context: RouteContext) {
     clearAuthCookies(response)
     // If refresh failed but this is a public endpoint, retry once anonymously.
     // This avoids stale auth cookies breaking unauthenticated routes.
-    const anonymousResponse = await forwardRequest(request, path, requestBody)
+    let anonymousResponse: Response
+    try {
+      anonymousResponse = await forwardRequest(request, path, requestBody)
+    } catch {
+      return backendUnavailableResponse()
+    }
     if (anonymousResponse.status !== 401) {
       const fallbackResponse = await toNextResponse(anonymousResponse)
       clearAuthCookies(fallbackResponse)
@@ -102,7 +136,12 @@ async function handle(request: NextRequest, context: RouteContext) {
 
   // For public endpoints, retry once without Authorization if token-auth request failed.
   if (backendResponse.status === 401 && !!accessToken && !isAuthPath) {
-    const anonymousResponse = await forwardRequest(request, path, requestBody)
+    let anonymousResponse: Response
+    try {
+      anonymousResponse = await forwardRequest(request, path, requestBody)
+    } catch {
+      return backendUnavailableResponse()
+    }
     if (anonymousResponse.status !== 401) {
       const response = await toNextResponse(anonymousResponse)
       clearAuthCookies(response)

@@ -309,9 +309,7 @@ export default function AdminCourseCategoriesPage() {
                       <td className="px-5 py-3 text-sm text-slate-500">{row.slug}</td>
                       <td className="px-5 py-3 text-sm text-slate-500">{row.display_order}</td>
                       <td className="px-5 py-3">
-                        <StatusBadge status={row.is_active ? 'completed' : 'on_hold'}>
-                          {row.is_active ? 'Active' : 'Inactive'}
-                        </StatusBadge>
+                        <StatusBadge status={row.is_active ? 'active' : 'inactive'} />
                       </td>
                       <td className="px-5 py-3 text-xs text-slate-400">{formatDate(row.created_at)}</td>
                       {canEditCategory && (
