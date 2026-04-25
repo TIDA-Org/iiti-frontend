@@ -11,9 +11,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isAuthenticated, _hasHydrated, hydrateUser } = useAuthStore()
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   useEffect(() => {
-    if (_hasHydrated) hydrateUser()
+    if (!_hasHydrated) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        await hydrateUser()
+      } finally {
+        if (!cancelled) setIsCheckingSession(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
   }, [_hasHydrated, hydrateUser])
 
   useEffect(() => {
@@ -27,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [_hasHydrated, isAuthenticated, user, router])
 
-  if (!_hasHydrated || !isAuthenticated || !user || user.role === 'student') {
+  if (!_hasHydrated || isCheckingSession || !isAuthenticated || !user || user.role === 'student') {
     return <PageLoader />
   }
 
