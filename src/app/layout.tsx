@@ -52,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${syne.variable} ${plusJakartaSans.variable} ${barlowCondensed.variable} ${dmSans.variable} ${notoSansSinhala.variable} font-sans antialiased`}
       >
         {children}

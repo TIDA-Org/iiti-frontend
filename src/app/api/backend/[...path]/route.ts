@@ -56,12 +56,16 @@ async function forwardRequest(
 function toNextResponse(response: Response) {
   const headers = new Headers(response.headers)
   headers.delete('content-length')
+  headers.delete('content-encoding')
+  headers.delete('transfer-encoding')
   headers.delete('set-cookie')
   return response.arrayBuffer().then((body) => new NextResponse(body, { status: response.status, headers }))
 }
 
 async function handle(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
+  const pathString = path.join('/')
+  const isAuthPath = pathString === 'auth/login' || pathString === 'auth/logout' || pathString === 'auth/refresh'
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value
   const requestBody = await buildRequestBody(request)
@@ -71,9 +75,7 @@ async function handle(request: NextRequest, context: RouteContext) {
   const canRefresh =
     backendResponse.status === 401 &&
     !!refreshToken &&
-    path.join('/') !== 'auth/login' &&
-    path.join('/') !== 'auth/logout' &&
-    path.join('/') !== 'auth/refresh'
+    !isAuthPath
 
   if (canRefresh) {
     const refreshedTokens = await refreshWithToken(refreshToken)
@@ -87,7 +89,25 @@ async function handle(request: NextRequest, context: RouteContext) {
 
     const response = await toNextResponse(backendResponse)
     clearAuthCookies(response)
+    // If refresh failed but this is a public endpoint, retry once anonymously.
+    // This avoids stale auth cookies breaking unauthenticated routes.
+    const anonymousResponse = await forwardRequest(request, path, requestBody)
+    if (anonymousResponse.status !== 401) {
+      const fallbackResponse = await toNextResponse(anonymousResponse)
+      clearAuthCookies(fallbackResponse)
+      return fallbackResponse
+    }
     return response
+  }
+
+  // For public endpoints, retry once without Authorization if token-auth request failed.
+  if (backendResponse.status === 401 && !!accessToken && !isAuthPath) {
+    const anonymousResponse = await forwardRequest(request, path, requestBody)
+    if (anonymousResponse.status !== 401) {
+      const response = await toNextResponse(anonymousResponse)
+      clearAuthCookies(response)
+      return response
+    }
   }
 
   const response = await toNextResponse(backendResponse)

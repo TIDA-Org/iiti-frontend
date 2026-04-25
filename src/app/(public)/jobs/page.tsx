@@ -1,10 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Briefcase, Calendar, LogIn, MapPin } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { Briefcase, Calendar, MapPin } from 'lucide-react'
 
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { PageLoader } from '@/components/shared/PageLoader'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
 import { useApi } from '@/hooks/useApi'
 import { apiGetPublishedVacancies } from '@/lib/api/jobs'
@@ -16,8 +19,20 @@ function stripHtml(value: string) {
 }
 
 export default function PublicJobsPage() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, _hasHydrated } = useAuthStore()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (_hasHydrated && !isAuthenticated) {
+      router.replace('/login?redirect=/jobs')
+    }
+  }, [_hasHydrated, isAuthenticated, router])
+
   const { data, isLoading, error, refetch } = useApi(() => apiGetPublishedVacancies(), [])
+
+  if (!_hasHydrated || !isAuthenticated) {
+    return <PageLoader />
+  }
   const vacancies = data || []
 
   return (
@@ -35,28 +50,6 @@ export default function PublicJobsPage() {
 
       <section className="bg-stone-50 py-20">
         <div className="mx-auto max-w-5xl px-4">
-          {!isAuthenticated && (
-            <ScrollReveal>
-              <div className="mb-8 rounded-2xl border border-orange-200 bg-orange-50/70 p-6 text-center shadow-sm">
-                <h2 className="text-xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                  Browse Jobs Publicly, Sign In to Apply
-                </h2>
-                <p className="mx-auto mt-3 max-w-2xl text-sm text-stone-600">
-                  Published vacancies are visible here for everyone. IITI students can sign in to view full portal details and apply directly.
-                </p>
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                  <Link href="/login" className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
-                    <LogIn className="h-4 w-4" />
-                    Sign In to Apply
-                  </Link>
-                  <Link href="/apply" className="rounded-lg border border-orange-300 px-5 py-2.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-100">
-                    Become a Student
-                  </Link>
-                </div>
-              </div>
-            </ScrollReveal>
-          )}
-
           <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
             {vacancies.length === 0 ? (
               <EmptyState
@@ -98,10 +91,10 @@ export default function PublicJobsPage() {
                         <div className="flex shrink-0 flex-col gap-2 lg:items-end">
                           {job.salary_range && <div className="text-sm font-semibold text-slate-700">{job.salary_range}</div>}
                           <Link
-                            href={isAuthenticated ? `/portal/jobs/${job.id}` : '/login'}
+                            href={`/portal/jobs/${job.id}`}
                             className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
                           >
-                            {isAuthenticated ? 'View Details' : 'Sign In to Apply'}
+                            View Details
                           </Link>
                         </div>
                       </div>

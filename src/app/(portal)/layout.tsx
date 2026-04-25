@@ -13,9 +13,23 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   useEffect(() => {
-    if (_hasHydrated) hydrateUser()
+    if (!_hasHydrated) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        await hydrateUser()
+      } finally {
+        if (!cancelled) setIsCheckingSession(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
   }, [_hasHydrated, hydrateUser])
 
   useEffect(() => {
@@ -47,7 +61,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     setSidebarOpen(!sidebarOpen)
   }
 
-  if (!_hasHydrated || !isAuthenticated || !user || user.role !== 'student') {
+  if (!_hasHydrated || isCheckingSession || !isAuthenticated || !user || user.role !== 'student') {
     return <PageLoader />
   }
 

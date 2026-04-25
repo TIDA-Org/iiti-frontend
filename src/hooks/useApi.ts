@@ -25,6 +25,8 @@ export function useApi<T>(
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
+      } else if (err instanceof Error && err.message) {
+        setError(err.message)
       } else {
         setError('An unexpected error occurred')
       }
