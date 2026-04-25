@@ -27,7 +27,11 @@ export function RevenueChart() {
           <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
           <Tooltip
-            formatter={(value: number) => [`LKR ${value.toLocaleString()}`, 'Revenue']}
+            formatter={(value) => {
+              const numericValue = typeof value === 'number' ? value : Number(value)
+              const safeValue = Number.isFinite(numericValue) ? numericValue : 0
+              return [`LKR ${safeValue.toLocaleString()}`, 'Revenue']
+            }}
             contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px' }}
           />
           <Bar dataKey="revenue" fill="#F59E0B" radius={[4, 4, 0, 0]} />

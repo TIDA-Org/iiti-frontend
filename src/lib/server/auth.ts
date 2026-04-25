@@ -29,8 +29,16 @@ function normalizeBaseUrl(value: string) {
 }
 
 export function getBackendApiBaseUrl() {
-  const configured = process.env.API_BASE_URL
-  return normalizeBaseUrl(configured || 'http://localhost:8000/api/v1')
+  const configured = process.env.API_BASE_URL?.trim()
+  if (configured) {
+    return normalizeBaseUrl(configured)
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('API_BASE_URL environment variable is required in production')
+  }
+
+  return 'http://localhost:8000/api/v1'
 }
 
 export function decodeJwtPayload<T>(token: string): T | null {

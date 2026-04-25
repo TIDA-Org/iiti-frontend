@@ -63,6 +63,7 @@ function TestimonialAvatar({
   return (
     <div className="relative h-10 w-10 overflow-hidden rounded-full ring-2 ring-foreground/10 transition-all duration-300 group-hover:ring-foreground/30 sm:h-11 sm:w-11">
       {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={image || ''}
           alt={author}
@@ -95,12 +96,7 @@ export default function TestimonialsEditorial({
     }
   }, [])
 
-  useEffect(() => {
-    if (active < testimonials.length) {
-      return
-    }
-    setActive(0)
-  }, [active, testimonials.length])
+  const safeActive = testimonials.length > 0 ? active % testimonials.length : 0
 
   const queueTimeout = (callback: () => void, delayMs: number) => {
     const timeoutId = window.setTimeout(callback, delayMs)
@@ -108,7 +104,7 @@ export default function TestimonialsEditorial({
   }
 
   const handleChange = (index: number) => {
-    if (index === active || isTransitioning || testimonials.length === 0) {
+    if (index === safeActive || isTransitioning || testimonials.length === 0) {
       return
     }
 
@@ -120,16 +116,16 @@ export default function TestimonialsEditorial({
   }
 
   const handlePrev = () => {
-    const newIndex = active === 0 ? testimonials.length - 1 : active - 1
+    const newIndex = safeActive === 0 ? testimonials.length - 1 : safeActive - 1
     handleChange(newIndex)
   }
 
   const handleNext = () => {
-    const newIndex = active === testimonials.length - 1 ? 0 : active + 1
+    const newIndex = safeActive === testimonials.length - 1 ? 0 : safeActive + 1
     handleChange(newIndex)
   }
 
-  const current = testimonials[active]
+  const current = testimonials[safeActive]
 
   if (!current) {
     return null
@@ -142,7 +138,7 @@ export default function TestimonialsEditorial({
           className="select-none text-[42px] leading-none text-foreground/10 transition-all duration-500 sm:text-[56px] lg:text-[72px]"
           style={{ fontFeatureSettings: '"tnum"' }}
         >
-          {String(active + 1).padStart(2, '0')}
+          {String(safeActive + 1).padStart(2, '0')}
         </span>
 
         <div className="flex-1 pt-0 lg:pt-3">
@@ -206,7 +202,7 @@ export default function TestimonialsEditorial({
                 <span
                   className={cn(
                     'block h-px transition-all duration-500 ease-out',
-                    index === active
+                    index === safeActive
                       ? 'w-7 bg-foreground sm:w-8'
                       : 'w-4 bg-foreground/20 group-hover:w-6 group-hover:bg-foreground/40',
                   )}
@@ -215,7 +211,7 @@ export default function TestimonialsEditorial({
             ))}
           </div>
           <span className="text-[11px] uppercase tracking-widest text-muted-foreground sm:text-xs">
-            {String(active + 1).padStart(2, '0')} / {String(testimonials.length).padStart(2, '0')}
+            {String(safeActive + 1).padStart(2, '0')} / {String(testimonials.length).padStart(2, '0')}
           </span>
         </div>
 

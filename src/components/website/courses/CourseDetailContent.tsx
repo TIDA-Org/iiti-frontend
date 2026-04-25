@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Course, CourseOutlineWeek } from '@/types/course'
-import { CheckCircle, Clock, Award, CreditCard, GraduationCap, ChevronRight } from 'lucide-react'
+import { CheckCircle, Award, CreditCard, GraduationCap, ChevronRight } from 'lucide-react'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 
