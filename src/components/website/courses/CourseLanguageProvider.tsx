@@ -43,7 +43,22 @@ export function CourseLanguageProvider({ children }: { children: ReactNode }) {
 
   const setLang = useCallback((nextLang: CourseLanguage) => {
     setPreferredLang(nextLang)
-  }, [])
+    
+    // Immediately update URL and localStorage
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(COURSE_LANGUAGE_STORAGE_KEY, nextLang)
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString())
+    if (nextLang === 'en') {
+      nextParams.delete(COURSE_LANGUAGE_QUERY_PARAM)
+    } else {
+      nextParams.set(COURSE_LANGUAGE_QUERY_PARAM, nextLang)
+    }
+
+    const query = nextParams.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [pathname, router, searchParams])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
