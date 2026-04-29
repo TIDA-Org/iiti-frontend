@@ -15,8 +15,8 @@ import { ContactCta } from '@/components/website/home/ContactCta'
 export default function HomePage() {
   return (
     <PublicSiteSettingsProvider>
-      <NewsBanner />
       <PublicNavbar />
+      <NewsBanner />
       <main>
         <HeroSection />
         <AccreditationBadges />
