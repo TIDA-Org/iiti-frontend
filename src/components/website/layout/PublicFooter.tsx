@@ -1,8 +1,12 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Facebook, Youtube, MessageCircle } from 'lucide-react'
 
+import { useApi } from '@/hooks/useApi'
+import { apiGetCourses } from '@/lib/api/courses'
+import { getPublicCourseHref } from '@/lib/public-course-routes'
 import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 function buildWhatsAppHref(value: string) {
@@ -18,6 +22,10 @@ interface SocialLink {
 
 export function PublicFooter() {
   const { settings } = usePublicSiteSettings()
+  const { data: coursesData } = useApi(() => apiGetCourses(), [])
+  const activeCourses = (coursesData || [])
+    .filter((c) => c.is_active)
+    .sort((a, b) => a.display_order - b.display_order)
   const socialLinks = [
     settings.facebookUrl
       ? {
@@ -49,13 +57,16 @@ export function PublicFooter() {
           {/* Column 1 - Branding */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-sm" style={{ fontFamily: 'Outfit, sans-serif' }}>IITI</span>
-              </div>
-              <div>
-                <div className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
-                  {settings.instituteName}
-                </div>
+              <Image
+                src="/assets/logo_v2.png"
+                alt="IITI Logo"
+                width={40}
+                height={40}
+                className="object-contain shrink-0"
+                style={{ mixBlendMode: 'lighten' }}
+              />
+              <div className="text-white font-bold text-sm leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                {settings.instituteName}
               </div>
             </div>
             <p className="text-sm leading-relaxed text-stone-400 mb-4">
@@ -115,18 +126,21 @@ export function PublicFooter() {
           <div>
             <h4 className="text-white font-semibold text-sm mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Programmes</h4>
             <ul className="space-y-2.5">
-              {[
-                { href: '/courses/forklift', label: 'Forklift Operator Training' },
-                { href: '/courses/excavator', label: 'Excavator Operator Training' },
-                { href: '/courses/backhoe-loader', label: 'Backhoe Loader Training' },
-                { href: '/verify', label: 'Certificate Verification' },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm hover:text-orange-400 transition-colors">
-                    {link.label}
+              {activeCourses.map((course) => (
+                <li key={course.id}>
+                  <Link href={getPublicCourseHref(course)} className="text-sm hover:text-orange-400 transition-colors">
+                    {course.name}
                   </Link>
                 </li>
               ))}
+              {activeCourses.length === 0 && (
+                <>
+                  <li><Link href="/courses" className="text-sm hover:text-orange-400 transition-colors">All Programmes</Link></li>
+                </>
+              )}
+              <li>
+                <Link href="/verify" className="text-sm hover:text-orange-400 transition-colors">Certificate Verification</Link>
+              </li>
             </ul>
           </div>
 
