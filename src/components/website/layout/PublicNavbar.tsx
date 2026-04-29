@@ -4,7 +4,8 @@ import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Menu, X, ChevronDown, LayoutDashboard } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Menu, X, ChevronDown, LayoutDashboard, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourses } from '@/lib/api/courses'
@@ -155,69 +156,155 @@ export function PublicNavbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="lg:hidden bg-white border-t border-stone-100 px-4 pb-4">
-          {NAV_LINKS.map((link) =>
-            link.hasDropdown ? (
-              <div key="courses-mobile">
+      {/* Mobile Menu — full-screen slide-in from right */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              key="panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0, 0.08, 1] }}
+              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xs flex-col bg-white shadow-2xl lg:hidden"
+            >
+              {/* Panel header */}
+              <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
+                <Image src="/assets/logo.JPG" alt="IITI" width={100} height={38} className="object-contain" />
                 <button
-                  onClick={() => setCoursesOpen(!coursesOpen)}
-                  className="flex items-center justify-between w-full py-3 text-sm font-medium text-stone-700"
-                >
-                  {link.label}
-                  <ChevronDown className={cn('w-4 h-4 transition-transform', coursesOpen && 'rotate-180')} />
-                </button>
-                {coursesOpen && (
-                  <div className="pl-4 space-y-1">
-                    {courseDropdownItems.map((item) => (
-                      <Link
-                        key={`${item.href}-${item.label}`}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="block py-2 text-sm text-stone-600 hover:text-orange-500"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                key={link.href}
-                href={link.href!}
-                onClick={() => setMobileOpen(false)}
-                className="block py-3 text-sm font-medium text-stone-700 hover:text-orange-500 border-b border-stone-50"
-              >
-                {link.label}
-              </Link>
-            )
-          )}
-          <div className="flex flex-col gap-2 mt-4">
-            {isAuthenticated ? (
-              <>
-                <Link
-                  href={user?.role === 'student' ? '/portal/dashboard' : '/admin/dashboard'}
                   onClick={() => setMobileOpen(false)}
-                  className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+                  aria-label="Close menu"
                 >
-                  Profile
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md">
-                  Login
-                </Link>
-                <Link href="/apply" onClick={() => setMobileOpen(false)} className="w-full text-center py-2.5 text-sm font-semibold bg-orange-500 text-white rounded-md">
-                  Apply Now
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex-1 overflow-y-auto px-4 py-6">
+                <motion.ul
+                  initial="hidden"
+                  animate="visible"
+                  variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } }}
+                  className="space-y-1"
+                >
+                  {NAV_LINKS.map((link) =>
+                    link.hasDropdown ? (
+                      <motion.li
+                        key="courses-mobile"
+                        variants={{ hidden: { opacity: 0, x: 28 }, visible: { opacity: 1, x: 0, transition: { duration: 0.28, ease: 'easeOut' } } }}
+                      >
+                        <button
+                          onClick={() => setCoursesOpen(!coursesOpen)}
+                          className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-stone-800 hover:bg-orange-50 hover:text-orange-500 transition-colors"
+                        >
+                          {link.label}
+                          <ChevronDown className={cn('h-4 w-4 text-stone-400 transition-transform duration-200', coursesOpen && 'rotate-180 text-orange-500')} />
+                        </button>
+                        <AnimatePresence>
+                          {coursesOpen && (
+                            <motion.ul
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.22, ease: 'easeOut' }}
+                              className="overflow-hidden pl-4"
+                            >
+                              {courseDropdownItems.map((item, idx) => (
+                                <motion.li
+                                  key={`${item.href}-${item.label}`}
+                                  initial={{ opacity: 0, x: 12 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: idx * 0.04, duration: 0.2 }}
+                                >
+                                  <Link
+                                    href={item.href}
+                                    onClick={() => setMobileOpen(false)}
+                                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-stone-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                                  >
+                                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-orange-400" />
+                                    {item.label}
+                                  </Link>
+                                </motion.li>
+                              ))}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </motion.li>
+                    ) : (
+                      <motion.li
+                        key={link.href}
+                        variants={{ hidden: { opacity: 0, x: 28 }, visible: { opacity: 1, x: 0, transition: { duration: 0.28, ease: 'easeOut' } } }}
+                      >
+                        <Link
+                          href={link.href!}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            'flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+                            pathname === link.href
+                              ? 'bg-orange-50 text-orange-500'
+                              : 'text-stone-800 hover:bg-stone-50 hover:text-orange-500',
+                          )}
+                        >
+                          {link.label}
+                        </Link>
+                      </motion.li>
+                    )
+                  )}
+                </motion.ul>
+              </nav>
+
+              {/* CTA buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.22, duration: 0.28, ease: 'easeOut' }}
+                className="border-t border-stone-100 px-4 py-5 space-y-2"
+              >
+                {isAuthenticated ? (
+                  <Link
+                    href={user?.role === 'student' ? '/portal/dashboard' : '/admin/dashboard'}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full rounded-xl border border-orange-500 py-3 text-sm font-semibold text-orange-500 hover:bg-orange-50 transition-colors"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Profile
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center w-full rounded-xl border border-orange-500 py-3 text-sm font-semibold text-orange-500 hover:bg-orange-50 transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/apply"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center justify-center w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white hover:bg-orange-600 transition-colors"
+                    >
+                      Apply Now
+                    </Link>
+                  </>
+                )}
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   )
 }
