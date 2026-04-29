@@ -56,7 +56,7 @@ export default function LoginPage() {
 
               {/* Logo Image */}
               <Image
-                src="/assets/logo.jpg"
+                src="/assets/logo.JPG"
                 alt="IITI Logo"
                 width={200}
                 height={70}

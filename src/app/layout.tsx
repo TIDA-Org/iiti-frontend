@@ -42,6 +42,9 @@ export const metadata: Metadata = {
   title: 'IITI - Imasha International Training Institute',
   description: 'Sri Lanka\'s Premier Heavy Vehicle Training Institute. NVQ Level 3 certified training for Forklift, Excavator, and Backhoe Loader operators.',
   keywords: 'forklift training, excavator training, NVQ Level 3, TVEC, Sri Lanka vocational training',
+  icons: {
+    icon: '/images/fav/favicon.svg',
+  },
 }
 
 export default function RootLayout({
