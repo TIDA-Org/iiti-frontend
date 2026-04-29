@@ -108,6 +108,13 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
         </div>
       </section>
 
+      {/* Language Selector - Mobile Friendly Top Position */}
+      <section className="border-b border-stone-200 bg-white px-4 py-3">
+        <div className="mx-auto max-w-6xl flex justify-end">
+          <CourseLanguageSwitch />
+        </div>
+      </section>
+
       <section className="bg-stone-50 px-4 py-16">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
           <div className="space-y-10 lg:col-span-2">
@@ -288,10 +295,6 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div className="flex justify-end">
-              <CourseLanguageSwitch />
-            </div>
-
             <ScrollReveal>
               <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-md">
                 <h3 className={cn('mb-5 font-bold text-stone-800', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>{localizedName}</h3>

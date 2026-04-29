@@ -63,7 +63,7 @@ export function PublicNavbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0">
             <Image
-              src="/assets/logo.jpg"
+              src="/assets/logo.JPG"
               alt="IITI Logo"
               width={160}
               height={60}
