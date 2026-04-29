@@ -107,9 +107,41 @@ export function WhyChooseUs() {
     <section className="py-28 bg-linear-to-b from-white via-slate-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left visual */}
-          <ScrollReveal direction="left">
-            <div className="relative">
+          {/* Right features — rendered first in DOM so it appears above the image on mobile */}
+          <div className="lg:order-2">
+            <ScrollReveal>
+              <SectionLabel>Why Choose IITI</SectionLabel>
+              <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-12 leading-tight tracking-tight">
+                The Smart Choice for
+                <br />
+                <span className="text-orange-500">Professional Training</span>
+              </h2>
+            </ScrollReveal>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {features.map((feature, i) => {
+                const Icon = feature.icon
+                return (
+                  <ScrollReveal key={feature.title} delay={i * 0.08}>
+                    <Card className="p-4 border border-slate-200/50 hover:border-orange-200/50 hover:shadow-md transition-all duration-300 group bg-white">
+                      <div className="flex gap-3">
+                        <div className="w-11 h-11 rounded-lg bg-linear-to-br from-orange-50 to-orange-100 flex items-center justify-center shrink-0 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
+                          <Icon className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-slate-900 text-sm leading-tight mb-1">{feature.title}</h4>
+                          <p className="text-slate-600 text-xs leading-relaxed font-regular">{feature.desc}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </ScrollReveal>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Left visual — below features on mobile, left column on desktop */}
+          <ScrollReveal direction="left" className="lg:order-1">
+            <div className="relative pb-6 pr-6">
               <Card className="relative aspect-4/3 overflow-hidden border-0 bg-slate-950 shadow-lg">
                 {CARD_IMAGES.map((image, index) => (
                   <div
@@ -165,44 +197,12 @@ export function WhyChooseUs() {
                 </div>
               </Card>
               {/* Accent card */}
-              <Card className="absolute -bottom-6 -right-6 bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
+              <Card className="absolute bottom-0 right-0 bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
                 <div className="text-4xl font-bold tracking-tight">{yearsValue}{yearsSuffix}</div>
                 <div className="text-xs font-semibold opacity-90 mt-1">{yearsStat?.label || 'Years of Excellence'}</div>
               </Card>
             </div>
           </ScrollReveal>
-
-          {/* Right features */}
-          <div>
-            <ScrollReveal>
-              <SectionLabel>Why Choose IITI</SectionLabel>
-              <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-12 leading-tight tracking-tight">
-                The Smart Choice for
-                <br />
-                <span className="text-orange-500">Professional Training</span>
-              </h2>
-            </ScrollReveal>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {features.map((feature, i) => {
-                const Icon = feature.icon
-                return (
-                  <ScrollReveal key={feature.title} delay={i * 0.08}>
-                    <Card className="p-4 border border-slate-200/50 hover:border-orange-200/50 hover:shadow-md transition-all duration-300 group bg-white">
-                      <div className="flex gap-3">
-                        <div className="w-11 h-11 rounded-lg bg-linear-to-br from-orange-50 to-orange-100 flex items-center justify-center shrink-0 group-hover:from-orange-100 group-hover:to-orange-200 transition-colors">
-                          <Icon className="w-5 h-5 text-orange-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-900 text-sm leading-tight mb-1">{feature.title}</h4>
-                          <p className="text-slate-600 text-xs leading-relaxed font-regular">{feature.desc}</p>
-                        </div>
-                      </div>
-                    </Card>
-                  </ScrollReveal>
-                )
-              })}
-            </div>
-          </div>
         </div>
       </div>
     </section>
