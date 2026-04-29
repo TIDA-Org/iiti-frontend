@@ -43,12 +43,6 @@ export function PublicNavbar() {
       }))
   }, [coursesData])
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileOpen(false)
-    setCoursesOpen(false)
-  }, [pathname])
-
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', handleScroll, { passive: true })
