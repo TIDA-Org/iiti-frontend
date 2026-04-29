@@ -10,10 +10,12 @@ import {
   Clock3,
   CreditCard,
   GraduationCap,
+  Lightbulb,
   MapPin,
   Network,
   Route,
   Sparkles,
+  Wrench,
 } from 'lucide-react'
 
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
@@ -53,6 +55,74 @@ function getCurriculumTopics(html: string) {
     .slice(0, 8)
 }
 
+interface DetailSection {
+  heading: string
+  items: string[]
+}
+
+function parseDetailSections(html: string): { preamble: string; sections: DetailSection[] } {
+  const firstHeadingAt = html.search(/<h[34][^>]*>/i)
+  let preamble = ''
+  if (firstHeadingAt > 0) {
+    preamble = html
+      .slice(0, firstHeadingAt)
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  const sections: DetailSection[] = []
+  const sectionRegex = /<h[34][^>]*>(.*?)<\/h[34]>([\s\S]*?)(?=<h[34]|$)/gi
+  let match: RegExpExecArray | null
+  while ((match = sectionRegex.exec(html)) !== null) {
+    const heading = match[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+    const body = match[2]
+    const items: string[] = []
+    const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi
+    let li: RegExpExecArray | null
+    while ((li = liRegex.exec(body)) !== null) {
+      const text = li[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+      if (text) items.push(text)
+    }
+    if (items.length === 0) {
+      const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi
+      let p: RegExpExecArray | null
+      while ((p = pRegex.exec(body)) !== null) {
+        const text = p[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+        if (text) items.push(text)
+      }
+    }
+    if (heading) sections.push({ heading, items })
+  }
+
+  return { preamble, sections }
+}
+
+type SectionStyle = {
+  bg: string
+  border: string
+  iconBg: string
+  iconColor: string
+  headingColor: string
+  dotColor: string
+  Icon: React.ComponentType<{ className?: string }>
+}
+
+function getSectionStyle(heading: string): SectionStyle {
+  const h = heading.toLowerCase()
+  if (h.includes('learning') || h.includes('content') || h.includes('syllabus')) {
+    return { bg: 'bg-blue-50/50', border: 'border-blue-200', iconBg: 'bg-blue-100', iconColor: 'text-blue-600', headingColor: 'text-blue-900', dotColor: 'text-blue-500', Icon: BookOpenText }
+  }
+  if (h.includes('knowledge') || h.includes('theory')) {
+    return { bg: 'bg-violet-50/50', border: 'border-violet-200', iconBg: 'bg-violet-100', iconColor: 'text-violet-600', headingColor: 'text-violet-900', dotColor: 'text-violet-500', Icon: Lightbulb }
+  }
+  if (h.includes('skill') || h.includes('practical') || h.includes('competenc')) {
+    return { bg: 'bg-emerald-50/50', border: 'border-emerald-200', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', headingColor: 'text-emerald-900', dotColor: 'text-emerald-500', Icon: Wrench }
+  }
+  return { bg: 'bg-stone-50/60', border: 'border-stone-200', iconBg: 'bg-orange-100', iconColor: 'text-orange-600', headingColor: 'text-stone-900', dotColor: 'text-orange-500', Icon: CheckCircle2 }
+}
+
 export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) {
   const { settings } = usePublicSiteSettings()
   const { lang, copy } = useCourseLanguage()
@@ -66,6 +136,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
   )
   const localizedDetails = getLocalizedCourseDetails(course, lang)
   const curriculumTopics = useMemo(() => getCurriculumTopics(localizedDetails), [localizedDetails])
+  const detailSections = useMemo(() => parseDetailSections(localizedDetails), [localizedDetails])
   const availableDurations = course.duration_options.filter((option) => option.is_available)
   const titleStyle = lang === 'en' ? { fontFamily: 'Outfit, sans-serif' } : undefined
 
@@ -245,12 +316,48 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
                   {localizedDetails ? (
                     <div
                       className={cn(
-                        'prose max-w-none text-stone-600 prose-headings:text-stone-900 prose-p:text-stone-600 prose-strong:text-stone-800 prose-li:text-stone-600 [&_h3]:rounded-2xl [&_h3]:bg-stone-50 [&_h3]:px-4 [&_h3]:py-3 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:shadow-[inset_0_0_0_1px_rgba(231,229,228,0.8)] [&_h4]:mt-8 [&_h4]:text-base [&_h4]:font-semibold [&_li]:marker:text-orange-500',
                         lang === 'si' && 'font-sinhala tracking-normal',
                       )}
                       lang={lang === 'si' ? 'si' : undefined}
-                      dangerouslySetInnerHTML={{ __html: localizedDetails }}
-                    />
+                    >
+                      <div className="space-y-4">
+                        {detailSections.preamble && (
+                          <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                              <Award className="h-4 w-4 text-amber-600" />
+                            </div>
+                            <p className={cn('text-sm leading-6 text-amber-900', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{detailSections.preamble}</p>
+                          </div>
+                        )}
+                        {detailSections.sections.map((section) => {
+                          const style = getSectionStyle(section.heading)
+                          const Icon = style.Icon
+                          return (
+                            <div key={section.heading} className={cn('rounded-2xl border p-5', style.bg, style.border)}>
+                              <div className="mb-4 flex items-center gap-3">
+                                <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', style.iconBg)}>
+                                  <Icon className={cn('h-4 w-4', style.iconColor)} />
+                                </div>
+                                <h4 className={cn('text-sm font-bold uppercase tracking-wide', style.headingColor, getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{section.heading}</h4>
+                              </div>
+                              {section.items.length > 0 && (
+                                <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                                  {section.items.map((item, idx) => (
+                                    <li key={idx} className="flex items-start gap-2.5">
+                                      <CheckCircle2 className={cn('mt-0.5 h-4 w-4 shrink-0', style.dotColor)} />
+                                      <span className={cn('text-sm leading-6 text-stone-700', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )
+                        })}
+                        {detailSections.sections.length === 0 && !detailSections.preamble && (
+                          <p className={cn('text-sm leading-7 text-stone-500', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.detailsFallback}</p>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <p className={cn('text-sm leading-7 text-stone-600', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
                       {copy.detailsFallback}

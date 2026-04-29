@@ -34,6 +34,26 @@ export function getCourseDuration(course: CourseApiResponse) {
   return `${primary.duration_value} ${unit}`
 }
 
+export function getCourseCardImage(course: CourseApiResponse): string {
+  const code = course.course_code.toUpperCase()
+  if (code === 'FORK-OP') return '/images/course_cards/forklift.jpg'
+  if (code === 'EXCV-OP') return '/images/course_cards/crawler_excavator.jpg'
+  if (code === 'BCHL-OP') return '/images/course_cards/backhoe_loader.jpg'
+  if (code === 'PACK-40D') return '/images/course_cards/heavy_equipment.jpg'
+  if (code === 'PKG-ALL') return '/images/course_cards/boom_tractor.jpg'
+  return '/images/course_cards/heavy_equipment.jpg'
+}
+
+export function getCourseThemeColor(course: CourseApiResponse): string {
+  const code = course.course_code.toUpperCase()
+  if (code === 'FORK-OP') return '24 95% 40%'           // orange
+  if (code === 'EXCV-OP') return '38 90% 38%'           // amber
+  if (code === 'BCHL-OP') return '15 85% 38%'           // red-orange
+  if (code === 'PACK-40D') return '220 60% 35%'         // steel blue
+  if (code === 'PKG-ALL') return '270 50% 35%'          // deep purple
+  return '24 95% 40%'
+}
+
 export function getCourseAccent(course: CourseApiResponse) {
   const value = `${course.course_code} ${course.short_name || ''} ${course.name}`.toLowerCase()
 

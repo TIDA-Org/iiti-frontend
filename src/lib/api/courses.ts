@@ -121,6 +121,10 @@ export async function apiGetCourses(): Promise<CourseApiResponse[]> {
   return apiFetch('/courses')
 }
 
+export async function apiGetCoursesAdmin(): Promise<CourseApiResponse[]> {
+  return apiFetch('/courses/manage')
+}
+
 export async function apiCreateCourse(data: Record<string, unknown>): Promise<CourseApiResponse> {
   return apiFetch('/courses', { method: 'POST', body: JSON.stringify(data) })
 }
