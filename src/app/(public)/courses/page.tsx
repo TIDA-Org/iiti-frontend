@@ -1,8 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import Link from 'next/link'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
