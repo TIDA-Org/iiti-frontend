@@ -10,7 +10,7 @@ const HERO_IMAGES = [
   '/images/hero/DSC07577.jpg',
   '/images/hero/DSC07657.jpg',
   '/images/hero/DSC07664.jpg',
-  '/images/hero/DSC07666.jpg',
+  '/images/hero/DSC07644.jpg',
 ]
 
 export function HeroSection() {
