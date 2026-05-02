@@ -103,7 +103,7 @@ function CoursesPageContent() {
           {!isLoading && !error && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {courses.map((course, index) => (
-                <ScrollReveal key={course.id} delay={index * 0.08} className="h-[420px]">
+                <ScrollReveal key={course.id} delay={index * 0.08} className="h-105">
                   <CourseImageCard
                     imageUrl={getCourseCardImage(course)}
                     title={getLocalizedCourseName(course, lang)}
