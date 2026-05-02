@@ -271,7 +271,7 @@ export default function ApplyPage() {
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>{t.applicationSubmitted}</h2>
+          <h2 className="text-2xl font-bold text-stone-800 mb-2 leading-tight tracking-tight">{t.applicationSubmitted}</h2>
           <p className="text-stone-500 mb-4">{t.reference} <span className="font-mono font-bold text-orange-600">{refNo}</span></p>
           <p className="text-stone-400 text-sm mb-8">{t.followUp}</p>
           <div className="bg-stone-50 rounded-xl p-5 text-left text-sm space-y-2 mb-6">
@@ -291,7 +291,7 @@ export default function ApplyPage() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <SectionLabel className="justify-center">{t.onlineApplication}</SectionLabel>
-          <h1 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{t.applyForCourse}</h1>
+          <h1 className="text-3xl font-bold text-stone-900 leading-tight tracking-tight">{t.applyForCourse}</h1>
           <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-stone-200 px-3 py-1.5 bg-white">
             <span className="text-xs text-stone-500 font-medium">{t.language}</span>
             <button type="button" onClick={() => setLang('en')} className={`text-xs px-2 py-0.5 rounded ${lang === 'en' ? 'bg-orange-500 text-white' : 'text-stone-600 hover:bg-stone-100'}`}>EN</button>

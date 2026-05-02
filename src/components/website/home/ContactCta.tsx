@@ -19,8 +19,7 @@ export function ContactCta() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <ScrollReveal>
           <h2
-            className="text-4xl font-extrabold text-stone-900 mb-4"
-            style={{ fontFamily: 'Outfit, sans-serif' }}
+            className="text-4xl lg:text-5xl font-bold text-stone-900 mb-4 leading-tight tracking-tight"
           >
             Ready to Begin Your Training?
           </h2>

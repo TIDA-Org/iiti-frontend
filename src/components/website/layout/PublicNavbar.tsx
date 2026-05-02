@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -22,8 +22,10 @@ const NAV_LINKS = [
 
 export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [showNavbar, setShowNavbar] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [coursesOpen, setCoursesOpen] = useState(false)
+  const lastScrollYRef = useRef(0)
   const pathname = usePathname()
   const { isAuthenticated, user } = useAuthStore()
   const { data: coursesData } = useApi(() => apiGetCourses(), [])
@@ -44,20 +46,43 @@ export function PublicNavbar() {
   }, [coursesData])
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 60)
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      setScrolled(currentScrollY > 60)
+
+      if (mobileOpen) {
+        setShowNavbar(true)
+        lastScrollYRef.current = currentScrollY
+        return
+      }
+
+      if (currentScrollY <= 10) {
+        setShowNavbar(true)
+      } else if (currentScrollY > lastScrollYRef.current + 4) {
+        setShowNavbar(false)
+      } else if (currentScrollY < lastScrollYRef.current - 4) {
+        setShowNavbar(true)
+      }
+
+      lastScrollYRef.current = currentScrollY
+    }
+
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [mobileOpen])
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 w-full bg-white transition-shadow duration-300',
-        scrolled ? 'shadow-md' : 'shadow-sm'
-      )}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+    <>
+      <header
+        className={cn(
+          'fixed top-0 left-0 z-50 w-full bg-white transition-all duration-300',
+          showNavbar ? 'translate-y-0' : '-translate-y-full',
+          scrolled ? 'shadow-md' : 'shadow-sm'
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
           
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0">
@@ -134,13 +159,13 @@ export function PublicNavbar() {
                   href="/login"
                   className="px-4 py-2 text-sm font-semibold text-orange-500 border border-orange-500 rounded-md hover:bg-orange-50 transition-colors"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link
                   href="/apply"
                   className="px-5 py-2 text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-all duration-200 hover:scale-105"
                 >
-                  Apply Now
+                  Get Started
                 </Link>
               </>
             )}
@@ -154,32 +179,33 @@ export function PublicNavbar() {
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-      </div>
+        </div>
+      </header>
 
       {/* Mobile Menu — full-screen slide-in from right */}
       <AnimatePresence>
-        {mobileOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-              onClick={() => setMobileOpen(false)}
-            />
+          {mobileOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                key="backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                onClick={() => setMobileOpen(false)}
+              />
 
-            {/* Panel */}
-            <motion.div
-              key="panel"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0, 0.08, 1] }}
-              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xs flex-col bg-white shadow-2xl lg:hidden"
-            >
+              {/* Panel */}
+              <motion.div
+                key="panel"
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0, 0.08, 1] }}
+                className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xs flex-col bg-white shadow-2xl lg:hidden"
+              >
               {/* Panel header */}
               <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
                 <Image src="/assets/logo.JPG" alt="IITI" width={100} height={38} className="object-contain" />
@@ -301,10 +327,13 @@ export function PublicNavbar() {
                   </>
                 )}
               </motion.div>
-            </motion.div>
-          </>
-        )}
+              </motion.div>
+            </>
+          )}
       </AnimatePresence>
-    </header>
+
+      {/* Spacer to prevent content jump while navbar is fixed */}
+      <div className="h-16 lg:h-20" aria-hidden />
+    </>
   )
 }

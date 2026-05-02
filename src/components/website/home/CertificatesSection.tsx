@@ -50,8 +50,7 @@ export function CertificatesSection() {
         <ScrollReveal className="text-center mb-14">
           <SectionLabel light>{data?.eyebrow || 'Certification'}</SectionLabel>
           <h2
-            className="text-4xl lg:text-5xl font-extrabold text-white mb-4"
-            style={{ fontFamily: 'Outfit, sans-serif' }}
+            className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight tracking-tight"
           >
             {data?.title || 'What You Receive After'}
             <span className="text-orange-500"> {data?.title_highlight || 'Graduation'}</span>
@@ -71,8 +70,7 @@ export function CertificatesSection() {
                     <Icon className="w-8 h-8 text-orange-400" />
                   </div>
                   <h3
-                    className="mb-4 flex min-h-14 items-center justify-center text-lg font-bold text-white"
-                    style={{ fontFamily: 'Outfit, sans-serif' }}
+                    className="mb-4 flex min-h-14 items-center justify-center text-lg font-bold leading-tight tracking-tight text-white"
                   >
                     {cert.title}
                   </h3>

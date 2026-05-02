@@ -138,41 +138,45 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
   const curriculumTopics = useMemo(() => getCurriculumTopics(localizedDetails), [localizedDetails])
   const detailSections = useMemo(() => parseDetailSections(localizedDetails), [localizedDetails])
   const availableDurations = course.duration_options.filter((option) => option.is_available)
-  const titleStyle = lang === 'en' ? { fontFamily: 'Outfit, sans-serif' } : undefined
 
   return (
     <div>
-      <section className="bg-linear-to-br from-stone-950 via-stone-900 to-stone-800 px-4 py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-6 flex items-center gap-2 text-sm text-stone-400">
-            <Link href="/" className="hover:text-orange-400">Home</Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link href={getCourseLanguageHref('/courses', lang)} className={cn('hover:text-orange-400', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.courses}</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className={cn('text-white', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{localizedName}</span>
+      <section className="bg-linear-to-br from-stone-950 via-stone-900 to-stone-800 px-4 py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          {/* Breadcrumb */}
+          <div className="mb-8 flex items-center justify-center gap-2 text-sm text-stone-500">
+            <Link href="/" className="hover:text-stone-300 transition-colors">Home</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <Link href={getCourseLanguageHref('/courses', lang)} className={cn('hover:text-stone-300 transition-colors', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.courses}</Link>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className={cn('text-stone-400 truncate max-w-50', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{localizedName}</span>
           </div>
 
           <ScrollReveal>
-            <div className="mb-6 flex flex-wrap items-center gap-2">
+            {/* Unified credential strip */}
+            <div className="mb-8 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3 sm:gap-x-5 sm:gap-y-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 backdrop-blur-sm">
               {course.nvq_level && (
-                <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-bold text-white">
+                <span className={cn('flex items-center gap-2 text-xs font-semibold text-stone-300', getCourseTextClass(lang))}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" />
                   NVQ Level {course.nvq_level}
                 </span>
               )}
               {course.is_nvq_linked && (
-                <span className={cn('rounded-full bg-green-600 px-3 py-1 text-xs font-bold text-white', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
+                <span className={cn('flex items-center gap-2 text-xs font-semibold text-stone-300', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" />
                   {copy.tvecRegistered}
                 </span>
               )}
-              <span className={cn('rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
+              <span className={cn('flex items-center gap-2 text-xs font-semibold text-stone-300', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-400 shrink-0" />
                 {getLocalizedCourseTypeLabel(course, lang)}
               </span>
             </div>
 
-            <h1 className={cn('mb-4 text-4xl font-extrabold text-white lg:text-5xl', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>
+            <h1 className={cn('mb-5 text-3xl sm:text-4xl font-bold text-white lg:text-5xl leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>
               {localizedName}
             </h1>
-            <p className={cn('max-w-3xl text-lg leading-relaxed text-stone-300', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
+            <p className={cn('mx-auto max-w-2xl text-lg leading-relaxed text-stone-400', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
               {localizedDescription}
             </p>
           </ScrollReveal>
@@ -191,7 +195,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
           <div className="space-y-10 lg:col-span-2">
             <ScrollReveal>
               <SectionLabel className={cn(getCourseTextClass(lang))}>{copy.courseOverview}</SectionLabel>
-              <h2 className={cn('mb-5 text-2xl font-bold text-stone-800', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>
+              <h2 className={cn('mb-5 text-2xl font-bold text-stone-800 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>
                 {copy.trainingDetails}
               </h2>
               <div className="grid gap-4 md:grid-cols-3">
@@ -231,7 +235,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
                       <BookOpenText className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className={cn('text-xl font-bold text-stone-900', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>{copy.programmeBrief}</h3>
+                      <h3 className={cn('text-xl font-bold text-stone-900 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>{copy.programmeBrief}</h3>
                       <p className={cn('text-sm text-stone-500', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.practicalFocus}</p>
                     </div>
                   </div>
@@ -261,7 +265,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
                       <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className={cn('text-xl font-bold text-stone-900', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>{copy.certificationOutcomes}</h3>
+                      <h3 className={cn('text-xl font-bold text-stone-900 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>{copy.certificationOutcomes}</h3>
                       <p className={cn('text-sm text-stone-500', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.certificatesYouReceive}</p>
                     </div>
                   </div>
@@ -296,7 +300,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                       <SectionLabel className={cn('mb-2', getCourseTextClass(lang))}>{copy.courseRoadmap}</SectionLabel>
-                      <h3 className={cn('text-2xl font-bold text-stone-900', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>{copy.keyTopics}</h3>
+                      <h3 className={cn('text-2xl font-bold text-stone-900 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>{copy.keyTopics}</h3>
                       <p className={cn('mt-2 max-w-2xl text-sm leading-6 text-stone-500', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.keyTopicsDescription}</p>
                     </div>
 
@@ -368,7 +372,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
             </ScrollReveal>
 
             <ScrollReveal>
-              <h2 className={cn('mb-5 text-2xl font-bold text-stone-800', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>
+              <h2 className={cn('mb-5 text-2xl font-bold text-stone-800 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>
                 {copy.availableDurations}
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
@@ -404,7 +408,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <ScrollReveal>
               <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-md">
-                <h3 className={cn('mb-5 font-bold text-stone-800', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>{localizedName}</h3>
+                <h3 className={cn('mb-5 font-bold text-stone-800 leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>{localizedName}</h3>
                 <div className="mb-5 space-y-3 text-sm">
                   <div className="flex justify-between gap-4"><span className={cn('text-stone-400', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.duration}</span><span className={cn('text-right font-medium text-stone-700', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{durationSummary}</span></div>
                   <div className="flex justify-between gap-4"><span className={cn('text-stone-400', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.courseCode}</span><span className="font-mono text-xs text-stone-500">{course.course_code}</span></div>

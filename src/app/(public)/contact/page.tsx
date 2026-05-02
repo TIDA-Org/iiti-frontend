@@ -95,7 +95,7 @@ export default function ContactPage() {
             <SectionLabel light className="justify-center">
               Get In Touch
             </SectionLabel>
-            <h1 className="mb-5 text-4xl font-extrabold text-white sm:text-5xl" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            <h1 className="mb-5 text-4xl font-bold text-white sm:text-5xl leading-tight tracking-tight">
               Let&apos;s Talk About
               <span className="block text-orange-500">Your Training Journey</span>
             </h1>
@@ -113,7 +113,7 @@ export default function ContactPage() {
             <ScrollReveal>
               <div className="rounded-4xl border border-stone-200 bg-white p-7 shadow-[0_24px_70px_-48px_rgba(28,25,23,0.35)] sm:p-8">
                 <SectionLabel className="mb-4">Contact Details</SectionLabel>
-                <h2 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                <h2 className="text-3xl font-bold text-stone-900 leading-tight tracking-tight">
                   Reach the institute through the channel that works for you.
                 </h2>
 
@@ -158,7 +158,7 @@ export default function ContactPage() {
             <div className="overflow-hidden rounded-4xl border border-stone-200 bg-white shadow-[0_28px_80px_-52px_rgba(28,25,23,0.35)]">
               <div className="border-b border-stone-200 bg-linear-to-r from-orange-50 via-white to-stone-50 px-8 py-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">Message Form</p>
-                <h2 className="mt-3 text-2xl font-bold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                <h2 className="mt-3 text-2xl font-bold text-stone-900 leading-tight tracking-tight">
                   Send Us a Message
                 </h2>
                 <p className="mt-2 max-w-xl text-sm leading-7 text-stone-500">

@@ -112,7 +112,7 @@ export function HeroSection() {
                 href="/apply"
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-7 py-3.5 rounded-lg font-semibold text-sm transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/30"
               >
-                Apply for a Course
+                Apply Now
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link

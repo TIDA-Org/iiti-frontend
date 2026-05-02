@@ -36,7 +36,7 @@ function CoursesPageFallback() {
       <section className="bg-linear-to-br from-stone-900 to-stone-800 px-4 py-20 text-center">
         <ScrollReveal>
           <SectionLabel light className="justify-center">Our Programmes</SectionLabel>
-          <h1 className="mb-4 text-4xl font-extrabold text-white lg:text-5xl" style={{ fontFamily: 'Outfit, sans-serif' }}>
+          <h1 className="mb-4 text-4xl font-bold text-white lg:text-5xl leading-tight tracking-tight">
             All Training Programmes
           </h1>
         </ScrollReveal>
@@ -58,14 +58,13 @@ function CoursesPageContent() {
   const courses = (data || [])
     .filter((course) => course.is_active)
     .sort((left, right) => left.display_order - right.display_order)
-  const titleStyle = lang === 'en' ? { fontFamily: 'Outfit, sans-serif' } : undefined
 
   return (
     <div>
       <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
         <ScrollReveal>
           <SectionLabel light className={cn('justify-center', getCourseTextClass(lang))}>{copy.catalogueLabel}</SectionLabel>
-          <h1 className={cn('mb-4 text-4xl font-extrabold text-white lg:text-5xl', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} style={titleStyle} lang={lang === 'si' ? 'si' : undefined}>
+          <h1 className={cn('mb-4 text-4xl font-bold text-white lg:text-5xl leading-tight tracking-tight', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>
             {copy.catalogueTitle}
           </h1>
           <p className={cn('mx-auto max-w-2xl text-stone-400', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>
