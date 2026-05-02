@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useApi } from '@/hooks/useApi'
-import { apiBulkUpdateSettings, apiGetAllSettings, SiteSettingApiResponse } from '@/lib/api/settings'
+import { apiBulkUpdateSettings, apiGetAllSettings, apiGetPublicSettings, SiteSettingApiResponse } from '@/lib/api/settings'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/utils'
+
+const SETTINGS_CACHE_KEY = 'iiti-admin-settings-cache-v1'
 
 const CATEGORY_COPY: Record<string, string> = {
   general: 'Public institute identity, contact details, and core profile values used across the platform.',
@@ -28,6 +30,20 @@ function buildDraftMap(groups: { settings: SiteSettingApiResponse[] }[]) {
   )
 }
 
+function groupSettingsByCategory(settings: SiteSettingApiResponse[]) {
+  const grouped = new Map<string, SiteSettingApiResponse[]>()
+  settings.forEach((setting) => {
+    const category = setting.category || 'general'
+    if (!grouped.has(category)) grouped.set(category, [])
+    grouped.get(category)?.push(setting)
+  })
+
+  return Array.from(grouped.entries()).map(([category, groupedSettings]) => ({
+    category,
+    settings: groupedSettings,
+  }))
+}
+
 function formatCategoryLabel(category: string) {
   return category.charAt(0).toUpperCase() + category.slice(1)
 }
@@ -39,17 +55,20 @@ function shouldUseTextarea(setting: SiteSettingApiResponse) {
 export default function AdminSettingsPage() {
   const { user } = useAuthStore()
   const { data, isLoading, error, refetch } = useApi(apiGetAllSettings, [])
+  const [cachedData, setCachedData] = useState<ReturnType<typeof apiGetAllSettings> extends Promise<infer T> ? T | null : null>(null)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [selectedCategory, setSelectedCategory] = useState('')
   const [saving, setSaving] = useState(false)
 
   const canEdit = user?.role === 'super_admin'
 
-  const initialSettings = useMemo(() => (data ? buildDraftMap(data) : {}), [data])
-  const categories = useMemo(() => data?.map((group) => group.category) || [], [data])
+  const groups = data || cachedData
+
+  const initialSettings = useMemo(() => (groups ? buildDraftMap(groups) : {}), [groups])
+  const categories = useMemo(() => groups?.map((group) => group.category) || [], [groups])
   const currentGroup = useMemo(
-    () => data?.find((group) => group.category === selectedCategory) || data?.[0] || null,
-    [data, selectedCategory],
+    () => groups?.find((group) => group.category === selectedCategory) || groups?.[0] || null,
+    [groups, selectedCategory],
   )
   const changedSettings = useMemo(
     () =>
@@ -61,15 +80,56 @@ export default function AdminSettingsPage() {
   const dirtyCount = Object.keys(changedSettings).length
 
   useEffect(() => {
-    if (!data) return
-    setDrafts(buildDraftMap(data))
+    if (!groups) return
+    setDrafts(buildDraftMap(groups))
     setSelectedCategory((current) => {
-      if (current && data.some((group) => group.category === current)) {
+      if (current && groups.some((group) => group.category === current)) {
         return current
       }
-      return data[0]?.category || ''
+      return groups[0]?.category || ''
     })
+  }, [groups])
+
+  useEffect(() => {
+    if (!data || typeof window === 'undefined') return
+    window.localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(data))
+    setCachedData(data)
   }, [data])
+
+  useEffect(() => {
+    if (data || !error || typeof window === 'undefined') return
+    const cached = window.localStorage.getItem(SETTINGS_CACHE_KEY)
+    if (!cached) return
+
+    try {
+      const parsed = JSON.parse(cached)
+      if (Array.isArray(parsed)) {
+        setCachedData(parsed)
+      }
+    } catch {
+      // Ignore malformed cache; live API remains source of truth.
+    }
+  }, [data, error])
+
+  useEffect(() => {
+    if (data || cachedData || !error) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const publicSettings = await apiGetPublicSettings()
+        if (cancelled || publicSettings.length === 0) return
+        const groupedPublic = groupSettingsByCategory(publicSettings)
+        setCachedData(groupedPublic)
+      } catch {
+        // Keep existing error state when fallback cannot load.
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [cachedData, data, error])
 
   function updateDraft(key: string, value: string) {
     setDrafts((current) => ({ ...current, [key]: value }))
@@ -135,7 +195,13 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+      {error && groups && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Live settings could not be refreshed. Showing the most recent cached data.
+        </div>
+      )}
+
+      <DataLoader isLoading={isLoading} error={groups ? null : error} onRetry={refetch}>
         {categories.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
             No site settings were returned by the backend.
@@ -146,7 +212,7 @@ export default function AdminSettingsPage() {
               <div className="space-y-1">
                 {categories.map((category) => {
                   const isActive = category === currentGroup?.category
-                  const count = data?.find((group) => group.category === category)?.settings.length || 0
+                  const count = groups?.find((group) => group.category === category)?.settings.length || 0
 
                   return (
                     <button

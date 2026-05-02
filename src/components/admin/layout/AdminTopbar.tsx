@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { Bell, Sun, Moon, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUIStore } from '@/store/uiStore'
-import { useAuthStore } from '@/store/authStore'
 
 function Breadcrumb() {
   const pathname = usePathname()
@@ -30,7 +29,6 @@ function Breadcrumb() {
 
 export function AdminTopbar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const { theme, setTheme } = useUIStore()
-  const { user } = useAuthStore()
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 shrink-0">
@@ -58,11 +56,6 @@ export function AdminTopbar({ onOpenMobileMenu }: { onOpenMobileMenu: () => void
         <Button variant="ghost" size="icon" className="text-slate-500 relative">
           <Bell className="w-4 h-4" />
         </Button>
-        <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-          <span className="text-amber-700 text-xs font-bold">
-            {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-          </span>
-        </div>
       </div>
     </header>
   )
