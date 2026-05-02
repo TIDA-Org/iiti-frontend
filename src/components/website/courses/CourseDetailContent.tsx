@@ -28,7 +28,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
               <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">TVEC Registered</span>
               <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">ISO Certified</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight tracking-tight">
               {course.name}
             </h1>
             <p className="text-stone-300 text-lg max-w-2xl leading-relaxed">{course.description}</p>
@@ -45,7 +45,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
               {/* What you'll learn */}
               <ScrollReveal>
                 <SectionLabel>Curriculum</SectionLabel>
-                <h2 className="text-2xl font-bold text-stone-800 mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>Week-by-Week Training Plan</h2>
+                <h2 className="text-2xl font-bold text-stone-800 mb-6 leading-tight tracking-tight">Week-by-Week Training Plan</h2>
                 <div className="space-y-4">
                   {outline.map((week) => (
                     <div key={week.week} className="bg-white rounded-xl border border-stone-100 p-5">
@@ -70,7 +70,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
 
               {/* Certificates */}
               <ScrollReveal>
-                <h2 className="text-2xl font-bold text-stone-800 mb-6" style={{ fontFamily: 'Outfit, sans-serif' }}>Certificates You Receive</h2>
+                <h2 className="text-2xl font-bold text-stone-800 mb-6 leading-tight tracking-tight">Certificates You Receive</h2>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
                     { icon: Award, label: 'Institute Certificate', desc: 'Officially issued by IITI' },
@@ -96,7 +96,7 @@ export function CourseDetailContent({ course, outline }: CourseDetailContentProp
             <div className="lg:sticky lg:top-24 lg:self-start space-y-4">
               <ScrollReveal>
                 <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-md">
-                  <h3 className="font-bold text-stone-800 mb-5" style={{ fontFamily: 'Outfit, sans-serif' }}>{course.name}</h3>
+                  <h3 className="font-bold text-stone-800 mb-5 leading-tight tracking-tight">{course.name}</h3>
                   <div className="space-y-3 mb-5 text-sm">
                     <div className="flex justify-between"><span className="text-stone-400">Duration</span><span className="font-medium text-stone-700">{course.duration}</span></div>
                     <div className="flex justify-between"><span className="text-stone-400">NVQ Level</span><span className="font-medium text-stone-700">Level {course.nvqLevel}</span></div>

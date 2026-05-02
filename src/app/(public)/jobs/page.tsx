@@ -39,7 +39,7 @@ export default function PublicJobsPage() {
     <div>
       <section className="bg-linear-to-br from-stone-900 to-stone-800 px-4 py-20 text-center">
         <ScrollReveal>
-          <h1 className="mb-4 text-4xl font-extrabold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
+          <h1 className="mb-4 text-4xl font-bold text-white leading-tight tracking-tight">
             Job Opportunities
           </h1>
           <p className="mx-auto max-w-xl text-stone-400">

@@ -16,7 +16,7 @@ export default function NewsPage() {
       <section className="bg-linear-to-br from-stone-900 to-stone-800 py-20 px-4 text-center">
         <ScrollReveal>
           <SectionLabel light className="justify-center">Latest Updates</SectionLabel>
-          <h1 className="text-4xl font-extrabold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>News & Announcements</h1>
+          <h1 className="text-4xl font-bold text-white leading-tight tracking-tight">News & Announcements</h1>
         </ScrollReveal>
       </section>
       <section className="py-20 bg-stone-50">
@@ -30,7 +30,7 @@ export default function NewsPage() {
                       <span className="text-xs font-semibold bg-orange-100 text-orange-600 px-2.5 py-1 rounded-full capitalize">{item.announcement_type}</span>
                       <span className="text-xs text-stone-400">{item.published_at ? formatDate(item.published_at) : formatDate(item.updated_at)}</span>
                     </div>
-                    <h3 className="text-lg font-bold text-stone-800 mb-2" style={{ fontFamily: 'Outfit, sans-serif' }}>{item.title}</h3>
+                    <h3 className="text-lg font-bold text-stone-800 mb-2 leading-tight tracking-tight">{item.title}</h3>
                     <p className="text-stone-500 text-sm leading-relaxed">{item.body || 'No announcement body provided.'}</p>
                   </div>
                 </ScrollReveal>

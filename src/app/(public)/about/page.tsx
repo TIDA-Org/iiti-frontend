@@ -101,7 +101,7 @@ export default async function AboutPage() {
           <ScrollReveal>
             {heroEyebrow ? <SectionLabel light className="justify-center">{heroEyebrow}</SectionLabel> : null}
             {heroTitle ? (
-              <h1 className="text-5xl font-extrabold text-white mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <h1 className="text-5xl font-bold text-white mb-4 leading-tight tracking-tight">
                 {heroTitle}
               </h1>
             ) : null}
@@ -120,7 +120,7 @@ export default async function AboutPage() {
           <div className="max-w-5xl mx-auto px-4">
             <ScrollReveal className="text-center mb-12">
               {heroEyebrow ? <SectionLabel className="justify-center">{heroEyebrow}</SectionLabel> : null}
-              {purposeHeading ? <h2 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{purposeHeading}</h2> : null}
+              {purposeHeading ? <h2 className="text-3xl font-bold text-stone-900 leading-tight tracking-tight">{purposeHeading}</h2> : null}
             </ScrollReveal>
             <div className="grid md:grid-cols-2 gap-8">
               {purposeCards.map((card, index) => (
@@ -129,7 +129,7 @@ export default async function AboutPage() {
                     <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-5">
                       {index === 0 ? <Award className="w-6 h-6 text-orange-500" /> : <Users className="w-6 h-6 text-orange-500" />}
                     </div>
-                    {card.title ? <h3 className="text-xl font-bold text-stone-800 mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>{card.title}</h3> : null}
+                    {card.title ? <h3 className="text-xl font-bold text-stone-800 mb-4 leading-tight tracking-tight">{card.title}</h3> : null}
                     {card.localText ? (
                       <p className="text-stone-600 text-sm leading-relaxed mb-4 font-sinhala" lang="si">
                         {card.localText}
@@ -156,7 +156,7 @@ export default async function AboutPage() {
         <div className="relative max-w-6xl mx-auto px-4">
           <ScrollReveal className="text-center mb-12">
             {aboutSection?.title ? <SectionLabel className="justify-center">{aboutSection.title}</SectionLabel> : null}
-            {aboutContent.title ? <h2 className="text-3xl font-extrabold text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{aboutContent.title}</h2> : null}
+            {aboutContent.title ? <h2 className="text-3xl font-bold text-stone-900 leading-tight tracking-tight">{aboutContent.title}</h2> : null}
           </ScrollReveal>
           <ScrollReveal>
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
@@ -170,7 +170,7 @@ export default async function AboutPage() {
                   </div>
 
                   {instituteName ? <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-300">{instituteName}</p> : null}
-                  {aboutSection?.title ? <h3 className="mt-3 text-3xl font-extrabold leading-tight" style={{ fontFamily: 'Outfit, sans-serif' }}>{aboutSection.title}</h3> : null}
+                  {aboutSection?.title ? <h3 className="mt-3 text-3xl font-bold leading-tight tracking-tight">{aboutSection.title}</h3> : null}
                   {heroDescription ? <p className="mt-4 max-w-md text-sm leading-7 text-stone-300">{heroDescription}</p> : null}
 
                   {yearEstablished || settingsCards.length > 0 ? (
@@ -206,7 +206,7 @@ export default async function AboutPage() {
                 ) : null}
 
                 <div className="pl-6">
-                  {aboutContent.title ? <h3 className="max-w-3xl text-3xl font-extrabold tracking-tight text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{aboutContent.title}</h3> : null}
+                  {aboutContent.title ? <h3 className="max-w-3xl text-3xl font-bold leading-tight tracking-tight text-stone-900">{aboutContent.title}</h3> : null}
 
                   <div className="mt-8 space-y-6">
                     {aboutContent.paragraphs.map((paragraph, index) => (
@@ -229,7 +229,7 @@ export default async function AboutPage() {
                       </div>
                       <div>
                         {aboutSection?.title ? <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">{aboutSection.title}</p> : null}
-                        {aboutContent.emphasisLabel ? <h4 className="mt-2 text-2xl font-bold tracking-tight text-stone-900" style={{ fontFamily: 'Outfit, sans-serif' }}>{aboutContent.emphasisLabel}</h4> : null}
+                        {aboutContent.emphasisLabel ? <h4 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-stone-900">{aboutContent.emphasisLabel}</h4> : null}
                       </div>
                     </div>
 
