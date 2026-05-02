@@ -45,7 +45,7 @@ export function CoursesPreview() {
 
           {!isLoading &&
             courses.map((course, i) => (
-              <ScrollReveal key={course.id} delay={i * 0.1} className="h-[420px]">
+              <ScrollReveal key={course.id} delay={i * 0.1} className="h-105">
                 <CourseImageCard
                   imageUrl={getCourseCardImage(course)}
                   title={course.name}

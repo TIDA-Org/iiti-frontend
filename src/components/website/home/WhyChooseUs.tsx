@@ -141,7 +141,7 @@ export function WhyChooseUs() {
 
           {/* Left visual — below features on mobile, left column on desktop */}
           <ScrollReveal direction="left" className="lg:order-1">
-            <div className="relative pb-6 pr-6">
+            <div className="relative pb-5 pr-5 sm:pb-6 sm:pr-6">
               <Card className="relative aspect-4/3 overflow-hidden border-0 bg-slate-950 shadow-lg">
                 {CARD_IMAGES.map((image, index) => (
                   <div
@@ -197,9 +197,9 @@ export function WhyChooseUs() {
                 </div>
               </Card>
               {/* Accent card */}
-              <Card className="absolute bottom-0 right-0 bg-linear-to-br from-orange-500 to-orange-600 text-white p-6 shadow-xl border-0">
-                <div className="text-4xl font-bold tracking-tight">{yearsValue}{yearsSuffix}</div>
-                <div className="text-xs font-semibold opacity-90 mt-1">{yearsStat?.label || 'Years of Excellence'}</div>
+              <Card className="absolute -bottom-2 right-0 border-0 bg-linear-to-br from-orange-500 to-orange-600 px-4 py-3 text-white shadow-xl sm:bottom-0 sm:p-6">
+                <div className="text-3xl font-bold tracking-tight leading-none sm:text-4xl sm:leading-tight">{yearsValue}{yearsSuffix}</div>
+                <div className="mt-1 text-[10px] font-semibold opacity-90 sm:text-xs">{yearsStat?.label || 'Years of Excellence'}</div>
               </Card>
             </div>
           </ScrollReveal>

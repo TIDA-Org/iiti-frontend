@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react'
+import { CheckCircle, ArrowRight, ArrowLeft, CircleAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
 import { SectionLabel } from '@/components/shared/SectionLabel'
@@ -252,8 +252,17 @@ export default function ApplyPage() {
     }
   }
 
-  const inputClass = "w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-  const labelClass = "block text-sm font-medium text-stone-700 mb-1.5"
+  const getInputClass = (hasError = false) =>
+    [
+      'w-full px-3.5 py-2.5 rounded-xl border text-sm text-stone-800 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all duration-200',
+      'placeholder:text-stone-400 focus:outline-none focus:ring-4',
+      hasError
+        ? 'border-rose-400 bg-rose-50/60 focus:border-rose-500 focus:ring-rose-100'
+        : 'border-stone-200 hover:border-orange-300 focus:border-orange-500 focus:ring-orange-100',
+    ].join(' ')
+
+  const labelClass = 'mb-1.5 block text-sm font-medium text-stone-700'
+  const errorClass = 'mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600'
 
   if (submitted) {
     return (
@@ -291,38 +300,124 @@ export default function ApplyPage() {
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-0 mb-10">
-          {[t.personalInfo, t.courseAndPayment, t.reviewAndSubmit].map((label, i) => (
-            <div key={label} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step > i + 1 ? 'bg-green-500 text-white' : step === i + 1 ? 'bg-orange-500 text-white' : 'bg-stone-200 text-stone-400'}`}>
+        <div className="mb-10 px-1">
+          <div className="grid grid-cols-3">
+            {[t.personalInfo, t.courseAndPayment, t.reviewAndSubmit].map((label, i) => (
+              <div key={label} className="relative flex min-w-0 flex-col items-center px-1 text-center">
+                {i < 2 && (
+                  <div
+                    className={`absolute left-[calc(50%+1rem)] right-[-50%] top-4 h-0.5 ${
+                      step > i + 1 ? 'bg-green-400' : 'bg-stone-200'
+                    }`}
+                  />
+                )}
+
+                <div className={`relative z-10 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${step > i + 1 ? 'bg-green-500 text-white' : step === i + 1 ? 'bg-orange-500 text-white' : 'bg-stone-200 text-stone-400'}`}>
                   {step > i + 1 ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
-                <span className={`text-xs mt-1.5 font-medium ${step === i + 1 ? 'text-orange-500' : 'text-stone-400'}`}>{label}</span>
+                <span className={`mt-1.5 min-h-10 text-center text-xs font-medium leading-tight sm:min-h-0 ${step === i + 1 ? 'text-orange-500' : 'text-stone-400'}`}>
+                  {label}
+                </span>
               </div>
-              {i < 2 && <div className={`w-16 h-0.5 mx-2 mb-5 ${step > i + 1 ? 'bg-green-400' : 'bg-stone-200'}`} />}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-stone-100 p-8 shadow-sm">
+        <div className="rounded-3xl border border-stone-200/70 bg-white/95 p-6 shadow-[0_16px_45px_-24px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-8">
           {step === 1 && (
             <form onSubmit={form1.handleSubmit(onStep1)} className="space-y-4">
-              <h2 className="text-lg font-bold text-stone-800 mb-5">{t.personalInformation}</h2>
+              <h2 className="mb-5 text-lg font-bold text-stone-800">{t.personalInformation}</h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><label className={labelClass}>{t.fullName}</label><input {...form1.register('fullName')} className={inputClass} />{form1.formState.errors.fullName && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.fullName.message}</p>}</div>
-                <div><label className={labelClass}>{t.nameWithInitials}</label><input {...form1.register('nameWithInitials')} className={inputClass} />{form1.formState.errors.nameWithInitials && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nameWithInitials.message}</p>}</div>
-                <div><label className={labelClass}>{t.nicNumber}</label><input {...form1.register('nic')} className={inputClass} />{form1.formState.errors.nic && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.nic.message}</p>}</div>
-                <div><label className={labelClass}>{t.dateOfBirth}</label><input {...form1.register('dateOfBirth')} type="date" readOnly className={inputClass + ' bg-stone-50'} />{form1.formState.errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.dateOfBirth.message}</p>}</div>
-                <div><label className={labelClass}>{t.gender}</label><select {...form1.register('gender')} className={inputClass + ' bg-white'}><option value="">{t.select}</option><option value="male">{t.male}</option><option value="female">{t.female}</option><option value="other">{t.other}</option></select>{form1.formState.errors.gender && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.gender.message}</p>}</div>
-                <div><label className={labelClass}>{t.phone}</label><input {...form1.register('phone')} className={inputClass} />{form1.formState.errors.phone && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.phone.message}</p>}</div>
+                <div>
+                  <label className={labelClass}>{t.fullName}</label>
+                  <input {...form1.register('fullName')} className={getInputClass(Boolean(form1.formState.errors.fullName))} />
+                  {form1.formState.errors.fullName && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.fullName.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.nameWithInitials}</label>
+                  <input {...form1.register('nameWithInitials')} className={getInputClass(Boolean(form1.formState.errors.nameWithInitials))} />
+                  {form1.formState.errors.nameWithInitials && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.nameWithInitials.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.nicNumber}</label>
+                  <input {...form1.register('nic')} className={getInputClass(Boolean(form1.formState.errors.nic))} />
+                  {form1.formState.errors.nic && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.nic.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.dateOfBirth}</label>
+                  <input {...form1.register('dateOfBirth')} type="date" className={getInputClass(Boolean(form1.formState.errors.dateOfBirth))} />
+                  {form1.formState.errors.dateOfBirth && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.dateOfBirth.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.gender}</label>
+                  <select {...form1.register('gender')} className={getInputClass(Boolean(form1.formState.errors.gender))}>
+                    <option value="">{t.select}</option>
+                    <option value="male">{t.male}</option>
+                    <option value="female">{t.female}</option>
+                    <option value="other">{t.other}</option>
+                  </select>
+                  {form1.formState.errors.gender && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.gender.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.phone}</label>
+                  <input {...form1.register('phone')} className={getInputClass(Boolean(form1.formState.errors.phone))} />
+                  {form1.formState.errors.phone && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.phone.message}</p>
+                  )}
+                </div>
               </div>
-              <div><label className={labelClass}>{t.email}</label><input {...form1.register('email')} type="email" className={inputClass} />{form1.formState.errors.email && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.email.message}</p>}</div>
-              <div><label className={labelClass}>{t.addressLine1}</label><input {...form1.register('addressLine1')} className={inputClass} />{form1.formState.errors.addressLine1 && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.addressLine1.message}</p>}</div>
+              <div>
+                <label className={labelClass}>{t.email}</label>
+                <input {...form1.register('email')} type="email" className={getInputClass(Boolean(form1.formState.errors.email))} />
+                {form1.formState.errors.email && (
+                  <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.email.message}</p>
+                )}
+              </div>
+              <div>
+                <label className={labelClass}>{t.addressLine1}</label>
+                <input {...form1.register('addressLine1')} className={getInputClass(Boolean(form1.formState.errors.addressLine1))} />
+                {form1.formState.errors.addressLine1 && (
+                  <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.addressLine1.message}</p>
+                )}
+              </div>
               <div className="grid sm:grid-cols-3 gap-4">
-                <div><label className={labelClass}>{t.city}</label><input {...form1.register('city')} className={inputClass} />{form1.formState.errors.city && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.city.message}</p>}</div>
-                <div><label className={labelClass}>{t.district}</label><select {...form1.register('district')} className={inputClass + ' bg-white'}><option value="">{t.select}</option>{DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}</select>{form1.formState.errors.district && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.district.message}</p>}</div>
-                <div><label className={labelClass}>{t.province}</label><select {...form1.register('province')} className={inputClass + ' bg-white'}><option value="">{t.select}</option>{PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}</select>{form1.formState.errors.province && <p className="text-red-500 text-xs mt-1">{form1.formState.errors.province.message}</p>}</div>
+                <div>
+                  <label className={labelClass}>{t.city}</label>
+                  <input {...form1.register('city')} className={getInputClass(Boolean(form1.formState.errors.city))} />
+                  {form1.formState.errors.city && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.city.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.district}</label>
+                  <select {...form1.register('district')} className={getInputClass(Boolean(form1.formState.errors.district))}>
+                    <option value="">{t.select}</option>
+                    {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  {form1.formState.errors.district && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.district.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className={labelClass}>{t.province}</label>
+                  <select {...form1.register('province')} className={getInputClass(Boolean(form1.formState.errors.province))}>
+                    <option value="">{t.select}</option>
+                    {PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  {form1.formState.errors.province && (
+                    <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form1.formState.errors.province.message}</p>
+                  )}
+                </div>
               </div>
               <button type="submit" className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors mt-4">
                 {t.continue} <ArrowRight className="w-4 h-4" />
@@ -347,7 +442,9 @@ export default function ApplyPage() {
                   ))}
                 </div>
                 {courses.length === 0 && <p className="text-slate-500 text-xs mt-2">{t.noCourses}</p>}
-                {form2.formState.errors.courses && <p className="text-red-500 text-xs mt-1">{form2.formState.errors.courses.message}</p>}
+                {form2.formState.errors.courses && (
+                  <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form2.formState.errors.courses.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-3">{t.paymentMethod}</label>
