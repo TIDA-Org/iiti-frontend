@@ -177,7 +177,8 @@ export function PublicFooter() {
         {/* Bottom bar */}
         <div className="border-t border-stone-800 pt-8 text-center">
           <p className="text-sm text-stone-500">
-            © 2025 Imasha International Training Institute (Pvt) Ltd. All rights reserved.
+            © 2026 Imasha International Training Institute (Pvt) Ltd. All rights reserved. <br />
+            Engineered by TIDA - Transforming Ideas into Digital Assets.
           </p>
         </div>
       </div>

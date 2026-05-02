@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, ClipboardList, CreditCard,
   FileText, Award, Briefcase, Tag, Calendar, BarChart3,
   UserCog, Database, Shield, Settings, ChevronLeft, ChevronRight, ChevronDown,
-  LogOut, GraduationCap, MapPin, Layers, ReceiptText, BriefcaseBusiness,
+  LogOut, MapPin, Layers, ReceiptText, BriefcaseBusiness,
   Package, ShoppingBag, Megaphone, MessageSquareQuote, MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -284,9 +285,20 @@ export function AdminSidebar({
         'flex items-center h-16 border-b border-slate-100 transition-all duration-300',
         sidebarCollapsed ? 'justify-between px-3' : 'gap-3 px-4'
       )}>
-        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-          <GraduationCap className="w-4 h-4 text-white" />
-        </div>
+        <Link
+          href="/"
+          onClick={closeMobileIfNeeded}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 overflow-hidden"
+          aria-label="Go to landing page"
+        >
+          <Image
+            src="/assets/logo_v2.png"
+            alt="IITI Logo"
+            width={32}
+            height={32}
+            className="h-full w-full object-contain"
+          />
+        </Link>
         {!sidebarCollapsed && (
           <div className="min-w-0 flex-1">
             <div className="text-slate-900 font-bold text-sm truncate" style={{ fontFamily: 'Inter, sans-serif' }}>IITI Admin</div>
