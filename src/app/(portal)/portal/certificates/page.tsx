@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Award, Download, QrCode } from 'lucide-react'
 import { toast } from 'sonner'
+import { getProxiedCertificateUrl } from '@/lib/utils/download'
 
 export default function PortalCertificatesPage() {
   const [certs, setCerts] = useState<CertificateApiResponse[]>([])
@@ -61,16 +62,19 @@ export default function PortalCertificatesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2 pt-3 border-t border-stone-100">
-                    {cert.certificate_pdf_url && (
-                      <a
-                        href={cert.certificate_pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 border border-stone-200 hover:border-stone-300 px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" /> Download
-                      </a>
-                    )}
+                    {(() => {
+                      const href = getProxiedCertificateUrl(cert.certificate_pdf_url, cert.id)
+                      return href ? (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 border border-stone-200 hover:border-stone-300 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Download
+                        </a>
+                      ) : null
+                    })()}
                     <button
                       onClick={() => {navigator.clipboard.writeText(verifyUrl); toast.success('Verification link copied!')}}
                       className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-600 border border-orange-200 hover:border-orange-300 px-3 py-1.5 rounded-lg transition-colors"
