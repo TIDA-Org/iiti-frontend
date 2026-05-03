@@ -1,4 +1,4 @@
-const CLIENT_API_BASE_URL = '/api/backend'
+export const CLIENT_API_BASE_URL = '/api/backend'
 const DEFAULT_TIMEOUT_MS = 15000
 const MAX_IDEMPOTENT_RETRIES = 2
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504])

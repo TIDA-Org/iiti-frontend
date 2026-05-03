@@ -11,6 +11,7 @@ import { DataLoader } from '@/components/shared/DataLoader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
 import { Eye } from 'lucide-react'
+import { getProxiedCertificateUrl } from '@/lib/utils/download'
 
 export default function AdminCertificatesPage() {
   const { data, isLoading, error, refetch } = useApi<CertificateListApiResponse>(
@@ -50,20 +51,23 @@ export default function AdminCertificatesPage() {
                       <StatusBadge status={cert.is_revoked ? 'inactive' : 'active'} />
                     </td>
                     <td className="px-5 py-3">
-                      {cert.certificate_pdf_url ? (
-                        <a
-                          href={cert.certificate_pdf_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </a>
-                      ) : (
-                        <span className="flex items-center gap-1 text-xs text-slate-300 font-medium cursor-not-allowed" title="Certificate PDF is not available">
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </span>
-                      )}
+                      {(() => {
+                        const href = getProxiedCertificateUrl(cert.certificate_pdf_url, cert.id)
+                        return href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </a>
+                        ) : (
+                          <span className="flex items-center gap-1 text-xs text-slate-300 font-medium cursor-not-allowed" title="Certificate PDF is not available">
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </span>
+                        )
+                      })()}
                     </td>
                   </tr>
                 ))}
