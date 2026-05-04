@@ -19,6 +19,7 @@ import {
 import { apiGetStudents, StudentApiResponse } from '@/lib/api/students'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
@@ -64,6 +65,7 @@ const getDisplayedAmountPaid = (enrollment: {
 }
 
 export default function AdminEnrollmentsPage() {
+  const [search, setSearch] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -104,6 +106,21 @@ export default function AdminEnrollmentsPage() {
 
   const studentNameById = useMemo(() => new Map(students.map((student) => [student.id, student.full_name])), [students])
   const courseNameById = useMemo(() => new Map(courses.map((course) => [course.id, course.name])), [courses])
+
+  const filteredEnrollments = useMemo(() => {
+    if (!search.trim()) return enrollments
+    const lowerSearch = search.toLowerCase()
+    return enrollments.filter((enrollment) => {
+      const studentName = studentNameById.get(enrollment.student_id)?.toLowerCase() || ''
+      const courseName = courseNameById.get(enrollment.course_id)?.toLowerCase() || ''
+      const enrollmentNumber = enrollment.enrollment_number?.toLowerCase() || ''
+      return (
+        studentName.includes(lowerSearch) ||
+        courseName.includes(lowerSearch) ||
+        enrollmentNumber.includes(lowerSearch)
+      )
+    })
+  }, [enrollments, search, studentNameById, courseNameById])
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -362,9 +379,13 @@ export default function AdminEnrollmentsPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by enrollment, student name, or course..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{filteredEnrollments.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
-          {enrollments.length === 0 ? (
-            <EmptyState icon={ClipboardList} title="No enrollments yet" description="No enrollment records are available right now." />
+          {filteredEnrollments.length === 0 ? (
+            <EmptyState icon={ClipboardList} title="No enrollments yet" description={search ? "No enrollment records match your search." : "No enrollment records are available right now."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -382,7 +403,7 @@ export default function AdminEnrollmentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {enrollments.map((enrollment) => (
+                  {filteredEnrollments.map((enrollment) => (
                     <tr key={enrollment.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3 font-mono text-xs text-amber-600">{enrollment.enrollment_number || `${enrollment.id.slice(0, 8)}...`}</td>
                       <td className="px-5 py-3 text-slate-700">{studentNameById.get(enrollment.student_id) || enrollment.student_id.slice(0, 8)}</td>

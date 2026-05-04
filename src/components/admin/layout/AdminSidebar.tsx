@@ -6,9 +6,9 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, BookOpen, ClipboardList, CreditCard,
-  FileText, Award, Briefcase, Tag, Calendar, BarChart3,
+  FileText, Award, Briefcase, Tag, BarChart3,
   UserCog, Database, Shield, Settings, ChevronLeft, ChevronRight, ChevronDown,
-  LogOut, MapPin, Layers, ReceiptText, BriefcaseBusiness,
+  LogOut, MapPin, ReceiptText, BriefcaseBusiness,
   Package, ShoppingBag, Megaphone, MessageSquareQuote, MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -61,8 +61,6 @@ const NAV_GROUPS: NavGroup[] = [
           { href: '/admin/courses/locations', label: 'Course Locations', icon: MapPin, roles: ['super_admin', 'admin'] },
         ],
       },
-      { href: '/admin/batches', label: 'Batches', icon: Layers, roles: ['super_admin', 'admin', 'front_desk'] },
-      { href: '/admin/intakes', label: 'Intake Dates', icon: Calendar, roles: ['super_admin', 'admin', 'front_desk'] },
       {
         href: '/admin/results',
         label: 'Results',

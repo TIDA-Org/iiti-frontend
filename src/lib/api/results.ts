@@ -1,5 +1,21 @@
 import { apiFetch } from './core'
 
+export interface StudentBriefResponse {
+  id: string
+  student_number: string
+  full_name: string
+}
+
+export interface CourseBriefResponse {
+  id: string
+  name: string
+}
+
+export interface EnrollmentBriefResponse {
+  id: string
+  enrollment_number: string
+}
+
 export interface ResultApiResponse {
   id: string
   enrollment_id: string
@@ -19,6 +35,9 @@ export interface ResultApiResponse {
   published_by: string | null
   created_at: string
   updated_at: string
+  student?: StudentBriefResponse | null
+  course?: CourseBriefResponse | null
+  enrollment?: EnrollmentBriefResponse | null
 }
 
 export interface ResultListApiResponse {

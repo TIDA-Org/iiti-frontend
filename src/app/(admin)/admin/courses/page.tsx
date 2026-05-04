@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   apiCreateCourse,
   apiGetCourseCategories,
@@ -13,6 +13,7 @@ import { useApi } from '@/hooks/useApi'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/lib/utils'
@@ -25,6 +26,7 @@ const courseTypeLabel: Record<string, string> = {
 }
 
 export default function AdminCoursesPage() {
+  const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [creating, setCreating] = useState(false)
   const [editingCourse, setEditingCourse] = useState<CourseApiResponse | null>(null)
@@ -130,7 +132,16 @@ export default function AdminCoursesPage() {
     }
   }
 
-  const list = courses || []
+  const list = useMemo(() => {
+    const courses_list = courses || []
+    if (!search.trim()) return courses_list
+    const lowerSearch = search.toLowerCase()
+    return courses_list.filter((course) =>
+      course.name.toLowerCase().includes(lowerSearch) ||
+      course.course_code?.toLowerCase().includes(lowerSearch) ||
+      course.name_si?.toLowerCase().includes(lowerSearch)
+    )
+  }, [courses, search])
 
   return (
     <div>
@@ -281,9 +292,13 @@ export default function AdminCoursesPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by course name, code, or Sinhala name..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{list.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
           {list.length === 0 ? (
-            <EmptyState icon={BookOpen} title="No courses yet" description="Add your first training programme using the button above." />
+            <EmptyState icon={BookOpen} title="No courses yet" description={search ? "No courses match your search." : "Add your first training programme using the button above."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

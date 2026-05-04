@@ -56,14 +56,32 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 }
 
 export class ApiError extends Error {
-  status: number
-  code: string
+  public status: number
+  public code: string
 
   constructor(status: number, code: string, message: string) {
     super(message)
+    
+    this.name = 'ApiError'
     this.status = status
     this.code = code
-    this.name = 'ApiError'
+    this.message = message
+    
+    // Properly set prototype for instanceof checks and proper inheritance chain
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, new.target.prototype)
+    } else {
+      (this as any).__proto__ = ApiError.prototype
+    }
+  }
+  
+  toJSON() {
+    return {
+      name: this.name,
+      status: this.status,
+      code: this.code,
+      message: this.message,
+    }
   }
 }
 

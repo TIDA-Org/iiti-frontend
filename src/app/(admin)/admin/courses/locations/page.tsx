@@ -11,6 +11,7 @@ import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
@@ -25,6 +26,7 @@ const toNullableNumber = (value: string): number | null => {
 }
 
 export default function AdminCourseLocationsPage() {
+  const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<TrainingLocationApiResponse | null>(null)
@@ -56,9 +58,18 @@ export default function AdminCourseLocationsPage() {
   )
 
   const locations = useMemo(() => {
-    const list = data || []
+    let list = data || []
+    if (search.trim()) {
+      const lowerSearch = search.toLowerCase()
+      list = list.filter((loc) =>
+        loc.name.toLowerCase().includes(lowerSearch) ||
+        loc.name_si?.toLowerCase().includes(lowerSearch) ||
+        loc.city?.toLowerCase().includes(lowerSearch) ||
+        loc.district?.toLowerCase().includes(lowerSearch)
+      )
+    }
     return [...list].sort((a, b) => a.name.localeCompare(b.name))
-  }, [data])
+  }, [data, search])
 
   const startEdit = (row: TrainingLocationApiResponse) => {
     setEditing(row)
@@ -270,9 +281,13 @@ export default function AdminCourseLocationsPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by location name, city, or district..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{locations.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
           {locations.length === 0 ? (
-            <EmptyState icon={MapPin} title="No locations yet" description="Create your first training location." />
+            <EmptyState icon={MapPin} title="No locations yet" description={search ? "No locations match your search." : "Create your first training location."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   apiCreateStaffUser,
   apiDeleteStaffUser,
@@ -14,12 +14,14 @@ import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/lib/utils'
 import { Check, KeyRound, Pencil, Plus, Trash2, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function AdminUsersPage() {
+  const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -49,7 +51,16 @@ export default function AdminUsersPage() {
     [],
   )
 
-  const users = data?.items || []
+  const users = useMemo(() => {
+    const list = data?.items || []
+    if (!search.trim()) return list
+    const lowerSearch = search.toLowerCase()
+    return list.filter((user) =>
+      user.full_name?.toLowerCase().includes(lowerSearch) ||
+      user.email?.toLowerCase().includes(lowerSearch) ||
+      user.phone?.toLowerCase().includes(lowerSearch)
+    )
+  }, [data?.items, search])
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -264,9 +275,13 @@ export default function AdminUsersPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by name, email, or phone..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{users.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
           {users.length === 0 ? (
-            <EmptyState icon={Users} title="No staff users yet" description="Add your first staff user using the button above." />
+            <EmptyState icon={Users} title="No staff users yet" description={search ? "No users match your search." : "Add your first staff user using the button above."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

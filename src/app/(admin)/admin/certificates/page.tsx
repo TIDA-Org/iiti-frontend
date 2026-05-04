@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import {
   apiGetCertificates,
   CertificateApiResponse,
@@ -8,18 +9,29 @@ import {
 import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
 import { Eye } from 'lucide-react'
 import { getProxiedCertificateUrl } from '@/lib/utils/download'
 
 export default function AdminCertificatesPage() {
+  const [search, setSearch] = useState('')
+  
   const { data, isLoading, error, refetch } = useApi<CertificateListApiResponse>(
     () => apiGetCertificates(1, 100),
     [],
   )
 
-  const certs = data?.items || []
+  const certs = useMemo(() => {
+    const list = data?.items || []
+    if (!search.trim()) return list
+    const lowerSearch = search.toLowerCase()
+    return list.filter((cert) =>
+      cert.certificate_number?.toLowerCase().includes(lowerSearch) ||
+      cert.cert_subtype?.toLowerCase().includes(lowerSearch)
+    )
+  }, [data?.items, search])
   const certTypeLabel: Record<string, string> = { full: 'Institute', participation: 'Participation', skill_id: 'Skill ID', nvq: 'NVQ L3' }
 
   return (
@@ -27,6 +39,10 @@ export default function AdminCertificatesPage() {
       <PageHeader title="Certificates" subtitle={data ? `${data.total} certificates issued` : 'Loading...'} />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by certificate number or subtype..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{certs.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
