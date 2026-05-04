@@ -10,23 +10,8 @@ import { getPublicCourseHref } from '@/lib/public-course-routes'
 import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 function buildWhatsAppHref(value: string) {
-  // Remove all non-digits
-  let normalized = value.replace(/\D/g, '')
-  
-  // If empty, return hash
-  if (!normalized) return '#'
-  
-  // If doesn't start with 94 (Sri Lanka country code), add it
-  if (!normalized.startsWith('94')) {
-    // Remove leading 0 if present (e.g., 0712345678 -> 712345678)
-    if (normalized.startsWith('0')) {
-      normalized = normalized.substring(1)
-    }
-    // Add country code
-    normalized = '94' + normalized
-  }
-  
-  return `https://wa.me/${normalized}`
+  const normalized = value.replace(/\D/g, '')
+  return normalized ? `https://wa.me/${normalized}` : '#'
 }
 
 interface SocialLink {
