@@ -1,7 +1,8 @@
 export const CLIENT_API_BASE_URL = '/api/backend'
-const DEFAULT_TIMEOUT_MS = 15000
-const MAX_IDEMPOTENT_RETRIES = 2
+const DEFAULT_TIMEOUT_MS = 5000
+const MAX_IDEMPOTENT_RETRIES = 0
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504])
+const ENABLE_MOCK_DATA = process.env.NODE_ENV === 'development'
 
 function normalizeBaseUrl(value: string) {
   return value.replace(/\/+$/, '')
@@ -85,6 +86,45 @@ export class ApiError extends Error {
   }
 }
 
+function getMockData(path: string): unknown {
+  // Mock data for common endpoints
+  const mockResponses: Record<string, unknown> = {
+    '/settings/public': [],
+    '/courses/': [
+      {
+        id: 'course-1',
+        name: 'Forklift Operations',
+        course_code: 'FORK-001',
+        description: 'NVQ Level 3 certified forklift operator training',
+        display_order: 1,
+        is_active: true,
+      },
+      {
+        id: 'course-2',
+        name: 'Excavator Operations',
+        course_code: 'EXC-001',
+        description: 'Advanced heavy machinery operation training',
+        display_order: 2,
+        is_active: true,
+      },
+    ],
+    '/announcements/public': [],
+    '/website/stats': {
+      total_students: 500,
+      total_courses: 3,
+      total_employers: 25,
+    },
+    '/website/content-sections/other': {
+      title: 'Why Choose Us',
+      content: 'Industry-leading training with certified instructors',
+    },
+    '/website/testimonials/public': [],
+    '/website/jobs/teaser': [],
+  }
+
+  return mockResponses[path] || []
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -122,6 +162,12 @@ export async function apiFetch<T>(
         await sleep(200 * (attempt + 1))
         attempt += 1
         continue
+      }
+
+      // In development, return mock data on network errors
+      if (ENABLE_MOCK_DATA && method === 'GET') {
+        console.warn(`[API] Using mock data for ${path} (backend unavailable)`)
+        return getMockData(path) as T
       }
 
       if (isAbortError) {
