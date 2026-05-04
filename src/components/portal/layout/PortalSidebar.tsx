@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, CreditCard, FileText,
-  Award, Briefcase, Bell, LogOut, GraduationCap, X, ShoppingCart, PackageCheck,
+  Award, Briefcase, Bell, LogOut,X, ShoppingCart, PackageCheck,
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
+import Image from 'next/image';
 
 const NAV_ITEMS = [
   { href: '/portal/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -88,11 +89,18 @@ export function PortalSidebar({
       {/* Logo */}
       <div className={cn(
         'flex items-center h-16 border-b border-slate-100 transition-all duration-300 shrink-0',
-        !isMobile && collapsed ? 'justify-between px-3' : 'gap-2.5 px-5'
+        !isMobile && collapsed ? 'justify-center px-3' : 'gap-2.5 px-5'
       )}>
-        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-          <GraduationCap className="w-4 h-4 text-white" />
-        </div>
+        <Image
+          src="/assets/logo_v2.png"
+          alt="Logo"
+          className={cn(
+            "transition-all duration-300",
+            !isMobile && collapsed ? "w-2 h-2" : "w-12 h-auto"
+          )}
+        />
+
+
         {(!collapsed || isMobile) && (
           <div className="flex-1 min-w-0">
             <div className="text-slate-800 font-bold text-sm truncate">IITI Portal</div>

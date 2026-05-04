@@ -124,7 +124,7 @@ export default function LoginPage() {
       </section>
 
       {/* Right form panel */}
-      <section className="flex items-center justify-center bg-gradient-to-b from-orange-50/60 via-white to-orange-50/30 px-6 py-10 sm:px-10 lg:px-12">
+      <section className="flex items-center justify-center bg-gradient-to-b from-orange-50/60 via-white to-orange-50/30 px-6 py-10 sm:px-10 lg:px-12 -mt-55git checkout lg:mt-0 relative">
         <div className="w-full max-w-md">
           <Link
             href="/"

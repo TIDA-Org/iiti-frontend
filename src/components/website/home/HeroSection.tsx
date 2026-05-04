@@ -68,7 +68,7 @@ export function HeroSection() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="flex items-center gap-2 mb-6"
+              className="flex items-center gap-2 mb-4 -mt-12"
             >
               <div className="w-8 h-0.5 bg-orange-400" />
               <span className="text-orange-400 text-xs font-semibold uppercase tracking-widest">
@@ -81,7 +81,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-              className="text-5xl lg:text-7xl font-bold text-white leading-tight mb-6 tracking-tight"
+              className="text-5xl lg:text-7xl font-bold text-white leading-tight mb-4 tracking-tight"
             >
               Train Today.
               <br />
@@ -95,7 +95,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut', delay: 0.25 }}
-              className="text-white/80 text-base lg:text-lg leading-relaxed max-w-xl mb-8 font-regular"
+              className="text-white/80 text-base lg:text-lg leading-relaxed max-w-xl mb-6 font-regular"
             >
               Imasha International Training Institute offers TVEC-accredited NVQ Level 3 training
               for Forklift, Excavator, and Backhoe Loader operations — recognized locally and internationally.
