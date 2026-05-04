@@ -11,6 +11,7 @@ import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { DataLoader } from '@/components/shared/DataLoader'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
@@ -26,6 +27,7 @@ const toSlug = (value: string): string =>
     .replace(/-+/g, '-')
 
 export default function AdminCourseCategoriesPage() {
+  const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<CourseCategoryApiResponse | null>(null)
@@ -56,9 +58,17 @@ export default function AdminCourseCategoriesPage() {
   )
 
   const categories = useMemo(() => {
-    const list = data || []
+    let list = data || []
+    if (search.trim()) {
+      const lowerSearch = search.toLowerCase()
+      list = list.filter((cat) =>
+        cat.name.toLowerCase().includes(lowerSearch) ||
+        cat.name_si?.toLowerCase().includes(lowerSearch) ||
+        cat.description?.toLowerCase().includes(lowerSearch)
+      )
+    }
     return [...list].sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name))
-  }, [data])
+  }, [data, search])
 
   const startEdit = (row: CourseCategoryApiResponse) => {
     setEditing(row)
@@ -283,9 +293,13 @@ export default function AdminCourseCategoriesPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by category name or description..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{categories.length} results</span>
+        </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
           {categories.length === 0 ? (
-            <EmptyState icon={FolderTree} title="No categories yet" description="Create your first course category." />
+            <EmptyState icon={FolderTree} title="No categories yet" description={search ? "No categories match your search." : "Create your first course category."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ApiError } from '@/lib/api/core'
 
 interface UseApiState<T> {
@@ -15,6 +15,7 @@ export function useApi<T>(
   const [data, setData] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const depsRef = useRef<unknown[]>()
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
@@ -37,8 +38,16 @@ export function useApi<T>(
   }, deps)
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    // Only refetch if deps have actually changed, not on every render
+    const depsChanged = !depsRef.current || 
+      deps.length !== depsRef.current.length ||
+      deps.some((dep, i) => dep !== depsRef.current![i])
+    
+    if (depsChanged) {
+      depsRef.current = deps
+      fetchData()
+    }
+  }, [deps, fetchData]) // Only refetch if deps actually change
 
   return { data, isLoading, error, refetch: fetchData }
 }

@@ -11,11 +11,25 @@ import { toast } from 'sonner'
 import { ScrollReveal } from '@/components/shared/ScrollReveal'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
-import { delay } from '@/lib/utils'
+import { apiSendContactForm } from '@/lib/api/contact'
+
+// Reserved domains for documentation/testing only - RFC 6761
+const RESERVED_TEST_DOMAINS = [
+  'example.com', 'example.org', 'example.net',
+  'test.com', 'test.org', 'test.net',
+  'localhost', 'invalid', 'local',
+  'example.co.uk', 'example.co.jp'
+]
 
 const schema = z.object({
   name: z.string().trim().min(2, 'Name is required'),
-  email: z.string().trim().email('Valid email required'),
+  email: z.string().trim().email('Valid email required').refine(
+    (email) => {
+      const domain = email.toLowerCase().split('@')[1]
+      return !RESERVED_TEST_DOMAINS.includes(domain) && !domain?.endsWith('.test')
+    },
+    'Please enter your actual email address. Test/example domains cannot receive emails.'
+  ),
   phone: z
     .string()
     .trim()
@@ -75,12 +89,27 @@ export default function ContactPage() {
     },
   ]
 
-  const onSubmit = async () => {
-    setIsLoading(true)
-    await delay(800)
-    setIsLoading(false)
-    toast.success('Your message has been received. We will contact you shortly.')
-    reset()
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true)
+      const response = await apiSendContactForm(data)
+      
+      if (response.success) {
+        toast.success(response.message)
+        reset()
+      } else {
+        toast.error(response.message || 'Failed to send message')
+      }
+    } catch (error: any) {
+      const errorMessage = 
+        error?.message?.includes('Validation error') 
+          ? 'Please check your input and try again'
+          : error?.message || 'An error occurred. Please try again later or contact us directly.'
+      toast.error(errorMessage)
+      console.error('Contact form error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

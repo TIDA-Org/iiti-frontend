@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { SearchInput } from '@/components/shared/SearchInput'
 import { useApi } from '@/hooks/useApi'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { formatDate } from '@/lib/utils'
@@ -25,6 +26,7 @@ import { toast } from 'sonner'
 const slugPattern = /^[a-z][a-z0-9_]*$/
 
 export default function AdminRolesPage() {
+  const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<number | null>(null)
@@ -63,6 +65,17 @@ export default function AdminRolesPage() {
     Object.values(groups).forEach((list) => list.sort((a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label)))
     return groups
   }, [permissions])
+
+  const filteredRoles = useMemo(() => {
+    const list = roles || []
+    if (!search.trim()) return list
+    const lowerSearch = search.toLowerCase()
+    return list.filter((role) =>
+      role.name?.toLowerCase().includes(lowerSearch) ||
+      role.slug?.toLowerCase().includes(lowerSearch) ||
+      role.description?.toLowerCase().includes(lowerSearch)
+    )
+  }, [roles, search])
 
   const togglePermission = (permissionId: number) => {
     setSelectedPermissionIds((prev) =>
@@ -180,7 +193,7 @@ export default function AdminRolesPage() {
     }
   }
 
-  const roleList = roles || []
+  const roleList = filteredRoles
   const loading = rolesLoading || permsLoading
   const error = rolesError || permsError
 
@@ -188,7 +201,7 @@ export default function AdminRolesPage() {
     <div>
       <PageHeader
         title="Roles & Permissions"
-        subtitle={roles ? `${roleList.length} roles configured` : 'Loading...'}
+        subtitle={roles ? `${filteredRoles.length} results` : 'Loading...'}
         actions={
           canManageRoles ? (
             <button
@@ -342,6 +355,10 @@ export default function AdminRolesPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by role name, slug, or description..." className="max-w-sm" />
+          <span className="text-sm text-slate-400">{filteredRoles.length} results</span>
+        </div>
         <DataLoader
           isLoading={loading || loadingEdit}
           error={error}
@@ -350,7 +367,7 @@ export default function AdminRolesPage() {
           }}
         >
           {roleList.length === 0 ? (
-            <EmptyState icon={ShieldCheck} title="No roles yet" description="Create your first custom role." />
+            <EmptyState icon={ShieldCheck} title="No roles yet" description={search ? "No roles match your search." : "Create your first custom role."} />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">
