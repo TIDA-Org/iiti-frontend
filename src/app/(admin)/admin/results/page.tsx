@@ -29,16 +29,17 @@ export default function AdminResultsPage() {
 
   const results = data?.items || []
   const filteredResults = useMemo(() => {
-    if (!search.trim()) return results
+    const items = data?.items || []
+    if (!search.trim()) return items
     const lowerSearch = search.toLowerCase()
-    return results.filter((r) =>
+    return items.filter((r) =>
       r.student?.student_number?.toLowerCase().includes(lowerSearch) ||
       r.student?.full_name?.toLowerCase().includes(lowerSearch) ||
       r.course?.name?.toLowerCase().includes(lowerSearch) ||
       r.enrollment_id?.toLowerCase().includes(lowerSearch) ||
       r.final_grade?.toLowerCase().includes(lowerSearch)
     )
-  }, [results, search])
+  }, [data?.items, search])
   const published = filteredResults.filter(r => r.is_published).length
   const unpublished = filteredResults.filter(r => !r.is_published).length
 

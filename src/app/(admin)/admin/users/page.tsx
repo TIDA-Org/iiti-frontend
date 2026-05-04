@@ -58,7 +58,7 @@ export default function AdminUsersPage() {
     return list.filter((user) =>
       user.full_name?.toLowerCase().includes(lowerSearch) ||
       user.email?.toLowerCase().includes(lowerSearch) ||
-      user.phone_primary?.toLowerCase().includes(lowerSearch)
+      user.phone?.toLowerCase().includes(lowerSearch)
     )
   }, [data?.items, search])
 
