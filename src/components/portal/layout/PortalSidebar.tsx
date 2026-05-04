@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, CreditCard, FileText,
-  Award, Briefcase, Bell, LogOut, GraduationCap, X, ShoppingCart, PackageCheck,
+  Award, Briefcase, Bell, LogOut,X, ShoppingCart, PackageCheck,
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
 import { useAuthStore } from '@/store/authStore'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
+import Image from 'next/image';
 
 const NAV_ITEMS = [
   { href: '/portal/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -90,7 +91,7 @@ export function PortalSidebar({
         'flex items-center h-16 border-b border-slate-100 transition-all duration-300 shrink-0',
         !isMobile && collapsed ? 'justify-center px-3' : 'gap-2.5 px-5'
       )}>
-        <img
+        <Image
           src="/assets/logo_v2.png"
           alt="Logo"
           className={cn(
