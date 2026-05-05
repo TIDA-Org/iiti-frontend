@@ -1,16 +1,16 @@
 ﻿'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { useApi } from '@/hooks/useApi'
 import { apiGetContentSection, apiUpdateContentSection } from '@/lib/api/website'
 
-interface Props { params: Promise<{ section: string }> }
+interface Props { params: { section: string } }
 
 export default function AdminWebsiteContentSectionPage({ params }: Props) {
-  const { section } = use(params)
+  const { section } = params
   const { data, isLoading, error, refetch } = useApi(() => apiGetContentSection(section), [section])
   const [form, setForm] = useState({ title: '', title_si: '', content: '', content_si: '', meta_description: '', is_published: false })
   const [saving, setSaving] = useState(false)
