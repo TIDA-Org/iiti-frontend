@@ -44,19 +44,26 @@ export function CertificatesSection() {
       }))
     : DEFAULT_CERTS
 
+  // Use data values if available, otherwise use sensible defaults
+  const eyebrow = data?.eyebrow || 'CERTIFICATIONS'
+  const title = data?.title || 'Industry-Recognized Certifications'
+  const titleHighlight = data?.title_highlight || 'Graduation'
+  const description = data?.description || 'Complete your training and receive three industry-recognized credentials that open doors to local and international employment.'
+  const verifyLabel = data?.verify_button_label || 'Verify a Certificate'
+
   return (
     <section className="py-24" style={{ backgroundColor: '#0A0A0A' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal className="text-center mb-14">
-          <SectionLabel light>{data?.eyebrow || 'Certification'}</SectionLabel>
+          <SectionLabel light>{eyebrow}</SectionLabel>
           <h2
             className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight tracking-tight"
           >
-            {data?.title || 'What You Receive After'}
-            <span className="text-orange-500"> {data?.title_highlight || 'Graduation'}</span>
+            {title}
+            <span className="text-orange-500"> {titleHighlight}</span>
           </h2>
           <p className="text-stone-400 max-w-xl mx-auto">
-            {data?.description || 'Complete your training and receive three industry-recognized credentials that open doors to local and international employment.'}
+            {description}
           </p>
         </ScrollReveal>
 
@@ -86,7 +93,7 @@ export function CertificatesSection() {
             href="/verify"
             className="inline-flex items-center gap-2 border border-orange-500/60 text-orange-400 hover:bg-orange-500 hover:text-white hover:border-orange-500 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200"
           >
-            {data?.verify_button_label || 'Verify a Certificate'}
+            {verifyLabel}
           </Link>
         </div>
       </div>

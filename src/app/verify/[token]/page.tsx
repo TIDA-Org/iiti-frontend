@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState } from 'react'
 import { apiVerify, VerifyApiResponse } from '@/lib/api/verify'
 import { formatDate } from '@/lib/utils'
 import { CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { INSTITUTE_INFO } from '@/lib/constants'
 
-interface Props { params: Promise<{ token: string }> }
+interface Props { params: { token: string } }
 
 export default function VerifyCertificatePage({ params }: Props) {
-  const { token } = use(params)
+  const { token } = params
   const [data, setData] = useState<VerifyApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
 

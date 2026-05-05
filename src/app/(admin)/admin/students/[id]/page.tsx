@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, use } from 'react'
+import { useMemo } from 'react'
 import {
   apiGetGuarantors,
   apiGetStudent,
@@ -25,7 +25,7 @@ import {
   ClipboardList,
 } from 'lucide-react'
 
-interface Props { params: Promise<{ id: string }> }
+interface Props { params: { id: string } }
 
 function statusClass(status: string) {
   const key = status.toLowerCase()
@@ -51,7 +51,7 @@ function getEnrollmentRemaining(enrollment: {
 }
 
 export default function AdminStudentDetailPage({ params }: Props) {
-  const { id } = use(params)
+  const { id } = params
 
   const {
     data: student,

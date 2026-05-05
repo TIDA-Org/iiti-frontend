@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { Suspense, use } from 'react'
+import { Suspense } from 'react'
 
 import { DataLoader } from '@/components/shared/DataLoader'
 import { CourseLanguageProvider } from '@/components/website/courses/CourseLanguageProvider'
@@ -9,11 +9,11 @@ import { useApi } from '@/hooks/useApi'
 import { apiGetCourse, apiGetCourses } from '@/lib/api/courses'
 
 interface Props {
-  params: Promise<{ category: string; courseCode: string }>
+  params: { category: string; courseCode: string }
 }
 
 export default function Page({ params }: Props) {
-  const { category, courseCode } = use(params)
+  const { category, courseCode } = params
   const { data, isLoading, error, refetch } = useApi(async () => {
     const courses = await apiGetCourses()
     const matchedCourse = courses.find((course) => {

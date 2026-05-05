@@ -1,15 +1,15 @@
 'use client'
 
-import { use } from 'react'
+import { } from 'react'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import Link from 'next/link'
 import { ArrowLeft, ClipboardList } from 'lucide-react'
 
-interface Props { params: Promise<{ id: string }> }
+interface Props { params: { id: string } }
 
 export default function AdminEnrollmentDetailPage({ params }: Props) {
-  const { id } = use(params)
+  const { id } = params
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
