@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Syne, Plus_Jakarta_Sans, Barlow_Condensed, DM_Sans, Noto_Sans_Sinhala } from 'next/font/google'
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
@@ -55,6 +56,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-2328DVGCL7"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-2328DVGCL7');
+            `,
+          }}
+        />
+      </head>
       <body
         suppressHydrationWarning
         className={`${syne.variable} ${plusJakartaSans.variable} ${barlowCondensed.variable} ${dmSans.variable} ${notoSansSinhala.variable} font-sans antialiased`}
