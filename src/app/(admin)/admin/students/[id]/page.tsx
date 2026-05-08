@@ -129,12 +129,16 @@ export default function AdminStudentDetailPage({ params }: Props) {
     refetchRelatedNames()
   }
 
+  const studentDisplayName =
+    student?.full_name?.trim() || student?.name_for_certificate?.trim() || 'Student'
+  const studentInitial = studentDisplayName.charAt(0).toUpperCase()
+
   return (
     <DataLoader isLoading={studentLoading} error={studentError} onRetry={refreshAll}>
       {student && (
         <div>
           <PageHeader
-            title={student.full_name}
+            title={studentDisplayName}
             subtitle={student.student_number}
             actions={
               <Link href={`/admin/students/${student.id}/edit`} className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
@@ -148,10 +152,10 @@ export default function AdminStudentDetailPage({ params }: Props) {
               <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <div className="flex items-center gap-4 mb-5">
                   <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
-                    <span className="text-amber-600 font-bold text-xl">{student.full_name[0]}</span>
+                    <span className="text-amber-600 font-bold text-xl">{studentInitial}</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800 text-lg">{student.full_name}</h3>
+                    <h3 className="font-bold text-slate-800 text-lg">{studentDisplayName}</h3>
                     <p className="text-xs text-slate-500">{student.gender} · DOB {formatDate(student.date_of_birth)}</p>
                   </div>
                 </div>

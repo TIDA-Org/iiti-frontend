@@ -4,6 +4,8 @@ export interface AuditLogApiResponse {
   id: number
   actor_staff_id: string | null
   actor_student_id: string | null
+  actor_email: string | null
+  actor_name: string | null
   actor_role: string | null
   action: string
   entity_type: string | null
@@ -24,15 +26,19 @@ export interface AuditLogListApiResponse {
   pages: number
 }
 
+export interface AuditActionOption {
+  value: string
+  label: string
+}
+
 export async function apiGetAuditLogs(
   page = 1,
   perPage = 20,
   filters?: {
-    actor_staff_id?: string
-    actor_student_id?: string
+    actor_email?: string
     action?: string
     entity_type?: string
-    entity_id?: string
+    date?: string
     date_from?: string
     date_to?: string
   },
@@ -44,4 +50,8 @@ export async function apiGetAuditLogs(
     })
   }
   return apiFetch(`/audit?${params}`)
+}
+
+export async function apiGetAuditActions(): Promise<AuditActionOption[]> {
+  return apiFetch('/audit/actions')
 }
