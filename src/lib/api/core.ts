@@ -185,15 +185,16 @@ function getMockData(path: string): unknown {
 
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: (RequestInit & { timeoutMs?: number }) = {},
 ): Promise<T> {
+  const { timeoutMs = DEFAULT_TIMEOUT_MS, ...requestOptions } = options
   const url = `${getApiBaseUrl()}${path}`
-  const method = (options.method || 'GET').toUpperCase()
+  const method = (requestOptions.method || 'GET').toUpperCase()
   const shouldRetry = isIdempotentMethod(method)
 
   const headers: Record<string, string> = {
-    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-    ...((options.headers as Record<string, string>) || {}),
+    ...(requestOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+    ...((requestOptions.headers as Record<string, string>) || {}),
   }
 
   let res: Response | null = null
@@ -205,12 +206,12 @@ export async function apiFetch<T>(
       res = await fetchWithTimeout(
         url,
         {
-          ...options,
+          ...requestOptions,
           headers,
-          cache: options.cache ?? 'no-store',
+          cache: requestOptions.cache ?? 'no-store',
           credentials: typeof window !== 'undefined' ? 'include' : undefined,
         },
-        DEFAULT_TIMEOUT_MS,
+        timeoutMs,
       )
     } catch (error) {
       const isAbortError = error instanceof DOMException && error.name === 'AbortError'
