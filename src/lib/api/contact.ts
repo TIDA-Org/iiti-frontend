@@ -17,5 +17,6 @@ export async function apiSendContactForm(data: ContactFormData): Promise<Contact
   return apiFetch('/contact/send-message', {
     method: 'POST',
     body: JSON.stringify(data),
+    timeoutMs: 20000,
   })
 }
