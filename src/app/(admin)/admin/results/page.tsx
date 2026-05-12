@@ -35,6 +35,7 @@ export default function AdminResultsPage() {
     return items.filter((r) =>
       r.student?.student_number?.toLowerCase().includes(lowerSearch) ||
       r.student?.full_name?.toLowerCase().includes(lowerSearch) ||
+      r.student?.nic_number?.toLowerCase().includes(lowerSearch) ||
       r.course?.name?.toLowerCase().includes(lowerSearch) ||
       r.enrollment_id?.toLowerCase().includes(lowerSearch) ||
       r.final_grade?.toLowerCase().includes(lowerSearch)
@@ -74,7 +75,7 @@ export default function AdminResultsPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search by student number, name, course, enrollment, or grade..." className="max-w-sm" />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by student number, name, NIC, course, enrollment, or grade..." className="max-w-sm" />
           <span className="text-sm text-slate-400">{filteredResults.length} results</span>
         </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
@@ -84,6 +85,7 @@ export default function AdminResultsPage() {
                 <tr>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Student No.</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Name</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NIC</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Enrolled Course</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Theory</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Practical</th>
@@ -98,6 +100,7 @@ export default function AdminResultsPage() {
                   <tr key={r.id} className="hover:bg-slate-50">
                     <td className="px-5 py-3 font-mono text-xs text-amber-600">{r.student?.student_number ?? 'N/A'}</td>
                     <td className="px-5 py-3 text-slate-700 text-sm">{r.student?.full_name ?? 'N/A'}</td>
+                    <td className="px-5 py-3 text-slate-700 font-mono">{r.student?.nic_number ?? 'N/A'}</td>
                     <td className="px-5 py-3 text-slate-700 text-sm">{r.course?.name ?? 'N/A'}</td>
                     <td className="px-5 py-3 text-slate-700 font-mono">{r.theory_score ?? '-'}</td>
                     <td className="px-5 py-3 text-slate-700 font-mono">{r.practical_score ?? '-'}</td>

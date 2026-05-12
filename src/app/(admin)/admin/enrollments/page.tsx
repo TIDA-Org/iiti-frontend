@@ -105,6 +105,7 @@ export default function AdminEnrollmentsPage() {
   }, [data])
 
   const studentNameById = useMemo(() => new Map(students.map((student) => [student.id, student.full_name])), [students])
+  const studentNicById = useMemo(() => new Map(students.map((student) => [student.id, student.nic_number])), [students])
   const courseNameById = useMemo(() => new Map(courses.map((course) => [course.id, course.name])), [courses])
 
   const filteredEnrollments = useMemo(() => {
@@ -112,15 +113,17 @@ export default function AdminEnrollmentsPage() {
     const lowerSearch = search.toLowerCase()
     return enrollments.filter((enrollment) => {
       const studentName = studentNameById.get(enrollment.student_id)?.toLowerCase() || ''
+      const studentNic = studentNicById.get(enrollment.student_id)?.toLowerCase() || ''
       const courseName = courseNameById.get(enrollment.course_id)?.toLowerCase() || ''
       const enrollmentNumber = enrollment.enrollment_number?.toLowerCase() || ''
       return (
         studentName.includes(lowerSearch) ||
+        studentNic.includes(lowerSearch) ||
         courseName.includes(lowerSearch) ||
         enrollmentNumber.includes(lowerSearch)
       )
     })
-  }, [enrollments, search, studentNameById, courseNameById])
+  }, [enrollments, search, studentNameById, studentNicById, courseNameById])
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -380,7 +383,7 @@ export default function AdminEnrollmentsPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search by enrollment, student name, or course..." className="max-w-sm" />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by enrollment, student name, NIC, or course..." className="max-w-sm" />
           <span className="text-sm text-slate-400">{filteredEnrollments.length} results</span>
         </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
@@ -393,6 +396,7 @@ export default function AdminEnrollmentsPage() {
                   <tr>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Enrollment ID</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Student</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NIC</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Course</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Plan</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Fee</th>
@@ -407,6 +411,7 @@ export default function AdminEnrollmentsPage() {
                     <tr key={enrollment.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3 font-mono text-xs text-amber-600">{enrollment.enrollment_number || `${enrollment.id.slice(0, 8)}...`}</td>
                       <td className="px-5 py-3 text-slate-700">{studentNameById.get(enrollment.student_id) || enrollment.student_id.slice(0, 8)}</td>
+                      <td className="px-5 py-3 text-slate-700 font-mono">{studentNicById.get(enrollment.student_id) || 'N/A'}</td>
                       <td className="px-5 py-3 text-slate-700">{courseNameById.get(enrollment.course_id) || enrollment.course_id.slice(0, 8)}</td>
                       <td className="px-5 py-3 text-slate-700 capitalize">{enrollment.payment_plan}</td>
                       <td className="px-5 py-3 text-slate-700 font-mono">{enrollment.total_fee_at_enrollment.toLocaleString()}</td>
