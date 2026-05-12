@@ -29,7 +29,10 @@ export default function AdminCertificatesPage() {
     const lowerSearch = search.toLowerCase()
     return list.filter((cert) =>
       cert.certificate_number?.toLowerCase().includes(lowerSearch) ||
-      cert.cert_subtype?.toLowerCase().includes(lowerSearch)
+      cert.cert_subtype?.toLowerCase().includes(lowerSearch) ||
+      cert.student?.full_name?.toLowerCase().includes(lowerSearch) ||
+      cert.course?.name?.toLowerCase().includes(lowerSearch) ||
+      cert.student?.nic_number?.toLowerCase().includes(lowerSearch)
     )
   }, [data?.items, search])
   const certTypeLabel: Record<string, string> = { full: 'Institute', participation: 'Participation', skill_id: 'Skill ID', nvq: 'NVQ L3' }
@@ -40,7 +43,7 @@ export default function AdminCertificatesPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search by certificate number or subtype..." className="max-w-sm" />
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by certificate number, student, NIC, course, or subtype..." className="max-w-sm" />
           <span className="text-sm text-slate-400">{certs.length} results</span>
         </div>
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
@@ -49,6 +52,9 @@ export default function AdminCertificatesPage() {
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Certificate No</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Student Name</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NIC</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Course</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Subtype</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Issued</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>
@@ -59,6 +65,9 @@ export default function AdminCertificatesPage() {
                 {certs.map((cert: CertificateApiResponse) => (
                   <tr key={cert.id} className="hover:bg-slate-50">
                     <td className="px-5 py-3 font-mono text-xs text-amber-600 font-medium">{cert.certificate_number}</td>
+                    <td className="px-5 py-3 text-slate-700">{cert.student?.full_name ?? 'N/A'}</td>
+                    <td className="px-5 py-3 text-slate-700 font-mono">{cert.student?.nic_number ?? 'N/A'}</td>
+                    <td className="px-5 py-3 text-slate-700">{cert.course?.name ?? 'N/A'}</td>
                     <td className="px-5 py-3">
                       <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">{certTypeLabel[cert.cert_subtype] || cert.cert_subtype}</span>
                     </td>

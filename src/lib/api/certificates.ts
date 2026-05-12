@@ -1,5 +1,17 @@
 import { apiFetch } from './core'
 
+export interface CertificateStudentBriefResponse {
+  id: string
+  student_number: string
+  full_name: string
+  nic_number?: string | null
+}
+
+export interface CertificateCourseBriefResponse {
+  id: string
+  name: string
+}
+
 export interface CertificateApiResponse {
   id: string
   enrollment_id: string
@@ -22,6 +34,8 @@ export interface CertificateApiResponse {
   issued_by: string | null
   created_at: string
   updated_at: string
+  student?: CertificateStudentBriefResponse | null
+  course?: CertificateCourseBriefResponse | null
 }
 
 export interface CertificateListApiResponse {

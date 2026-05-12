@@ -4,6 +4,7 @@ export interface StudentBriefResponse {
   id: string
   student_number: string
   full_name: string
+  nic_number?: string | null
 }
 
 export interface CourseBriefResponse {
