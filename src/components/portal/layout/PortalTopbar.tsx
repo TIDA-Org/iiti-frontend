@@ -1,9 +1,10 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import { NotificationDropdown } from '@/components/shared/NotificationDropdown'
-import { Menu } from 'lucide-react'
+import { Menu, ShoppingCart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface PortalTopbarProps {
@@ -15,6 +16,7 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
   const { user } = useAuthStore()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -23,6 +25,28 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Load cart count from localStorage
+  useEffect(() => {
+    const updateCartCount = () => {
+      const saved = localStorage.getItem('merch_cart')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          const total = Object.values(parsed).reduce((sum: number, item: any) => sum + item.quantity, 0)
+          setCartCount(total)
+        } catch (e) {
+          setCartCount(0)
+        }
+      } else {
+        setCartCount(0)
+      }
+    }
+
+    updateCartCount()
+    const interval = setInterval(updateCartCount, 1000)
+    return () => clearInterval(interval)
   }, [])
 
   const parts = pathname.split('/').filter(Boolean)
@@ -53,6 +77,20 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
 
       {/* Right section */}
       <div className="flex items-center gap-3 ml-auto">
+        {/* Cart Link */}
+        <Link
+          href="/portal/merchandise/cart"
+          className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          title="Shopping Cart"
+        >
+          <ShoppingCart className="w-5 h-5 text-slate-600" />
+          {cartCount > 0 && (
+            <span className="absolute top-1 right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          )}
+        </Link>
+
         <NotificationDropdown />
         <div className="text-right hidden sm:block">
           <div className="text-sm font-medium text-slate-700">{user?.name}</div>
