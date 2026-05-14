@@ -39,7 +39,8 @@ export function truncate(str: string, length: number): string {
   return str.slice(0, length) + '...'
 }
 
-export function getInitials(name: string): string {
+export function getInitials(name: string | undefined | null): string {
+  if (!name) return ''
   return name
     .split(' ')
     .map(n => n[0])

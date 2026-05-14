@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, CreditCard, FileText,
-  Award, Briefcase, Bell, LogOut,X, ShoppingCart, PackageCheck,
+  Award, Briefcase, Bell, LogOut,X, ShoppingBag, PackageCheck,
   ChevronLeft, ChevronRight
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { href: '/portal/results', label: 'Results', icon: FileText },
   { href: '/portal/certificates', label: 'Certificates', icon: Award },
   { href: '/portal/jobs', label: 'Job Board', icon: Briefcase },
-  { href: '/portal/merchandise/cart', label: 'Cart', icon: ShoppingCart },
+  { href: '/portal/merchandise/cart', label: 'Merchandise', icon: ShoppingBag },
   { href: '/portal/merchandise/orders', label: 'My Orders', icon: PackageCheck },
   { href: '/portal/notifications', label: 'Notifications', icon: Bell },
 ]
@@ -94,8 +94,10 @@ export function PortalSidebar({
         <Image
           src="/assets/logo_v2.png"
           alt="Logo"
+          width={48}
+          height={48}
           className={cn(
-            "transition-all duration-300",
+            "transition-all duration-300 object-contain",
             !isMobile && collapsed ? "w-2 h-2" : "w-12 h-auto"
           )}
         />
