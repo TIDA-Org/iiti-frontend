@@ -13,14 +13,59 @@ const HERO_IMAGES = [
   '/images/hero/DSC07644.jpg',
 ]
 
+interface WhyChooseUsItem {
+  key: string
+  label: string
+  label_si?: string
+}
+
+interface WhyChooseUsData {
+  title: string
+  title_si?: string
+  items: WhyChooseUsItem[]
+}
+
+const DEFAULT_WHY_CHOOSE_US_DATA: WhyChooseUsData = {
+  title: 'Why Choose Us',
+  items: [
+    { key: 'programmes_available', label: '3 Programmes Available' },
+    { key: 'nvq_certified', label: 'NVQ Level 3 Certified' },
+    { key: 'placement_assistance', label: '100% Placement Assistance' },
+    { key: 'accredited', label: 'TVEC & ISO Accredited' },
+  ],
+}
+
 export function HeroSection() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [whyChooseUsData, setWhyChooseUsData] = useState<WhyChooseUsData>(DEFAULT_WHY_CHOOSE_US_DATA)
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length)
     }, 5000) // Change image every 5 seconds
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const fetchWhyChooseUsData = async () => {
+      try {
+        const response = await fetch('/api/backend/website/why-choose-us', { cache: 'no-store' })
+        if (response.ok) {
+          const data = (await response.json()) as Partial<WhyChooseUsData>
+          if (data && Array.isArray(data.items) && data.items.length > 0) {
+            setWhyChooseUsData({
+              title: data.title || DEFAULT_WHY_CHOOSE_US_DATA.title,
+              title_si: data.title_si,
+              items: data.items,
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch Why Choose Us data:', error)
+      }
+    }
+
+    fetchWhyChooseUsData()
   }, [])
   return (
     <section
@@ -126,43 +171,29 @@ export function HeroSection() {
 
           {/* Right — floating card */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, x: 40, y: 40 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 }}
-            className="hidden lg:flex justify-center"
+            className="hidden lg:flex justify-center -mt-12"
           >
             <div
               className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full"
               style={{ transform: 'rotate(-2deg)' }}
             >
-              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Active Enrollment Open
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  {whyChooseUsData.title}
+                </h3>
+                <div className="w-12 h-1 bg-orange-500 rounded-full" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-1">
-                2025 Intake
-              </h3>
-              <p className="text-slate-600 text-sm mb-5 font-regular">April batch now accepting applications</p>
-              <ul className="space-y-3">
-                {[
-                  '3 Programmes Available',
-                  'NVQ Level 3 Certified',
-                  '100% Placement Assistance',
-                  'TVEC & ISO Accredited',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2.5 text-sm text-slate-700 font-regular">
-                    <CheckCircle className="w-4 h-4 text-orange-500 shrink-0" />
-                    {item}
+              <ul className="space-y-4">
+                {whyChooseUsData.items.map((item) => (
+                  <li key={item.key} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+                    <CheckCircle className="w-5 h-5 text-orange-500 shrink-0" />
+                    {item.label}
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/courses#intakes"
-                className="mt-6 flex items-center gap-1 text-sm font-semibold text-orange-500 hover:text-orange-600"
-              >
-                View Dates
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </motion.div>
         </div>
