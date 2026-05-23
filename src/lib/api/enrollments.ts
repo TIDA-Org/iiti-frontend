@@ -1,4 +1,12 @@
 import { apiFetch } from './core'
+import type { ResultApiResponse } from './results'
+
+export interface EnrollmentStudentApiResponse {
+  id: string
+  student_number: string
+  full_name: string
+  nic_number: string
+}
 
 export interface EnrollmentApiResponse {
   id: string
@@ -19,6 +27,8 @@ export interface EnrollmentApiResponse {
   retake_of: string | null
   created_at: string
   updated_at: string
+  student?: EnrollmentStudentApiResponse | null
+  result?: ResultApiResponse | null
 }
 
 export interface EnrollmentDetailApiResponse extends EnrollmentApiResponse {
