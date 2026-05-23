@@ -61,7 +61,7 @@ export default function ResultEntryPage() {
     [],
   )
 
-  const enrollments = enrollmentsData || []
+  const enrollments = useMemo(() => enrollmentsData || [], [enrollmentsData])
 
   const coursesById = useMemo<Record<string, CourseApiResponse>>(() => {
     const items = coursesData || []
