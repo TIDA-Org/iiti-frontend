@@ -22,6 +22,28 @@ export interface VerifyCertificateResponse {
   enrollment_number: string | null
 }
 
+export interface VerifyQrStudentResponse {
+  id: string
+  student_number: string
+  full_name: string
+  name_for_certificate: string
+  nic_number: string
+  photo_url: string | null
+}
+
+export interface VerifyQrCertificateResponse {
+  id: string
+  verification_token: string
+  certificate_number: string
+  cert_subtype: string
+  status: string
+  issue_date: string | null
+  is_revoked: boolean
+  printed_name: string | null
+  printed_nic_number: string | null
+  grade: string | null
+}
+
 export interface VerifyLicenseResponse {
   id: string
   license_number: string
@@ -55,7 +77,14 @@ export interface VerifyApiResponse {
   results: VerifyResultResponse[]
 }
 
-export async function apiVerify(token: string): Promise<VerifyApiResponse> {
+export interface VerifyQrApiResponse {
+  student: VerifyQrStudentResponse
+  certificate: VerifyQrCertificateResponse
+  course_name: string | null
+  enrollment_number: string | null
+}
+
+export async function apiVerify(token: string): Promise<VerifyQrApiResponse> {
   return apiFetch(`/verify/${encodeURIComponent(token.trim())}`)
 }
 
