@@ -14,6 +14,7 @@ type RouteContext = {
 }
 
 const BACKEND_TIMEOUT_MS = 15000
+const VERIFY_TIMEOUT_MS = 30000
 
 function buildProxyHeaders(request: NextRequest, accessToken?: string) {
   const headers = new Headers(request.headers)
@@ -55,6 +56,7 @@ async function forwardRequest(
   path: string[],
   body: ArrayBuffer | undefined,
   accessToken?: string,
+  timeoutMs = BACKEND_TIMEOUT_MS,
 ) {
   const target = `${getBackendApiBaseUrl()}/${path.join('/')}${request.nextUrl.search}`
 
@@ -85,6 +87,8 @@ function backendUnavailableResponse() {
 async function handle(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
   const pathString = path.join('/')
+  const isVerifyPath = pathString === 'verify' || pathString.startsWith('verify/')
+  const timeoutMs = isVerifyPath ? VERIFY_TIMEOUT_MS : BACKEND_TIMEOUT_MS
   const isAuthPath = pathString === 'auth/login' || pathString === 'auth/logout' || pathString === 'auth/refresh'
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value
@@ -92,7 +96,7 @@ async function handle(request: NextRequest, context: RouteContext) {
 
   let backendResponse: Response
   try {
-    backendResponse = await forwardRequest(request, path, requestBody, accessToken)
+    backendResponse = await forwardRequest(request, path, requestBody, accessToken, timeoutMs)
   } catch {
     return backendUnavailableResponse()
   }
@@ -107,7 +111,7 @@ async function handle(request: NextRequest, context: RouteContext) {
 
     if (refreshedTokens) {
       try {
-        backendResponse = await forwardRequest(request, path, requestBody, refreshedTokens.access_token)
+        backendResponse = await forwardRequest(request, path, requestBody, refreshedTokens.access_token, timeoutMs)
       } catch {
         return backendUnavailableResponse()
       }
@@ -122,7 +126,7 @@ async function handle(request: NextRequest, context: RouteContext) {
     // This avoids stale auth cookies breaking unauthenticated routes.
     let anonymousResponse: Response
     try {
-      anonymousResponse = await forwardRequest(request, path, requestBody)
+      anonymousResponse = await forwardRequest(request, path, requestBody, undefined, timeoutMs)
     } catch {
       return backendUnavailableResponse()
     }
@@ -138,7 +142,7 @@ async function handle(request: NextRequest, context: RouteContext) {
   if (backendResponse.status === 401 && !!accessToken && !isAuthPath) {
     let anonymousResponse: Response
     try {
-      anonymousResponse = await forwardRequest(request, path, requestBody)
+      anonymousResponse = await forwardRequest(request, path, requestBody, undefined, timeoutMs)
     } catch {
       return backendUnavailableResponse()
     }
