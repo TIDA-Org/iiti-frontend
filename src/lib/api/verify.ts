@@ -2,11 +2,24 @@ import { apiFetch } from './core'
 
 export interface VerifyCertificateResponse {
   id: string
+  student_id: string | null
+  student_number: string | null
+  full_name: string | null
+  name_for_certificate: string | null
+  nic_number: string | null
+  photo_url: string | null
+  certificate_id: string | null
+  verification_token: string | null
   certificate_number: string
   cert_subtype: string
   status: string
   issue_date: string | null
   is_revoked: boolean
+  printed_name: string | null
+  printed_nic_number: string | null
+  grade: string | null
+  course_name: string | null
+  enrollment_number: string | null
 }
 
 export interface VerifyLicenseResponse {
@@ -25,6 +38,7 @@ export interface VerifyResultResponse {
   score_percentage: number | null
   result_status: string
   is_published: boolean
+  certificate_id: string | null
 }
 
 export interface VerifyApiResponse {
@@ -42,5 +56,24 @@ export interface VerifyApiResponse {
 }
 
 export async function apiVerify(token: string): Promise<VerifyApiResponse> {
-  return apiFetch(`/verify/${token}`)
+  return apiFetch(`/verify/${encodeURIComponent(token.trim())}`)
+}
+
+export interface VerifyManualParams {
+  student_number?: string
+  nic_number?: string
+  certificate_number?: string
+  enrollment_number?: string
+}
+
+export async function apiVerifyManual(params: VerifyManualParams): Promise<VerifyApiResponse> {
+  const query = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value && value.trim()) {
+      query.set(key, value.trim())
+    }
+  })
+
+  return apiFetch(`/verify?${query.toString()}`)
 }
