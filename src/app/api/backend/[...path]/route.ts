@@ -13,8 +13,9 @@ type RouteContext = {
   params: Promise<{ path: string[] }>
 }
 
-const BACKEND_TIMEOUT_MS = 15000
+const BACKEND_TIMEOUT_MS = 30000
 const VERIFY_TIMEOUT_MS = 30000
+const CERTIFICATE_RECREATE_TIMEOUT_MS = 60000
 
 function buildProxyHeaders(request: NextRequest, accessToken?: string) {
   const headers = new Headers(request.headers)
@@ -40,9 +41,9 @@ async function buildRequestBody(request: NextRequest) {
   return body.byteLength > 0 ? body : undefined
 }
 
-async function fetchWithTimeout(target: string, init: RequestInit) {
+async function fetchWithTimeout(target: string, init: RequestInit, timeoutMs: number) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     return await fetch(target, { ...init, signal: controller.signal })
@@ -65,7 +66,7 @@ async function forwardRequest(
     headers: buildProxyHeaders(request, accessToken),
     body,
     cache: 'no-store',
-  })
+  }, timeoutMs)
 }
 
 function toNextResponse(response: Response) {
@@ -88,7 +89,12 @@ async function handle(request: NextRequest, context: RouteContext) {
   const { path } = await context.params
   const pathString = path.join('/')
   const isVerifyPath = pathString === 'verify' || pathString.startsWith('verify/')
-  const timeoutMs = isVerifyPath ? VERIFY_TIMEOUT_MS : BACKEND_TIMEOUT_MS
+  const isCertificateRecreatePath = pathString.startsWith('certificates/') && pathString.endsWith('/recreate')
+  const timeoutMs = isVerifyPath
+    ? VERIFY_TIMEOUT_MS
+    : isCertificateRecreatePath
+      ? CERTIFICATE_RECREATE_TIMEOUT_MS
+      : BACKEND_TIMEOUT_MS
   const isAuthPath = pathString === 'auth/login' || pathString === 'auth/logout' || pathString === 'auth/refresh'
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value

@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   apiGetCertificates,
+  apiRecreateCertificate,
   CertificateApiResponse,
   CertificateListApiResponse,
 } from '@/lib/api/certificates'
@@ -12,16 +13,44 @@ import { DataLoader } from '@/components/shared/DataLoader'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { formatDate } from '@/lib/utils'
-import { Eye } from 'lucide-react'
+import { Eye, Loader2, MoreVertical, RotateCcw } from 'lucide-react'
 import { getProxiedCertificateUrl } from '@/lib/utils/download'
+import { toast } from 'sonner'
 
 export default function AdminCertificatesPage() {
   const [search, setSearch] = useState('')
+  const [recreatingId, setRecreatingId] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   
   const { data, isLoading, error, refetch } = useApi<CertificateListApiResponse>(
     () => apiGetCertificates(1, 100),
     [],
   )
+
+  useEffect(() => {
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return
+      if (!event.target.closest('[data-certificate-menu]')) {
+        setOpenMenuId(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleDocumentMouseDown)
+    return () => document.removeEventListener('mousedown', handleDocumentMouseDown)
+  }, [])
+
+  const handleRecreateCertificate = async (certificateId: string) => {
+    try {
+      setRecreatingId(certificateId)
+      await apiRecreateCertificate(certificateId)
+      toast.success('Certificate PDF regeneration started.')
+      await refetch()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to recreate certificate.')
+    } finally {
+      setRecreatingId(null)
+    }
+  }
 
   const certs = useMemo(() => {
     const list = data?.items || []
@@ -76,23 +105,65 @@ export default function AdminCertificatesPage() {
                       <StatusBadge status={cert.is_revoked ? 'inactive' : 'active'} />
                     </td>
                     <td className="px-5 py-3">
-                      {(() => {
-                        const href = getProxiedCertificateUrl(cert.certificate_pdf_url, cert.id)
-                        return href ? (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> View
-                          </a>
-                        ) : (
-                          <span className="flex items-center gap-1 text-xs text-slate-300 font-medium cursor-not-allowed" title="Certificate PDF is not available">
-                            <Eye className="w-3.5 h-3.5" /> View
-                          </span>
-                        )
-                      })()}
+                      <div className="relative inline-flex" data-certificate-menu>
+                        {(() => {
+                          const href = getProxiedCertificateUrl(cert.certificate_pdf_url, cert.id)
+                          const isOpen = openMenuId === cert.id
+
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                aria-label="Certificate actions"
+                                aria-expanded={isOpen}
+                                onClick={() => setOpenMenuId(isOpen ? null : cert.id)}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+
+                              {isOpen && (
+                                <div className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                  {href ? (
+                                    <a
+                                      href={href}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                                      onClick={() => setOpenMenuId(null)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      View PDF
+                                    </a>
+                                  ) : (
+                                    <span className="flex cursor-not-allowed items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300">
+                                      <Eye className="h-4 w-4" />
+                                      View PDF unavailable
+                                    </span>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+                                    onClick={async () => {
+                                      setOpenMenuId(null)
+                                      await handleRecreateCertificate(cert.id)
+                                    }}
+                                    disabled={recreatingId === cert.id}
+                                  >
+                                    {recreatingId === cert.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <RotateCcw className="h-4 w-4" />
+                                    )}
+                                    {recreatingId === cert.id ? 'Creating...' : 'Create certificate'}
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
+                      </div>
                     </td>
                   </tr>
                 ))}
