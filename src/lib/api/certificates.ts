@@ -69,3 +69,10 @@ export async function apiRevokeCertificate(id: string, reason: string): Promise<
     body: JSON.stringify({ reason }),
   })
 }
+
+export async function apiRecreateCertificate(certificateId: string): Promise<CertificateApiResponse> {
+  return apiFetch(`/certificates/${certificateId}/recreate`, {
+    method: 'POST',
+    timeoutMs: 60000,
+  })
+}
