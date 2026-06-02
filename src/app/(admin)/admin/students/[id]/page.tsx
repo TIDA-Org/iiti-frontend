@@ -198,7 +198,7 @@ export default function AdminStudentDetailPage({ params }: Props) {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Student QR Code</DialogTitle>
-                      <DialogDescription>Scan to verify this student's identity. Admins can recreate the code.</DialogDescription>
+                      <DialogDescription>Scan to verify this student&apos;s identity. Admins can recreate the code.</DialogDescription>
                     </DialogHeader>
 
                     <div className="py-4">
