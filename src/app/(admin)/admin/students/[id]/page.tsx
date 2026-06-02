@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   apiGetGuarantors,
   apiGetStudent,
@@ -23,7 +23,12 @@ import {
   FileText,
   Wallet,
   ClipboardList,
+  QrCode,
 } from 'lucide-react'
+import { useRoleAccess } from '@/hooks/useRoleAccess'
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { apiGetStudentQr, apiRecreateStudentQr } from '@/lib/api/students'
 
 interface Props { params: { id: string } }
 
@@ -52,6 +57,39 @@ function getEnrollmentRemaining(enrollment: {
 
 export default function AdminStudentDetailPage({ params }: Props) {
   const { id } = params
+  const { isAdmin } = useRoleAccess()
+
+  const [qrOpen, setQrOpen] = useState(false)
+  const [qrData, setQrData] = useState<any | null>(null)
+  const [isQrLoading, setIsQrLoading] = useState(false)
+  const [isRecreating, setIsRecreating] = useState(false)
+
+  const openQr = async () => {
+    setQrOpen(true)
+    setIsQrLoading(true)
+    setQrData(null)
+    try {
+      const data = await apiGetStudentQr(id)
+      setQrData(data)
+    } catch (e) {
+      // ignore
+    } finally {
+      setIsQrLoading(false)
+    }
+  }
+
+  const recreateQr = async () => {
+    setIsRecreating(true)
+    try {
+      const data = await apiRecreateStudentQr(id)
+      setQrData(data)
+      refetchStudent()
+    } catch (e) {
+      // ignore
+    } finally {
+      setIsRecreating(false)
+    }
+  }
 
   const {
     data: student,
@@ -141,9 +179,55 @@ export default function AdminStudentDetailPage({ params }: Props) {
             title={studentDisplayName}
             subtitle={student.student_number}
             actions={
-              <Link href={`/admin/students/${student.id}/edit`} className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                <Edit className="w-4 h-4" /> Edit
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href={`/admin/students/${student.id}/edit`} className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                  <Edit className="w-4 h-4" /> Edit
+                </Link>
+
+                <Dialog open={qrOpen} onOpenChange={(open) => { if (!open) setQrData(null); setQrOpen(open) }}>
+                  <DialogTrigger>
+                    <button
+                      type="button"
+                      onClick={openQr}
+                      className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    >
+                      <QrCode className="w-4 h-4" /> QR
+                    </button>
+                  </DialogTrigger>
+
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Student QR Code</DialogTitle>
+                      <DialogDescription>Scan to verify this student&apos;s identity. Admins can recreate the code.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4">
+                      {isQrLoading ? (
+                        <div className="flex items-center justify-center p-6">Loading...</div>
+                      ) : qrData ? (
+                        <div className="flex flex-col items-center gap-4">
+                          {qrData.qr_code_image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={qrData.qr_code_image_url} alt="QR code" className="w-48 h-48 bg-white p-2 rounded-md" />
+                          ) : (
+                            <div className="text-sm text-stone-600">Token: <span className="font-mono">{qrData.qr_code_token}</span></div>
+                          )}
+                          <a href={`/verify/${qrData.qr_code_token}`} target="_blank" rel="noreferrer" className="text-sm underline text-sky-600">Open verification link</a>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-stone-500">Unable to load QR data.</div>
+                      )}
+                    </div>
+
+                    <DialogFooter>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => setQrOpen(false)}>Close</Button>
+                        {isAdmin && <Button disabled={isRecreating} onClick={recreateQr}>{isRecreating ? 'Recreating...' : 'Recreate QR'}</Button>}
+                      </div>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             }
           />
 
