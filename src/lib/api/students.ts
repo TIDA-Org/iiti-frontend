@@ -103,6 +103,24 @@ export async function apiGetStudent(id: string): Promise<StudentApiResponse> {
   return apiFetch(`/students/${id}`)
 }
 
+export interface StudentQrResponse {
+  student_id: string
+  qr_code_token: string
+  qr_code_image_url: string | null
+}
+
+export async function apiGetMyQr(): Promise<StudentQrResponse> {
+  return apiFetch('/students/me/qr')
+}
+
+export async function apiGetStudentQr(studentId: string): Promise<StudentQrResponse> {
+  return apiFetch(`/students/${studentId}/qr`)
+}
+
+export async function apiRecreateStudentQr(studentId: string): Promise<StudentQrResponse> {
+  return apiFetch(`/students/${studentId}/qr/recreate`, { method: 'POST' })
+}
+
 export async function apiGetMyProfile(): Promise<StudentApiResponse> {
   return apiFetch('/students/me')
 }
