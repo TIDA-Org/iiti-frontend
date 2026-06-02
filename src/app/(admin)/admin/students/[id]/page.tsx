@@ -185,7 +185,7 @@ export default function AdminStudentDetailPage({ params }: Props) {
                 </Link>
 
                 <Dialog open={qrOpen} onOpenChange={(open) => { if (!open) setQrData(null); setQrOpen(open) }}>
-                  <DialogTrigger asChild>
+                  <DialogTrigger>
                     <button
                       type="button"
                       onClick={openQr}

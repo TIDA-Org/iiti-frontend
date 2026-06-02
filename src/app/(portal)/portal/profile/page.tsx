@@ -105,7 +105,7 @@ export default function PortalProfilePage() {
                     </div>
                     <div className="ml-4">
                       <Dialog open={qrOpen} onOpenChange={(open) => { if (!open) setQrData(null); setQrOpen(open) }}>
-                        <DialogTrigger asChild>
+                        <DialogTrigger>
                           <button
                             type="button"
                             aria-label="View QR code"
