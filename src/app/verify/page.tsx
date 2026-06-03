@@ -1,6 +1,6 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AlertTriangle, BadgeCheck, BookCheck, CarFront, Loader2, UsersRound } from 'lucide-react'
 
@@ -47,7 +47,7 @@ function Field({ label, name, value, onChange, placeholder }: { label: string; n
   )
 }
 
-export default function VerifyEntryPage() {
+function VerifyEntryPageInner() {
   const searchParams = useSearchParams()
 
   const [form, setForm] = useState<ManualFormState>({
@@ -116,7 +116,6 @@ export default function VerifyEntryPage() {
       setLoading(false)
     }
   }
-
 
   const certificate = data?.certificates?.[0] ?? null
   const license = data?.licenses?.[0] ?? null
@@ -357,5 +356,13 @@ export default function VerifyEntryPage() {
         </section>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEntryPage() {
+  return (
+    <Suspense>
+      <VerifyEntryPageInner />
+    </Suspense>
   )
 }
