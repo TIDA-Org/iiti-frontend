@@ -185,14 +185,16 @@ export default function AdminStudentDetailPage({ params }: Props) {
                 </Link>
 
                 <Dialog open={qrOpen} onOpenChange={(open) => { if (!open) setQrData(null); setQrOpen(open) }}>
-                  <DialogTrigger>
-                    <button
-                      type="button"
-                      onClick={openQr}
-                      className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                    >
-                      <QrCode className="w-4 h-4" /> QR
-                    </button>
+                  <DialogTrigger
+                    onClick={openQr}
+                    render={
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      />
+                    }
+                  >
+                    <QrCode className="w-4 h-4" /> QR
                   </DialogTrigger>
 
                   <DialogContent>
