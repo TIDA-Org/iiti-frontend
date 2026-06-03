@@ -93,6 +93,7 @@ export interface VerifyManualParams {
   nic_number?: string
   certificate_number?: string
   enrollment_number?: string
+  student_token?: string
 }
 
 export async function apiVerifyManual(params: VerifyManualParams): Promise<VerifyApiResponse> {

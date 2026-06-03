@@ -104,7 +104,6 @@ export async function apiGetStudent(id: string): Promise<StudentApiResponse> {
 }
 
 export interface StudentQrResponse {
-  student_id: string
   qr_code_token: string
   qr_code_image_url: string | null
 }

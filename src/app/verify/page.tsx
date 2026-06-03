@@ -1,6 +1,7 @@
 "use client"
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AlertTriangle, BadgeCheck, BookCheck, CarFront, Loader2, UsersRound } from 'lucide-react'
 
 import { apiVerifyManual, type VerifyApiResponse, type VerifyManualParams } from '@/lib/api/verify'
@@ -46,7 +47,9 @@ function Field({ label, name, value, onChange, placeholder }: { label: string; n
   )
 }
 
-export default function VerifyEntryPage() {
+function VerifyEntryPageInner() {
+  const searchParams = useSearchParams()
+
   const [form, setForm] = useState<ManualFormState>({
     student_number: '',
     nic_number: '',
@@ -57,6 +60,35 @@ export default function VerifyEntryPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Auto-fetch when ?student_token=UUID is present (QR code redirect)
+  useEffect(() => {
+    const token = searchParams.get('student_token')
+    if (!token) return
+
+    let isActive = true
+
+    const fetchByToken = async () => {
+      setLoading(true)
+      setError(null)
+      setData(null)
+
+      try {
+        const response = await apiVerifyManual({ student_token: token })
+        if (isActive) setData(response)
+      } catch (fetchError) {
+        if (isActive) setError(normalizeError(fetchError))
+      } finally {
+        if (isActive) setLoading(false)
+      }
+    }
+
+    fetchByToken()
+
+    return () => {
+      isActive = false
+    }
+  }, [searchParams])
+
   const updateField = (name: keyof ManualFormState, value: string) => {
     setForm((current) => ({ ...current, [name]: value }))
   }
@@ -64,7 +96,7 @@ export default function VerifyEntryPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const hasValue = Object.values(form).some((value) => value.trim())
+    const hasValue = Object.values(form).some((value) => value?.trim())
     if (!hasValue) {
       setError('Enter at least one search field.')
       setData(null)
@@ -324,5 +356,13 @@ export default function VerifyEntryPage() {
         </section>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEntryPage() {
+  return (
+    <Suspense>
+      <VerifyEntryPageInner />
+    </Suspense>
   )
 }
