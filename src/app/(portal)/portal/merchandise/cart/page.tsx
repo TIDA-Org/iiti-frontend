@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import {
   apiGetMerchandiseItems,
   apiCreateMerchandiseOrder,
@@ -175,11 +174,11 @@ export default function StudentMerchandiseCartPage() {
                       {/* Image Container */}
                       <div className="relative bg-slate-100 h-48 overflow-hidden">
                         {item.image_url && (
-                          <Image
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
                             src={item.image_url}
                             alt={item.name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-200"
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                           />
                         )}
                         {/* Stock Badge */}
