@@ -35,6 +35,13 @@ export interface EnrollmentDetailApiResponse extends EnrollmentApiResponse {
   fee_breakdown: Record<string, unknown> | null
 }
 
+export interface SelfEnrollmentRequest {
+  student_id: string
+  course_ids: string[]
+  payment_plan: 'full' | 'installment'
+  nvq_selected?: boolean
+}
+
 export async function apiCreateEnrollment(data: Record<string, unknown>): Promise<EnrollmentApiResponse> {
   return apiFetch('/enrollments', { method: 'POST', body: JSON.stringify(data) })
 }
@@ -58,4 +65,8 @@ export async function apiUpdateEnrollmentStatus(id: string, status: string): Pro
 
 export async function apiCreateRetake(enrollmentId: string, data: Record<string, unknown>): Promise<EnrollmentApiResponse> {
   return apiFetch(`/enrollments/${enrollmentId}/retake`, { method: 'POST', body: JSON.stringify(data) })
+}
+
+export async function apiSelfEnrollStudent(data: SelfEnrollmentRequest): Promise<EnrollmentApiResponse[]> {
+  return apiFetch('/enrollments/self-enroll', { method: 'POST', body: JSON.stringify(data) })
 }

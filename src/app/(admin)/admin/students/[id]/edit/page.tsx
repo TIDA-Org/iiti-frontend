@@ -234,7 +234,7 @@ export default function AdminStudentEditPage({ params }: Props) {
       onRetry={() => { refetchStudent(); refetchGuarantors() }}
     >
       {student && (
-        <div className="max-w-3xl">
+        <div className="w-full">
           <PageHeader
             title={`Edit ${studentDisplayName}`}
             subtitle={student.student_number}

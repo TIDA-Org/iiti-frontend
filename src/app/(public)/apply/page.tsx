@@ -11,6 +11,7 @@ import { DISTRICTS, PROVINCES } from '@/lib/constants'
 import { SectionLabel } from '@/components/shared/SectionLabel'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourses } from '@/lib/api/courses'
+import { apiSelfEnrollStudent } from '@/lib/api/enrollments'
 import { apiSelfRegisterStudent } from '@/lib/api/students'
 import {
   extractSriLankanNicDetails,
@@ -241,6 +242,13 @@ export default function ApplyPage() {
         preferred_language: lang,
         is_doing_nvq: isDoingNvq,
         has_previous_nvq: false,
+      })
+
+      await apiSelfEnrollStudent({
+        student_id: student.id,
+        course_ids: step2Data.courses,
+        payment_plan: step2Data.paymentMethod,
+        nvq_selected: isDoingNvq,
       })
 
       setRefNo(student.student_number || student.id)
