@@ -13,59 +13,14 @@ const HERO_IMAGES = [
   '/images/hero/DSC07644.jpg',
 ]
 
-interface WhyChooseUsItem {
-  key: string
-  label: string
-  label_si?: string
-}
-
-interface WhyChooseUsData {
-  title: string
-  title_si?: string
-  items: WhyChooseUsItem[]
-}
-
-const DEFAULT_WHY_CHOOSE_US_DATA: WhyChooseUsData = {
-  title: 'Why Choose Us',
-  items: [
-    { key: 'programmes_available', label: '3 Programmes Available' },
-    { key: 'nvq_certified', label: 'NVQ Level 3 Certified' },
-    { key: 'placement_assistance', label: '100% Placement Assistance' },
-    { key: 'accredited', label: 'TVEC & ISO Accredited' },
-  ],
-}
-
 export function HeroSection() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [whyChooseUsData, setWhyChooseUsData] = useState<WhyChooseUsData>(DEFAULT_WHY_CHOOSE_US_DATA)
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % HERO_IMAGES.length)
     }, 5000) // Change image every 5 seconds
     return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    const fetchWhyChooseUsData = async () => {
-      try {
-        const response = await fetch('/api/backend/website/why-choose-us', { cache: 'no-store' })
-        if (response.ok) {
-          const data = (await response.json()) as Partial<WhyChooseUsData>
-          if (data && Array.isArray(data.items) && data.items.length > 0) {
-            setWhyChooseUsData({
-              title: data.title || DEFAULT_WHY_CHOOSE_US_DATA.title,
-              title_si: data.title_si,
-              items: data.items,
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch Why Choose Us data:', error)
-      }
-    }
-
-    fetchWhyChooseUsData()
   }, [])
   return (
     <section
@@ -182,15 +137,20 @@ export function HeroSection() {
             >
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                  {whyChooseUsData.title}
+                  Why Choose Us
                 </h3>
                 <div className="w-12 h-1 bg-orange-500 rounded-full" />
               </div>
               <ul className="space-y-4">
-                {whyChooseUsData.items.map((item) => (
-                  <li key={item.key} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+                {[
+                  '3 Programmes Available',
+                  'NVQ Level 3 Certified',
+                  '100% Placement Assistance',
+                  'TVEC & ISO Accredited',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
                     <CheckCircle className="w-5 h-5 text-orange-500 shrink-0" />
-                    {item.label}
+                    {item}
                   </li>
                 ))}
               </ul>
