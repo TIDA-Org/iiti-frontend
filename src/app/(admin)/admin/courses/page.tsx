@@ -42,6 +42,7 @@ export default function AdminCoursesPage() {
   const [editTotalFee, setEditTotalFee] = useState<number>(0)
   const [editNvqLevel, setEditNvqLevel] = useState('')
   const [editActive, setEditActive] = useState(true)
+  const [editCertificateSummary, setEditCertificateSummary] = useState('')
   const { hasPermission } = usePermissionAccess()
 
   const canCreateCourse = hasPermission('courses.create')
@@ -78,6 +79,7 @@ export default function AdminCoursesPage() {
         total_fee: Number(fd.get('total_fee')) || 0,
         nvq_level: (fd.get('nvq_level') as string) || null,
         is_active: true,
+        certificate_summary: (fd.get('certificate_summary') as string) || null,
       })
       toast.success('Course created')
       setShowForm(false)
@@ -101,6 +103,7 @@ export default function AdminCoursesPage() {
     setEditTotalFee(course.total_fee)
     setEditNvqLevel(course.nvq_level || '')
     setEditActive(course.is_active)
+    setEditCertificateSummary(course.certificate_summary || '')
   }
 
   const cancelEdit = () => {
@@ -121,6 +124,7 @@ export default function AdminCoursesPage() {
         total_fee: editTotalFee,
         nvq_level: editNvqLevel || null,
         is_active: editActive,
+        certificate_summary: editCertificateSummary || null,
       })
       toast.success('Course updated')
       setEditingCourse(null)
@@ -210,6 +214,21 @@ export default function AdminCoursesPage() {
               <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
               <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" />
             </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                Certificate Summary
+              </label>
+
+              <textarea
+                value={editCertificateSummary}
+                onChange={e => setEditCertificateSummary(e.target.value)}
+                rows={10}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm
+                          focus:ring-2 focus:ring-amber-500
+                          focus:border-amber-500 outline-none font-mono"
+                placeholder="Text shown on page 2 of the certificate..."
+              />
+            </div>
             <div className="flex items-center gap-3">
               <label className="block text-xs font-medium text-slate-500">Course Active</label>
               <button
@@ -282,6 +301,19 @@ export default function AdminCoursesPage() {
               <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
               <textarea name="description" rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none" />
             </div>
+              <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                Certificate Summary
+              </label>
+              <textarea
+                name="certificate_summary"
+                rows={10}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm
+                          focus:ring-2 focus:ring-amber-500
+                          focus:border-amber-500 outline-none font-mono"
+                placeholder="Text shown on page 2 of the certificate..."
+              />
+            </div>
           </div>
           <div className="mt-4 flex justify-end">
             <button type="submit" disabled={creating} className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50">
@@ -306,6 +338,7 @@ export default function AdminCoursesPage() {
                   <tr>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Code</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Name</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Certificate Summary</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Type</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Fee (LKR)</th>
                     <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NVQ</th>
@@ -321,6 +354,17 @@ export default function AdminCoursesPage() {
                       <td className="px-5 py-3">
                         <p className="font-medium text-slate-800">{course.name}</p>
                         {course.name_si && <p className="text-xs text-slate-400">{course.name_si}</p>}
+                      </td>
+                      <td className="px-5 py-3">
+                        {course.certificate_summary ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                            Configured
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full">
+                            Empty
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
