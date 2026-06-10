@@ -65,6 +65,7 @@ export interface CourseApiResponse {
   short_name: string | null
   description: string | null
   description_si: string | null
+  certificate_summary: string | null
   full_details: string | null
   full_details_si: string | null
   nvq_level: string | null
