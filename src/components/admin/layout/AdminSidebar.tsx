@@ -147,6 +147,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Communication',
+    items: [
+      { href: '/admin/feedback', label: 'Feedback & Complaints', icon: MessageSquare, roles: ['super_admin', 'admin', 'front_desk'], permission: 'feedback_complaints.view_all' },
+    ],
+  },
+  {
     label: 'Administration',
     items: [
       { href: '/admin/users', label: 'Users', icon: UserCog, roles: ['super_admin', 'admin'] },
