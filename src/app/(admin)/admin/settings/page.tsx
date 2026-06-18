@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Globe2, Lock, RotateCcw, Save } from 'lucide-react'
+import { Globe2, Lock, RotateCcw, Save, Upload, FileText, Link as LinkIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/admin/layout/PageHeader'
@@ -10,7 +10,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useApi } from '@/hooks/useApi'
-import { apiBulkUpdateSettings, apiGetAllSettings, apiGetPublicSettings, SiteSettingApiResponse } from '@/lib/api/settings'
+import {
+  apiBulkUpdateSettings,
+  apiGetAdminAccreditationDocuments,
+  apiGetAllSettings,
+  apiGetPublicSettings,
+  apiUpdateAccreditationDocuments,
+  SiteSettingApiResponse,
+} from '@/lib/api/settings'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/lib/utils'
 
@@ -55,10 +62,16 @@ function shouldUseTextarea(setting: SiteSettingApiResponse) {
 export default function AdminSettingsPage() {
   const { user } = useAuthStore()
   const { data, isLoading, error, refetch } = useApi(apiGetAllSettings, [])
+  const { data: accreditationData, refetch: refetchAccreditation } = useApi(apiGetAdminAccreditationDocuments, [])
   const [cachedData, setCachedData] = useState<ReturnType<typeof apiGetAllSettings> extends Promise<infer T> ? T | null : null>(null)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [selectedCategory, setSelectedCategory] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingDocs, setUploadingDocs] = useState(false)
+  const [iafUrlDraft, setIafUrlDraft] = useState('')
+  const [tvecDoc1, setTvecDoc1] = useState<File | null>(null)
+  const [tvecDoc2, setTvecDoc2] = useState<File | null>(null)
+  const [isoDoc, setIsoDoc] = useState<File | null>(null)
 
   const canEdit = user?.role === 'super_admin'
 
@@ -89,6 +102,10 @@ export default function AdminSettingsPage() {
       return groups[0]?.category || ''
     })
   }, [groups])
+
+  useEffect(() => {
+    setIafUrlDraft(accreditationData?.iaf_url || '')
+  }, [accreditationData?.iaf_url])
 
   useEffect(() => {
     if (!data || typeof window === 'undefined') return
@@ -162,6 +179,41 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function handleSaveAccreditationDocuments() {
+    if (!canEdit) {
+      toast.error('Only Super Admin can edit settings.')
+      return
+    }
+
+    if (!iafUrlDraft.trim() && !tvecDoc1 && !tvecDoc2 && !isoDoc) {
+      toast.info('Provide at least one URL or PDF to update accreditation documents.')
+      return
+    }
+
+    setUploadingDocs(true)
+    try {
+      const response = await apiUpdateAccreditationDocuments({
+        iafUrl: iafUrlDraft,
+        tvecDoc1,
+        tvecDoc2,
+        isoDoc,
+      })
+
+      toast.success(response.message)
+
+      setTvecDoc1(null)
+      setTvecDoc2(null)
+      setIsoDoc(null)
+
+      await refetchAccreditation()
+      await refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload accreditation documents')
+    } finally {
+      setUploadingDocs(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -192,6 +244,100 @@ export default function AdminSettingsPage() {
           <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
             {canEdit ? 'Editing enabled for Super Admin.' : 'Read-only mode. Your role can view but cannot edit.'}
           </div>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="mb-5 flex flex-col gap-2">
+          <h2 className="text-base font-semibold text-slate-800">Accreditation Documents</h2>
+          <p className="text-sm text-slate-500">
+            Upload PDF proofs for TVEC (2 documents) and ISO (1 document), and manage the external IAF URL used by the website badge links.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <LinkIcon className="h-4 w-4" />
+              IAF External URL
+            </label>
+            <Input
+              value={iafUrlDraft}
+              onChange={(event) => setIafUrlDraft(event.target.value)}
+              disabled={!canEdit || uploadingDocs}
+              placeholder="https://share.google/HrwGK4EtObOC4Cxif"
+              className="bg-white"
+            />
+            {accreditationData?.iaf_url && (
+              <a href={accreditationData.iaf_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-orange-600 hover:text-orange-700">
+                Open current IAF URL
+              </a>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <FileText className="h-4 w-4" />
+              ISO PDF Document
+            </label>
+            <Input
+              type="file"
+              accept="application/pdf,.pdf"
+              disabled={!canEdit || uploadingDocs}
+              onChange={(event) => setIsoDoc(event.target.files?.[0] || null)}
+              className="bg-white"
+            />
+            {accreditationData?.iso_document?.url && (
+              <a href={accreditationData.iso_document.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-orange-600 hover:text-orange-700">
+                View current ISO document
+              </a>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <FileText className="h-4 w-4" />
+              TVEC PDF Document 1
+            </label>
+            <Input
+              type="file"
+              accept="application/pdf,.pdf"
+              disabled={!canEdit || uploadingDocs}
+              onChange={(event) => setTvecDoc1(event.target.files?.[0] || null)}
+              className="bg-white"
+            />
+            {accreditationData?.tvec_documents?.[0]?.url && (
+              <a href={accreditationData.tvec_documents[0].url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-orange-600 hover:text-orange-700">
+                View current TVEC document 1
+              </a>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <FileText className="h-4 w-4" />
+              TVEC PDF Document 2
+            </label>
+            <Input
+              type="file"
+              accept="application/pdf,.pdf"
+              disabled={!canEdit || uploadingDocs}
+              onChange={(event) => setTvecDoc2(event.target.files?.[0] || null)}
+              className="bg-white"
+            />
+            {accreditationData?.tvec_documents?.[1]?.url && (
+              <a href={accreditationData.tvec_documents[1].url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-orange-600 hover:text-orange-700">
+                View current TVEC document 2
+              </a>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <Button onClick={handleSaveAccreditationDocuments} disabled={!canEdit || uploadingDocs}>
+            <Upload className="h-4 w-4" />
+            {uploadingDocs ? 'Uploading...' : 'Save Accreditation Documents'}
+          </Button>
         </div>
       </div>
 

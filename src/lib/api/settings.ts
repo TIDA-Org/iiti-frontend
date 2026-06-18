@@ -36,6 +36,24 @@ export interface SmsTemplateUpdatePayload {
   label?: string | null
 }
 
+export interface AccreditationDocumentLink {
+  label: string
+  object_key: string | null
+  original_name: string | null
+  url: string | null
+}
+
+export interface AccreditationDocumentsResponse {
+  tvec_documents: AccreditationDocumentLink[]
+  iso_document: AccreditationDocumentLink
+  iaf_url: string
+}
+
+export interface AccreditationDocumentsUpdateResponse {
+  message: string
+  updated_keys: string[]
+}
+
 export function mapSettingsByKey(settings: SiteSettingApiResponse[]): Record<string, SiteSettingApiResponse> {
   return Object.fromEntries(settings.map((setting) => [setting.key, setting]))
 }
@@ -64,6 +82,41 @@ export async function apiUpdateSetting(key: string, value: string): Promise<Site
 
 export async function apiGetSmsTemplates(): Promise<SmsTemplateApiResponse[]> {
   return apiFetch('/settings/sms-templates')
+}
+
+export async function apiGetPublicAccreditationDocuments(): Promise<AccreditationDocumentsResponse> {
+  return apiFetch('/settings/public/accreditation-documents')
+}
+
+export async function apiGetAdminAccreditationDocuments(): Promise<AccreditationDocumentsResponse> {
+  return apiFetch('/settings/accreditation-documents')
+}
+
+export async function apiUpdateAccreditationDocuments(payload: {
+  iafUrl?: string
+  tvecDoc1?: File | null
+  tvecDoc2?: File | null
+  isoDoc?: File | null
+}): Promise<AccreditationDocumentsUpdateResponse> {
+  const formData = new FormData()
+
+  if (payload.iafUrl !== undefined) {
+    formData.append('iaf_url', payload.iafUrl)
+  }
+  if (payload.tvecDoc1) {
+    formData.append('tvec_doc_1', payload.tvecDoc1)
+  }
+  if (payload.tvecDoc2) {
+    formData.append('tvec_doc_2', payload.tvecDoc2)
+  }
+  if (payload.isoDoc) {
+    formData.append('iso_doc', payload.isoDoc)
+  }
+
+  return apiFetch('/settings/accreditation-documents', {
+    method: 'PUT',
+    body: formData,
+  })
 }
 
 export async function apiGetSmsTemplate(eventKey: string): Promise<SmsTemplateApiResponse> {

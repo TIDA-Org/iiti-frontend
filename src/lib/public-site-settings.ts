@@ -7,6 +7,7 @@ export interface PublicSiteSettings {
   businessRegNumber: string
   tvecAccreditation: string
   isoCertification: string
+  iafAccreditationUrl: string
   contactPhone: string
   mobilePhone: string
   contactEmail: string
@@ -84,6 +85,7 @@ export function buildPublicSiteSettings(settings: SiteSettingApiResponse[] | nul
     businessRegNumber: getNonEmptyValue(settingsByKey.business_reg_number?.value, INSTITUTE_INFO.tvecRegNo),
     tvecAccreditation: getNonEmptyValue(settingsByKey.tvec_accreditation?.value, INSTITUTE_INFO.tvecRegNo),
     isoCertification: getNonEmptyValue(settingsByKey.iso_certification?.value, INSTITUTE_INFO.isoNumber),
+    iafAccreditationUrl: getNonEmptyValue(settingsByKey.accreditation_iaf_url?.value, 'https://share.google/HrwGK4EtObOC4Cxif'),
     contactPhone: getNonEmptyValue(settingsByKey.contact_phone?.value, INSTITUTE_INFO.telephone),
     mobilePhone: whatsappNumber,
     contactEmail: getNonEmptyValue(settingsByKey.contact_email?.value, INSTITUTE_INFO.email),
