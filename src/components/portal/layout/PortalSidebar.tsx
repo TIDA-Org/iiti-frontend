@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, CreditCard, FileText,
   Award, Briefcase, Bell, LogOut,X, ShoppingBag, PackageCheck,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, MessageSquare
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: '/portal/jobs', label: 'Job Board', icon: Briefcase },
   { href: '/portal/merchandise/cart', label: 'Merchandise', icon: ShoppingBag },
   { href: '/portal/merchandise/orders', label: 'My Orders', icon: PackageCheck },
+  { href: '/portal/feedback/history', label: 'Feedback & Complaints', icon: MessageSquare },
   { href: '/portal/notifications', label: 'Notifications', icon: Bell },
 ]
 
