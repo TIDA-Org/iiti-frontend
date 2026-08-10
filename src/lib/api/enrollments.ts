@@ -55,6 +55,10 @@ export async function apiGetMyEnrollments(): Promise<EnrollmentApiResponse[]> {
   return apiFetch('/enrollments/me')
 }
 
+export async function apiGetMyEnrollmentDetail(enrollmentId: string): Promise<EnrollmentDetailApiResponse> {
+  return apiFetch(`/enrollments/me/${enrollmentId}`)
+}
+
 export async function apiGetEnrollment(id: string): Promise<EnrollmentDetailApiResponse> {
   return apiFetch(`/enrollments/${id}`)
 }

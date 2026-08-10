@@ -180,7 +180,15 @@ function getMockData(path: string): unknown {
     },
   }
 
-  return mockResponses[path] || []
+  if (mockResponses[path]) {
+    return mockResponses[path]
+  }
+
+  if (path.includes('payments') || path.includes('receipts')) {
+    return { items: [], total: 0, page: 1, per_page: 20, pages: 0 }
+  }
+
+  return []
 }
 
 export async function apiFetch<T>(

@@ -22,6 +22,15 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
   published: 'bg-green-100 text-green-800',
   draft: 'bg-stone-100 text-stone-600',
+  // Payment statuses
+  under_review: 'bg-amber-100 text-amber-800',
+  refunded: 'bg-purple-100 text-purple-800',
+  // Receipt statuses
+  uploaded: 'bg-amber-100 text-amber-800',
+  // Notification statuses
+  sent: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
+  read: 'bg-stone-100 text-stone-600',
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
