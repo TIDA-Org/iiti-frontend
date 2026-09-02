@@ -5,7 +5,12 @@ import {
   apiGetGuarantors,
   apiGetStudent,
   apiGetStudentDocuments,
+  apiGetStudentPhoto,
+  apiUploadStudentPhoto,
+  apiDeleteStudentPhoto,
+  apiReviewStudentPhoto,
 } from '@/lib/api/students'
+import type { StudentPhotoApiResponse } from '@/lib/api/students'
 import { apiGetEnrollments } from '@/lib/api/enrollments'
 import { apiGetCourse, apiGetBatches } from '@/lib/api/courses'
 import { useApi } from '@/hooks/useApi'
@@ -64,6 +69,12 @@ export default function AdminStudentDetailPage({ params }: Props) {
   const [isQrLoading, setIsQrLoading] = useState(false)
   const [isRecreating, setIsRecreating] = useState(false)
 
+  // Photo state
+  const [photoData, setPhotoData] = useState<StudentPhotoApiResponse | null>(null)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoActionMsg, setPhotoActionMsg] = useState<string | null>(null)
+
   const openQr = async () => {
     setQrOpen(true)
     setIsQrLoading(true)
@@ -88,6 +99,67 @@ export default function AdminStudentDetailPage({ params }: Props) {
       // ignore
     } finally {
       setIsRecreating(false)
+    }
+  }
+
+  const loadPhoto = async () => {
+    setPhotoLoading(true)
+    setPhotoActionMsg(null)
+    try {
+      const data = await apiGetStudentPhoto(id)
+      setPhotoData(data)
+    } catch {
+      setPhotoData(null)
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoUploading(true)
+    setPhotoActionMsg(null)
+    try {
+      const data = await apiUploadStudentPhoto(id, file)
+      setPhotoData(data as unknown as StudentPhotoApiResponse)
+      refetchStudent()
+      setPhotoActionMsg('Photo uploaded and auto-approved.')
+    } catch {
+      setPhotoActionMsg('Upload failed.')
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  const handlePhotoDelete = async () => {
+    if (!confirm('Remove this student\'s license photo?')) return
+    setPhotoUploading(true)
+    setPhotoActionMsg(null)
+    try {
+      await apiDeleteStudentPhoto(id)
+      setPhotoData(null)
+      refetchStudent()
+      setPhotoActionMsg('Photo removed.')
+    } catch {
+      setPhotoActionMsg('Delete failed.')
+    } finally {
+      setPhotoUploading(false)
+    }
+  }
+
+  const handlePhotoReview = async (status: 'approved' | 'rejected') => {
+    setPhotoUploading(true)
+    setPhotoActionMsg(null)
+    try {
+      const data = await apiReviewStudentPhoto(id, status)
+      setPhotoData(data)
+      refetchStudent()
+      setPhotoActionMsg(`Photo ${status}.`)
+    } catch {
+      setPhotoActionMsg('Action failed.')
+    } finally {
+      setPhotoUploading(false)
     }
   }
 
@@ -235,15 +307,75 @@ export default function AdminStudentDetailPage({ params }: Props) {
 
           <div className="grid xl:grid-cols-3 gap-6">
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center">
-                    <span className="text-amber-600 font-bold text-xl">{studentInitial}</span>
-                  </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  {student.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={student.photo_url} alt="License photo" className="w-16 h-20 object-cover rounded-md border border-slate-200" />
+                  ) : (
+                    <div className="w-16 h-20 rounded-md bg-amber-100 flex items-center justify-center border border-amber-200">
+                      <span className="text-amber-600 font-bold text-xl">{studentInitial}</span>
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-bold text-slate-800 text-lg">{studentDisplayName}</h3>
                     <p className="text-xs text-slate-500">{student.gender} · DOB {formatDate(student.date_of_birth)}</p>
+                    {/* Photo status badge */}
+                    {(() => {
+                      const s = (student as any).photo_status
+                      if (!s) return <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">No photo</span>
+                      if (s === 'approved') return <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">✓ Photo approved</span>
+                      if (s === 'pending') return <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">⏳ Photo pending</span>
+                      if (s === 'rejected') return <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">✗ Photo rejected</span>
+                      return null
+                    })()}
                   </div>
+                </div>
+
+                {/* Photo management for staff */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    <label className={`cursor-pointer inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-amber-300 hover:text-amber-600 transition-colors ${photoUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {photoUploading ? 'Working...' : '↑ Upload Photo'}
+                      <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoUpload} />
+                    </label>
+                    {!photoData && student.photo_url === null ? null : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={loadPhoto}
+                          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+                        >View Photo</button>
+                        {(student as any).photo_status === 'pending' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handlePhotoReview('approved')}
+                              disabled={photoUploading}
+                              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+                            >✓ Approve</button>
+                            <button
+                              type="button"
+                              onClick={() => handlePhotoReview('rejected')}
+                              disabled={photoUploading}
+                              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 transition-colors"
+                            >✗ Reject</button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handlePhotoDelete}
+                          disabled={photoUploading}
+                          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                        >Delete</button>
+                      </>
+                    )}
+                  </div>
+                  {photoActionMsg && <p className="text-xs text-slate-500">{photoActionMsg}</p>}
+                  {photoData?.photo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photoData.photo_url} alt="Student license photo" className="mt-2 max-h-48 rounded-md border border-slate-200" />
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">{student.preferred_language.toUpperCase()}</span>

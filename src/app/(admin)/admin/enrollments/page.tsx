@@ -542,6 +542,9 @@ export default function AdminEnrollmentsPage() {
               <div><span className="text-slate-400">Status:</span> <span className="text-slate-700">{statusLabel[detail.enrollment_status] || detail.enrollment_status}</span></div>
               <div><span className="text-slate-400">Payment Plan:</span> <span className="text-slate-700 capitalize">{detail.payment_plan}</span></div>
               <div><span className="text-slate-400">Enrollment Date:</span> <span className="text-slate-700">{formatDate(detail.enrollment_date)}</span></div>
+              {detail.completion_date && (
+                <div><span className="text-slate-400">Completion Date:</span> <span className="text-slate-700 font-semibold text-green-700">{formatDate(detail.completion_date)}</span></div>
+              )}
               <div><span className="text-slate-400">Amount Paid:</span> <span className="text-slate-700">{formatLkr(getDisplayedAmountPaid(detail))}</span></div>
               <div><span className="text-slate-400">Total Fee:</span> <span className="text-slate-700">{formatLkr(detail.total_fee_at_enrollment)}</span></div>
               <div><span className="text-slate-400">Retake:</span> <span className="text-slate-700">{detail.is_retake ? 'Yes' : 'No'}</span></div>

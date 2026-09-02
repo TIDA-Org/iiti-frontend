@@ -47,6 +47,7 @@ export default function AdminStudentsPage() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Student ID</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Name</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NIC</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Photo Status</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Phone</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">District</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Joined</th>
@@ -64,6 +65,12 @@ export default function AdminStudentsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3 text-slate-500 font-mono text-xs">{student.nic_number}</td>
+                    <td className="px-5 py-3">
+                      {student.photo_status === 'approved' && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Approved</span>}
+                      {student.photo_status === 'pending' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Pending Review</span>}
+                      {student.photo_status === 'rejected' && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Rejected</span>}
+                      {!student.photo_status && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">No Photo</span>}
+                    </td>
                     <td className="px-5 py-3 text-slate-500">{student.phone_primary}</td>
                     <td className="px-5 py-3 text-slate-500">{student.district}</td>
                     <td className="px-5 py-3 text-slate-400 text-xs">{formatDate(student.created_at)}</td>
