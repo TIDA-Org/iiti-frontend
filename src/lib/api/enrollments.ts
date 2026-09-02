@@ -8,6 +8,13 @@ export interface EnrollmentStudentApiResponse {
   nic_number: string
 }
 
+export interface EnrollmentCourseApiResponse {
+  id: string
+  name: string
+  short_name: string | null
+  course_code: string
+}
+
 export interface EnrollmentApiResponse {
   id: string
   enrollment_number: string
@@ -20,6 +27,7 @@ export interface EnrollmentApiResponse {
   custom_fee: number | null
   notes: string | null
   enrollment_date: string
+  completion_date?: string | null
   enrollment_status: string
   total_fee_at_enrollment: number
   amount_paid: number
@@ -28,6 +36,7 @@ export interface EnrollmentApiResponse {
   created_at: string
   updated_at: string
   student?: EnrollmentStudentApiResponse | null
+  course?: EnrollmentCourseApiResponse | null
   result?: ResultApiResponse | null
 }
 
@@ -53,6 +62,10 @@ export async function apiGetEnrollments(studentId?: string): Promise<EnrollmentA
 
 export async function apiGetMyEnrollments(): Promise<EnrollmentApiResponse[]> {
   return apiFetch('/enrollments/me')
+}
+
+export async function apiGetMyEnrollmentDetail(enrollmentId: string): Promise<EnrollmentDetailApiResponse> {
+  return apiFetch(`/enrollments/me/${enrollmentId}`)
 }
 
 export async function apiGetEnrollment(id: string): Promise<EnrollmentDetailApiResponse> {

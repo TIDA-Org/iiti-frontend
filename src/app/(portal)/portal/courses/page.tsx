@@ -36,7 +36,7 @@ export default function PortalCoursesPage() {
 
   const courseById = useMemo(() => {
     const map = new Map<string, CourseApiResponse>()
-    ;(courses ?? []).forEach((course) => map.set(course.id, course))
+      ; (courses ?? []).forEach((course) => map.set(course.id, course))
     return map
   }, [courses])
 
@@ -109,13 +109,6 @@ export default function PortalCoursesPage() {
                     <BadgeInfo className="w-3.5 h-3.5" />
                     Enrollment ID: {enrollment.id.slice(0, 8)}...
                   </p>
-                  <Link
-                    href={`/portal/courses/${enrollment.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
-                  >
-                    View
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
               </div>
             ))}

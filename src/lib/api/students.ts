@@ -41,6 +41,9 @@ export interface StudentApiResponse {
   phone_secondary: string | null
   email: string | null
   photo_url: string | null
+  photo_status: string | null
+  photo_reviewed_by: string | null
+  photo_reviewed_at: string | null
   is_doing_nvq: boolean
   has_previous_nvq: boolean
   nvq_eligible: boolean
@@ -93,9 +96,11 @@ export async function apiGetStudents(
   page = 1,
   perPage = 20,
   search?: string,
+  photoStatus?: string,
 ): Promise<StudentListApiResponse> {
   const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
   if (search) params.set('search', search)
+  if (photoStatus) params.set('photo_status', photoStatus)
   return apiFetch(`/students?${params}`)
 }
 
@@ -161,6 +166,47 @@ export async function apiUploadStudentPhoto(studentId: string, file: File): Prom
     headers: {},
     body: formData,
   })
+}
+
+export interface StudentPhotoApiResponse {
+  student_id: string
+  photo_url: string | null
+  has_photo: boolean
+  photo_status: 'pending' | 'approved' | 'rejected' | null
+  photo_reviewed_by: string | null
+  photo_reviewed_at: string | null
+}
+
+export async function apiGetStudentPhoto(studentId: string): Promise<StudentPhotoApiResponse> {
+  return apiFetch(`/students/${studentId}/photo`)
+}
+
+export async function apiDeleteStudentPhoto(studentId: string): Promise<{ message: string }> {
+  return apiFetch(`/students/${studentId}/photo`, { method: 'DELETE' })
+}
+
+export async function apiReviewStudentPhoto(
+  studentId: string,
+  status: 'approved' | 'rejected',
+): Promise<StudentPhotoApiResponse> {
+  return apiFetch(`/students/${studentId}/photo/review`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export async function apiUploadMyPhoto(file: File): Promise<StudentPhotoApiResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return apiFetch('/students/me/photo', {
+    method: 'POST',
+    headers: {},
+    body: formData,
+  })
+}
+
+export async function apiGetMyPhoto(): Promise<StudentPhotoApiResponse> {
+  return apiFetch('/students/me/photo')
 }
 
 export async function apiAddGuarantors(studentId: string, guarantors: Record<string, unknown>[]): Promise<GuarantorApiResponse[]> {

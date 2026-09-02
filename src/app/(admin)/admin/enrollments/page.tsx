@@ -16,6 +16,8 @@ import {
   EnrollmentApiResponse,
   EnrollmentDetailApiResponse,
 } from '@/lib/api/enrollments'
+import { apiGetInstallmentBreakdown } from '@/lib/api/payments'
+import { InstallmentBreakdownApiResponse } from '@/types/payment'
 import { apiGetStudents, StudentApiResponse } from '@/lib/api/students'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
@@ -24,7 +26,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { formatDate } from '@/lib/utils'
-import { ClipboardList, Eye, Plus, RotateCcw, X } from 'lucide-react'
+import { ClipboardList, Eye, Loader2, Plus, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const statusLabel: Record<string, string> = {
@@ -74,7 +76,13 @@ export default function AdminEnrollmentsPage() {
   const [loadingCreateBatches, setLoadingCreateBatches] = useState(false)
 
   const [detail, setDetail] = useState<EnrollmentDetailApiResponse | null>(null)
+  const [breakdown, setBreakdown] = useState<InstallmentBreakdownApiResponse | null>(null)
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null)
+
+  // Searchable student picker state
+  const [studentSearch, setStudentSearch] = useState('')
+  const [selectedStudentId, setSelectedStudentId] = useState('')
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false)
 
   const [retakeEnrollment, setRetakeEnrollment] = useState<EnrollmentApiResponse | null>(null)
   const [retakeCourseBatches, setRetakeCourseBatches] = useState<BatchApiResponse[]>([])
@@ -230,9 +238,14 @@ export default function AdminEnrollmentsPage() {
 
   const handleViewDetail = async (id: string) => {
     setLoadingDetailId(id)
+    setBreakdown(null)
     try {
       const data = await apiGetEnrollment(id)
       setDetail(data)
+      // Also load installment breakdown
+      apiGetInstallmentBreakdown(id)
+        .then(setBreakdown)
+        .catch(() => { /* breakdown optional */ })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load enrollment detail')
     } finally {
@@ -280,6 +293,20 @@ export default function AdminEnrollmentsPage() {
     }
   }
 
+  // Filtered student list for searchable dropdown
+  const filteredStudentsForCreate = useMemo(() => {
+    if (!studentSearch.trim()) return students
+    const lower = studentSearch.toLowerCase()
+    return students.filter(
+      s =>
+        s.full_name?.toLowerCase().includes(lower) ||
+        s.student_number?.toLowerCase().includes(lower) ||
+        s.nic_number?.toLowerCase().includes(lower),
+    )
+  }, [students, studentSearch])
+
+  const selectedStudent = students.find(s => s.id === selectedStudentId) ?? null
+
   const selectedCreateCourse = courses.find((course) => course.id === createCourseId)
 
   return (
@@ -304,14 +331,44 @@ export default function AdminEnrollmentsPage() {
         <form onSubmit={handleCreateEnrollment} className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h3 className="text-sm font-semibold text-slate-700 mb-4">Create Enrollment</h3>
           <div className="grid md:grid-cols-2 gap-4">
-            <div>
+            {/* Searchable student picker */}
+            <div className="relative">
               <label className="block text-xs font-medium text-slate-500 mb-1">Student *</label>
-              <select name="student_id" required className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" disabled={studentsLoading || students.length === 0}>
-                <option value="">{studentsLoading ? 'Loading students...' : 'Select student'}</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>{student.full_name}</option>
-                ))}
-              </select>
+              <input
+                type="text"
+                value={selectedStudent ? `${selectedStudent.full_name} (${selectedStudent.student_number})` : studentSearch}
+                onChange={(e) => {
+                  setStudentSearch(e.target.value)
+                  setSelectedStudentId('')
+                  setShowStudentDropdown(true)
+                }}
+                onFocus={() => setShowStudentDropdown(true)}
+                placeholder={studentsLoading ? 'Loading students...' : 'Type to search student...'}
+                disabled={studentsLoading}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                autoComplete="off"
+              />
+              {/* Hidden select for form submission */}
+              <input type="hidden" name="student_id" value={selectedStudentId} required />
+              {showStudentDropdown && filteredStudentsForCreate.length > 0 && (
+                <div className="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                  {filteredStudentsForCreate.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStudentId(s.id)
+                        setStudentSearch('')
+                        setShowStudentDropdown(false)
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-amber-50 text-sm border-b border-slate-50 last:border-0"
+                    >
+                      <p className="font-medium text-slate-800">{s.full_name}</p>
+                      <p className="text-xs text-slate-400">{s.student_number} · {s.nic_number}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
               {studentsError && <p className="text-red-500 text-xs mt-1">{studentsError}</p>}
               {!studentsLoading && !studentsError && students.length === 0 && (
                 <p className="text-slate-400 text-xs mt-1">No registered students found.</p>
@@ -427,10 +484,12 @@ export default function AdminEnrollmentsPage() {
                           <button
                             onClick={() => handleViewDetail(enrollment.id)}
                             disabled={loadingDetailId === enrollment.id}
-                            className="text-slate-500 hover:text-slate-700"
+                            className="text-slate-500 hover:text-slate-700 disabled:opacity-50"
                             title="View details"
                           >
-                            <Eye className="w-4 h-4" />
+                            {loadingDetailId === enrollment.id
+                              ? <Loader2 className="w-4 h-4 animate-spin" />
+                              : <Eye className="w-4 h-4" />}
                           </button>
                           {canCreateEnrollment && (
                             <button
@@ -470,11 +529,12 @@ export default function AdminEnrollmentsPage() {
 
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl border border-slate-200">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="bg-white rounded-xl w-full max-w-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h3 className="font-semibold text-slate-800">Enrollment Detail</h3>
-              <button onClick={() => setDetail(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+              <button onClick={() => { setDetail(null); setBreakdown(null) }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
             </div>
+            {/* Loading indicator if detail just arrived but breakdown still loading */}
             <div className="p-5 grid sm:grid-cols-2 gap-4 text-sm">
               <div><span className="text-slate-400">Enrollment No:</span> <span className="text-slate-700 font-mono">{detail.enrollment_number}</span></div>
               <div><span className="text-slate-400">Student:</span> <span className="text-slate-700">{studentNameById.get(detail.student_id) || detail.student_id}</span></div>
@@ -482,6 +542,9 @@ export default function AdminEnrollmentsPage() {
               <div><span className="text-slate-400">Status:</span> <span className="text-slate-700">{statusLabel[detail.enrollment_status] || detail.enrollment_status}</span></div>
               <div><span className="text-slate-400">Payment Plan:</span> <span className="text-slate-700 capitalize">{detail.payment_plan}</span></div>
               <div><span className="text-slate-400">Enrollment Date:</span> <span className="text-slate-700">{formatDate(detail.enrollment_date)}</span></div>
+              {detail.completion_date && (
+                <div><span className="text-slate-400">Completion Date:</span> <span className="text-slate-700 font-semibold text-green-700">{formatDate(detail.completion_date)}</span></div>
+              )}
               <div><span className="text-slate-400">Amount Paid:</span> <span className="text-slate-700">{formatLkr(getDisplayedAmountPaid(detail))}</span></div>
               <div><span className="text-slate-400">Total Fee:</span> <span className="text-slate-700">{formatLkr(detail.total_fee_at_enrollment)}</span></div>
               <div><span className="text-slate-400">Retake:</span> <span className="text-slate-700">{detail.is_retake ? 'Yes' : 'No'}</span></div>
@@ -508,6 +571,62 @@ export default function AdminEnrollmentsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Installment Breakdown */}
+              <div className="sm:col-span-2">
+                <p className="font-medium text-slate-700 mb-2 flex items-center gap-2">
+                  Installment Breakdown
+                  {!breakdown && <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />}
+                </p>
+                {breakdown ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 text-center">
+                        <p className="text-blue-500 font-semibold">Total Fee</p>
+                        <p className="font-bold text-blue-800">{formatLkr(breakdown.total_fee)}</p>
+                      </div>
+                      <div className="bg-green-50 border border-green-100 rounded-lg p-2 text-center">
+                        <p className="text-green-500 font-semibold">Total Paid</p>
+                        <p className="font-bold text-green-800">{formatLkr(breakdown.total_paid)}</p>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 text-center">
+                        <p className="text-amber-500 font-semibold">Remaining</p>
+                        <p className="font-bold text-amber-800">{formatLkr(breakdown.remaining_balance)}</p>
+                      </div>
+                    </div>
+                    <div className="border border-slate-100 rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead className="bg-slate-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-slate-400 font-semibold">#</th>
+                            <th className="px-3 py-2 text-left text-slate-400 font-semibold">Amount Due</th>
+                            <th className="px-3 py-2 text-left text-slate-400 font-semibold">Due Date</th>
+                            <th className="px-3 py-2 text-left text-slate-400 font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                        {breakdown.installments.map((inst: { installment_number: number; amount_due: number; due_date: string; status: string }) => (
+                            <tr key={inst.installment_number}>
+                              <td className="px-3 py-2 font-medium">{inst.installment_number}</td>
+                              <td className="px-3 py-2">{formatLkr(inst.amount_due)}</td>
+                              <td className="px-3 py-2">{new Date(inst.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                              <td className="px-3 py-2">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  inst.status === 'paid' ? 'bg-green-100 text-green-700'
+                                  : inst.status === 'overdue' ? 'bg-red-100 text-red-700'
+                                  : 'bg-amber-100 text-amber-700'
+                                }`}>{inst.status}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">Loading installment breakdown...</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, BookOpen, CreditCard, FileText,
-  Award, Briefcase, Bell, LogOut,X, ShoppingBag, PackageCheck,
-  ChevronLeft, ChevronRight, MessageSquare
+  Award, Briefcase, Bell, LogOut, X, ShoppingBag, PackageCheck,
+  ChevronLeft, ChevronRight, MessageSquare, User
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { LogoutConfirmDialog } from '@/components/shared/LogoutConfirmDialog'
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { href: '/portal/payments', label: 'Payments', icon: CreditCard },
   { href: '/portal/results', label: 'Results', icon: FileText },
   { href: '/portal/certificates', label: 'Certificates', icon: Award },
+  { href: '/portal/profile', label: 'My Profile', icon: User },
   { href: '/portal/jobs', label: 'Job Board', icon: Briefcase },
   { href: '/portal/merchandise/cart', label: 'Merchandise', icon: ShoppingBag },
   { href: '/portal/merchandise/orders', label: 'My Orders', icon: PackageCheck },
@@ -164,15 +165,22 @@ export function PortalSidebar({
       {/* User footer */}
       <div className="border-t border-slate-100 p-4 shrink-0">
         <div className={cn('flex items-center gap-3', !isMobile && collapsed && 'justify-center')}>
-          <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-            <span className="text-orange-600 text-sm font-bold">{user ? getInitials(user.name) : 'S'}</span>
-          </div>
-          {(!collapsed || isMobile) && (
-            <div className="flex-1 min-w-0">
-              <div className="text-slate-800 text-sm font-medium truncate">{user?.name}</div>
-              <div className="text-slate-400 text-xs truncate">{user?.studentId}</div>
+          <Link
+            href="/portal/profile"
+            onClick={handleNavClick}
+            className="flex items-center gap-3 flex-1 min-w-0 group hover:opacity-80 transition-opacity"
+            title="View My Profile"
+          >
+            <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0 group-hover:ring-2 group-hover:ring-orange-300">
+              <span className="text-orange-600 text-sm font-bold">{user ? getInitials(user.name) : 'S'}</span>
             </div>
-          )}
+            {(!collapsed || isMobile) && (
+              <div className="flex-1 min-w-0">
+                <div className="text-slate-800 text-sm font-medium truncate group-hover:text-orange-600">{user?.name}</div>
+                <div className="text-slate-400 text-xs truncate">{user?.studentId}</div>
+              </div>
+            )}
+          </Link>
           <button
             onClick={() => setLogoutDialogOpen(true)}
             title="Sign Out"

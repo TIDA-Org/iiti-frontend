@@ -42,6 +42,11 @@ export async function apiRevokeLicense(id: string, reason: string): Promise<Lice
   return apiFetch(`/licenses/${id}/revoke`, { method: 'PUT', body: JSON.stringify({ reason }) })
 }
 
+export async function apiGetLicenses(page = 1, perPage = 20): Promise<LicenseListApiResponse> {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+  return apiFetch(`/licenses?${params}`)
+}
+
 export async function apiGetMyLicenses(page = 1, perPage = 20): Promise<LicenseListApiResponse> {
   const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
   return apiFetch(`/licenses/me?${params}`)
