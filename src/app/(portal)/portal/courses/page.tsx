@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { apiGetCourses, type CourseApiResponse } from '@/lib/api/courses'
 import { apiGetMyEnrollments } from '@/lib/api/enrollments'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 function formatDate(value: string) {
   const parsed = Date.parse(value)
@@ -15,11 +16,9 @@ function formatDate(value: string) {
   return new Date(parsed).toLocaleDateString()
 }
 
-function toLabel(value: string) {
-  return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
 export default function PortalCoursesPage() {
+  const { t } = useTranslation()
+
   const {
     data: enrollments,
     isLoading: enrollmentsLoading,
@@ -50,11 +49,23 @@ export default function PortalCoursesPage() {
   const isLoading = enrollmentsLoading || coursesLoading
   const error = enrollmentsError || coursesError
 
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return t.common.statusActive
+      case 'completed': return t.common.statusCompleted
+      case 'pending_payment': return t.common.statusPending
+      case 'payment_overdue': return t.common.statusOverdue
+      case 'on_hold': return t.common.statusOnHold
+      case 'withdrawn': return t.common.statusWithdrawn
+      default: return status.replace(/_/g, ' ')
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>My Courses</h1>
-        <p className="text-stone-500 text-sm mt-1">Your enrolled training programmes</p>
+        <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>{t.courses.title}</h1>
+        <p className="text-stone-500 text-sm mt-1">{t.courses.subtitle}</p>
       </div>
 
       <DataLoader
@@ -68,8 +79,8 @@ export default function PortalCoursesPage() {
         {items.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="No courses enrolled"
-            description="You do not have any enrollments yet."
+            title={t.courses.emptyTitle}
+            description={t.courses.emptyDesc}
           />
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -77,26 +88,28 @@ export default function PortalCoursesPage() {
               <div key={enrollment.id} className="bg-white border border-slate-200 rounded-xl p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-400 mb-1">Course</p>
+                    <p className="text-xs text-slate-400 mb-1">{t.courses.courseLabel}</p>
                     <h3 className="text-base font-semibold text-slate-800 truncate">
-                      {course?.name || 'Course unavailable'}
+                      {course?.name || t.courses.courseNotAssigned}
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">
                       {course?.course_code || enrollment.course_id.slice(0, 8)}
                     </p>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-orange-50 text-orange-700 px-2.5 py-1 text-xs font-medium border border-orange-200 whitespace-nowrap">
-                    {toLabel(enrollment.enrollment_status)}
+                    {statusLabel(enrollment.enrollment_status)}
                   </span>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg border border-slate-200 px-3 py-2">
-                    <div className="text-xs text-slate-400 mb-1">Payment Plan</div>
-                    <div className="font-medium text-slate-700">{toLabel(enrollment.payment_plan)}</div>
+                    <div className="text-xs text-slate-400 mb-1">{t.courses.paymentPlan}</div>
+                    <div className="font-medium text-slate-700">
+                      {enrollment.payment_plan === 'full' ? t.payments.planFull : t.payments.planInstallment}
+                    </div>
                   </div>
                   <div className="rounded-lg border border-slate-200 px-3 py-2">
-                    <div className="text-xs text-slate-400 mb-1">Enrolled Date</div>
+                    <div className="text-xs text-slate-400 mb-1">{t.courses.enrolledDate}</div>
                     <div className="font-medium text-slate-700 flex items-center gap-1.5">
                       <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
                       {formatDate(enrollment.enrollment_date)}
@@ -107,7 +120,7 @@ export default function PortalCoursesPage() {
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-xs text-slate-500 flex items-center gap-1.5">
                     <BadgeInfo className="w-3.5 h-3.5" />
-                    Enrollment ID: {enrollment.id.slice(0, 8)}...
+                    ID: {enrollment.id.slice(0, 8)}...
                   </p>
                 </div>
               </div>

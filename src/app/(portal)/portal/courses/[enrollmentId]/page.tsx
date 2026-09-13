@@ -27,6 +27,7 @@ import { apiGetInstallmentBreakdown, apiGetPaymentsForEnrollment } from '@/lib/a
 import type { ResultApiResponse } from '@/lib/api/results'
 import type { InstallmentBreakdownApiResponse, PaymentApiResponse } from '@/types/payment'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 // ── Extended enrollment type with embedded relations ───────────────────────
 interface CourseEmbedded {
@@ -77,9 +78,9 @@ function fmtDateTime(val: string | null | undefined) {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }
-function fmtLkr(val: number | null | undefined) {
+function fmtLkr(val: number | null | undefined, currency = 'LKR') {
   if (val == null) return '—'
-  return `LKR ${val.toLocaleString('en-LK', { minimumFractionDigits: 2 })}`
+  return `${currency} ${val.toLocaleString('en-LK', { minimumFractionDigits: 2 })}`
 }
 function toLabel(v: string) {
   return v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -156,6 +157,7 @@ function Section({
 export default function CourseDetailPage({ params }: { params: Promise<{ enrollmentId: string }> }) {
   const { enrollmentId } = use(params)
   const router = useRouter()
+  const { t, isSinhala } = useTranslation()
 
   const [enrollment, setEnrollment] = useState<EnrollmentWithRelations | null>(null)
   const [breakdown, setBreakdown] = useState<InstallmentBreakdownApiResponse | null>(null)
@@ -194,7 +196,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
         <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center">
           <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
         </div>
-        <p className="text-slate-500 text-sm">Loading course details…</p>
+        <p className="text-slate-500 text-sm">{t.courses.loadingCourseDetails}</p>
       </div>
     )
   }
@@ -203,15 +205,48 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
     return (
       <div className="flex flex-col items-center justify-center min-h-64 gap-3">
         <XCircle className="w-10 h-10 text-red-400" />
-        <p className="text-slate-600 font-medium">{error ?? 'Enrollment not found.'}</p>
+        <p className="text-slate-600 font-medium">{error ?? t.courses.enrollmentNotFound}</p>
         <button onClick={() => router.back()} className="text-sm text-orange-600 hover:underline">
-          Go back
+          {t.courses.goBack}
         </button>
       </div>
     )
   }
 
   const { course, batch, result } = enrollment
+
+  const getEnrollmentStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active': return t.common.statusActive
+      case 'completed': return t.common.statusCompleted
+      case 'pending_payment': return t.common.statusPending
+      case 'payment_overdue': return t.common.statusOverdue
+      case 'on_hold': return t.common.statusOnHold
+      case 'withdrawn': return t.common.statusWithdrawn
+      case 'expelled': return t.common.statusExpelled
+      case 'upcoming': return t.common.statusUpcoming
+      case 'ongoing': return t.common.statusOngoing
+      case 'cancelled': return t.common.statusCancelled
+      default: return toLabel(status)
+    }
+  }
+
+  const getPaymentStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return t.common.statusCompleted
+      case 'pending': return t.common.statusPending
+      case 'under_review': return t.common.statusUnderReview
+      case 'rejected': return t.common.statusRejected
+      case 'refunded': return t.courses.refundedSlot
+      default: return toLabel(status)
+    }
+  }
+
+  const getPlanLabel = (plan: string) => {
+    if (plan === 'full') return t.payments.planFull
+    if (plan === 'installment') return t.payments.planInstallment
+    return toLabel(plan)
+  }
 
   const paidCount = payments.filter((p) => p.payment_status === 'completed').length
   const refundedCount = payments.filter((p) => p.payment_status === 'refunded').length
@@ -229,7 +264,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
       <div className="flex items-center gap-2 text-sm text-slate-400 mb-5">
         <Link href="/portal/courses" className="hover:text-orange-600 flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" />
-          My Courses
+          {t.courses.title}
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
         <span className="text-slate-700 font-medium truncate">
@@ -248,16 +283,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                   statusColors[enrollment.enrollment_status] ?? 'bg-white/20 text-white border-white/30'
                 )}
               >
-                {toLabel(enrollment.enrollment_status)}
+                {getEnrollmentStatusLabel(enrollment.enrollment_status)}
               </span>
               {enrollment.is_retake && (
                 <span className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full bg-white/20 border border-white/30">
-                  Retake
+                  {t.courses.retake}
                 </span>
               )}
             </div>
             <h1 className="text-xl font-bold mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>
-              {course?.name ?? 'Course Detail'}
+              {course?.name ?? t.courses.courseDetail}
             </h1>
             {course?.course_code && (
               <p className="text-orange-100 text-sm font-mono">{course.course_code}</p>
@@ -271,9 +306,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
         {/* Progress bar */}
         <div className="mt-5">
           <div className="flex items-center justify-between text-xs text-orange-100 mb-1.5">
-            <span>Payment Progress</span>
+            <span>{t.courses.paymentProgress}</span>
             <span>
-              {fmtLkr(enrollment.amount_paid)} of {fmtLkr(enrollment.total_fee_at_enrollment)}
+              {fmtLkr(enrollment.amount_paid, t.common.currency)} {t.courses.ofFee} {fmtLkr(enrollment.total_fee_at_enrollment, t.common.currency)}
             </span>
           </div>
           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -284,8 +319,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
           </div>
           <div className="flex items-center justify-between mt-1.5 text-xs text-orange-100">
             <span>
-              {netCompleted} of {totalInstallments} installments paid
-              {refundedCount > 0 && ` (${refundedCount} refunded)`}
+              {netCompleted} {t.courses.ofFee} {totalInstallments} {t.courses.installmentsPaid}
+              {refundedCount > 0 && ` (${refundedCount} ${t.courses.refundedSlot})`}
             </span>
             <span>{progressPct}%</span>
           </div>
@@ -294,36 +329,36 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Enrollment Info */}
-        <Section title="Enrollment Info" icon={FileText}>
-          <InfoRow icon={Hash} label="Enrollment Number" value={<span className="font-mono">{enrollment.enrollment_number}</span>} />
-          <InfoRow icon={CalendarDays} label="Enrolled Date" value={fmtDate(enrollment.enrollment_date)} />
-          <InfoRow icon={CreditCard} label="Payment Plan" value={toLabel(enrollment.payment_plan)} />
-          <InfoRow icon={GraduationCap} label="NVQ Selected" value={enrollment.nvq_selected ? 'Yes' : 'No'} />
-          {enrollment.notes && <InfoRow icon={Info} label="Notes" value={enrollment.notes} />}
+        <Section title={t.courses.enrollmentInfo} icon={FileText}>
+          <InfoRow icon={Hash} label={t.courses.enrollmentNumber} value={<span className="font-mono">{enrollment.enrollment_number}</span>} />
+          <InfoRow icon={CalendarDays} label={t.courses.enrolledDate} value={fmtDate(enrollment.enrollment_date)} />
+          <InfoRow icon={CreditCard} label={t.courses.paymentPlan} value={getPlanLabel(enrollment.payment_plan)} />
+          <InfoRow icon={GraduationCap} label={t.courses.nvqSelected} value={enrollment.nvq_selected ? t.courses.yes : t.courses.no} />
+          {enrollment.notes && <InfoRow icon={Info} label={t.courses.notes} value={enrollment.notes} />}
         </Section>
 
         {/* Course Info */}
         {course && (
-          <Section title="Course Info" icon={BookOpen}>
+          <Section title={t.courses.courseInfo} icon={BookOpen}>
             {course.description && (
               <p className="text-sm text-slate-600 mb-4 leading-relaxed">{course.description}</p>
             )}
-            <InfoRow icon={Hash} label="Course Code" value={<span className="font-mono">{course.course_code}</span>} />
-            <InfoRow icon={Trophy} label="NVQ Level" value={course.nvq_level ?? 'Not NVQ'} />
-            <InfoRow icon={CreditCard} label="Standard Fee" value={fmtLkr(course.total_fee)} />
-            <InfoRow icon={Info} label="Max Installments" value={String(course.max_installments)} />
+            <InfoRow icon={Hash} label={t.courses.batchCode} value={<span className="font-mono">{course.course_code}</span>} />
+            <InfoRow icon={Trophy} label={t.courses.nvqLevel} value={course.nvq_level ?? t.courses.notNvq} />
+            <InfoRow icon={CreditCard} label={t.courses.standardFee} value={fmtLkr(course.total_fee, t.common.currency)} />
+            <InfoRow icon={Info} label={t.courses.maxInstallments} value={String(course.max_installments)} />
           </Section>
         )}
 
         {/* Batch & Schedule */}
         {batch && (
-          <Section title="Batch & Schedule" icon={Calendar}>
-            <InfoRow icon={Hash} label="Batch Code" value={<span className="font-mono">{batch.batch_code}</span>} />
-            <InfoRow icon={CalendarDays} label="Start Date" value={fmtDate(batch.start_date)} />
-            <InfoRow icon={CalendarCheck} label="End Date" value={fmtDate(batch.end_date)} />
+          <Section title={t.courses.batchSchedule} icon={Calendar}>
+            <InfoRow icon={Hash} label={t.courses.batchCode} value={<span className="font-mono">{batch.batch_code}</span>} />
+            <InfoRow icon={CalendarDays} label={t.courses.startDate} value={fmtDate(batch.start_date)} />
+            <InfoRow icon={CalendarCheck} label={t.courses.endDate} value={fmtDate(batch.end_date)} />
             <InfoRow
               icon={Info}
-              label="Status"
+              label={t.common.status}
               value={
                 <span
                   className={cn(
@@ -331,36 +366,36 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                     statusColors[batch.status] ?? 'bg-slate-100 text-slate-600 border-slate-200'
                   )}
                 >
-                  {toLabel(batch.status)}
+                  {getEnrollmentStatusLabel(batch.status)}
                 </span>
               }
             />
             {batch.instructor_name && (
-              <InfoRow icon={GraduationCap} label="Instructor" value={batch.instructor_name} />
+              <InfoRow icon={GraduationCap} label={t.courses.instructor} value={batch.instructor_name} />
             )}
             {batch.location?.name && (
-              <InfoRow icon={MapPin} label="Location" value={batch.location.name} />
+              <InfoRow icon={MapPin} label={t.courses.location} value={batch.location.name} />
             )}
           </Section>
         )}
 
         {/* Fee Breakdown */}
         {enrollment.fee_breakdown && (
-          <Section title="Fee Breakdown" icon={CreditCard}>
+          <Section title={t.courses.feeBreakdown} icon={CreditCard}>
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                <span className="text-slate-500">Base Course Fee</span>
-                <span className="font-medium">{fmtLkr(enrollment.fee_breakdown.base_fee as number)}</span>
+                <span className="text-slate-500">{t.courses.baseCourseFee}</span>
+                <span className="font-medium">{fmtLkr(enrollment.fee_breakdown.base_fee as number, t.common.currency)}</span>
               </div>
               {enrollment.nvq_selected && (
                 <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                  <span className="text-slate-500">NVQ Fee</span>
-                  <span className="font-medium">{fmtLkr(enrollment.fee_breakdown.nvq_fee as number)}</span>
+                  <span className="text-slate-500">{t.courses.nvqFee}</span>
+                  <span className="font-medium">{fmtLkr(enrollment.fee_breakdown.nvq_fee as number, t.common.currency)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm py-2 bg-orange-50 rounded-lg px-3 mt-1">
-                <span className="font-semibold text-orange-700">Total Payable</span>
-                <span className="font-bold text-orange-700">{fmtLkr(enrollment.fee_breakdown.total as number)}</span>
+                <span className="font-semibold text-orange-700">{t.courses.totalPayable}</span>
+                <span className="font-bold text-orange-700">{fmtLkr(enrollment.fee_breakdown.total as number, t.common.currency)}</span>
               </div>
             </div>
           </Section>
@@ -369,19 +404,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
         {/* Installment Schedule */}
         {breakdown && (
           <div className="lg:col-span-2">
-            <Section title="Installment Schedule" icon={Clock}>
+            <Section title={t.courses.installmentSchedule} icon={Clock}>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-slate-50 rounded-xl p-3 text-center">
-                  <p className="text-xs text-slate-400 mb-1">Total Fee</p>
-                  <p className="font-bold text-slate-800 text-sm">{fmtLkr(breakdown.total_fee)}</p>
+                  <p className="text-xs text-slate-400 mb-1">{t.courses.totalFee}</p>
+                  <p className="font-bold text-slate-800 text-sm">{fmtLkr(breakdown.total_fee, t.common.currency)}</p>
                 </div>
                 <div className="bg-green-50 rounded-xl p-3 text-center">
-                  <p className="text-xs text-green-500 mb-1">Paid</p>
-                  <p className="font-bold text-green-700 text-sm">{fmtLkr(breakdown.total_paid)}</p>
+                  <p className="text-xs text-green-500 mb-1">{t.courses.paidCount}</p>
+                  <p className="font-bold text-green-700 text-sm">{fmtLkr(breakdown.total_paid, t.common.currency)}</p>
                 </div>
                 <div className="bg-amber-50 rounded-xl p-3 text-center">
-                  <p className="text-xs text-amber-500 mb-1">Remaining</p>
-                  <p className="font-bold text-amber-700 text-sm">{fmtLkr(breakdown.remaining_balance)}</p>
+                  <p className="text-xs text-amber-500 mb-1">{t.courses.remainingCount}</p>
+                  <p className="font-bold text-amber-700 text-sm">{fmtLkr(breakdown.remaining_balance, t.common.currency)}</p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -402,12 +437,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                         <Clock className="w-4 h-4 shrink-0" />
                       )}
                       <div>
-                        <p className="text-sm font-semibold">Installment {inst.installment_number}</p>
-                        <p className="text-xs opacity-75">Due: {fmtDate(inst.due_date)}</p>
+                        <p className="text-sm font-semibold">{t.payments.installmentNumber} {inst.installment_number}</p>
+                        <p className="text-xs opacity-75">{t.courses.due}: {fmtDate(inst.due_date)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold">{fmtLkr(inst.amount_due)}</p>
+                      <p className="text-sm font-bold">{fmtLkr(inst.amount_due, t.common.currency)}</p>
                       <p className="text-xs font-medium capitalize">{inst.status}</p>
                     </div>
                   </div>
@@ -420,7 +455,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
         {/* Payment History */}
         {payments.length > 0 && (
           <div className="lg:col-span-2">
-            <Section title="Payment History" icon={CreditCard}>
+            <Section title={t.courses.paymentHistory} icon={CreditCard}>
               <div className="space-y-2">
                 {payments.map((p) => (
                   <div key={p.id} className="flex items-center gap-4 rounded-xl border border-slate-100 px-4 py-3">
@@ -445,22 +480,22 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                             paymentStatusColors[p.payment_status] ?? 'bg-slate-100 text-slate-600'
                           )}
                         >
-                          {toLabel(p.payment_status)}
+                          {getPaymentStatusLabel(p.payment_status)}
                         </span>
                         {p.payment_status === 'refunded' && (
-                          <span className="text-xs text-slate-400">(Slot freed)</span>
+                          <span className="text-xs text-slate-400">({t.courses.slotFreed})</span>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Installment #{p.installment_number} · {fmtDateTime(p.created_at)}
+                        {t.payments.installmentNumber} #{p.installment_number} · {fmtDateTime(p.created_at)}
                         {p.bank_name && ` · ${p.bank_name}`}
                         {p.branch_name && `, ${p.branch_name}`}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-slate-800">{fmtLkr(p.amount)}</p>
+                      <p className="text-sm font-bold text-slate-800">{fmtLkr(p.amount, t.common.currency)}</p>
                       {p.approved_at && (
-                        <p className="text-xs text-green-500">Approved {fmtDate(p.approved_at)}</p>
+                        <p className="text-xs text-green-500">{t.courses.approvedOn} {fmtDate(p.approved_at)}</p>
                       )}
                     </div>
                   </div>
@@ -473,17 +508,17 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
         {/* Exam Result */}
         {result && (
           <div className="lg:col-span-2">
-            <Section title="Exam Result" icon={Trophy}>
+            <Section title={t.courses.examResult} icon={Trophy}>
               <div className="grid sm:grid-cols-3 gap-3">
                 {result.final_grade && (
                   <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
-                    <p className="text-xs text-amber-500 font-medium mb-1">Grade</p>
+                    <p className="text-xs text-amber-500 font-medium mb-1">{t.courses.grade}</p>
                     <p className="text-3xl font-black text-amber-700">{result.final_grade}</p>
                   </div>
                 )}
                 {result.score_percentage != null && (
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                    <p className="text-xs text-blue-500 font-medium mb-1">Score</p>
+                    <p className="text-xs text-blue-500 font-medium mb-1">{t.courses.score}</p>
                     <p className="text-2xl font-bold text-blue-700">{result.score_percentage}%</p>
                   </div>
                 )}
@@ -502,7 +537,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                         result.result_status === 'pass' ? 'text-green-500' : 'text-red-500'
                       )}
                     >
-                      Status
+                      {t.common.status}
                     </p>
                     <p
                       className={cn(
@@ -510,7 +545,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
                         result.result_status === 'pass' ? 'text-green-700' : 'text-red-700'
                       )}
                     >
-                      {result.result_status}
+                      {result.result_status === 'pass' ? t.results.statusPass : t.results.statusFail}
                     </p>
                   </div>
                 )}
@@ -532,17 +567,18 @@ export default function CourseDetailPage({ params }: { params: Promise<{ enrollm
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shadow-sm"
           >
             <CreditCard className="w-4 h-4" />
-            Go to Payments
+            {t.courses.goToPayments}
           </Link>
           <Link
             href="/portal/courses"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to My Courses
+            {t.courses.backToCourses}
           </Link>
         </div>
       </div>
     </div>
   )
 }
+

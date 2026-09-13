@@ -20,8 +20,11 @@ const CATEGORIES = [
   'Other',
 ]
 
+import { useTranslation } from '@/lib/i18n/useTranslation'
+
 export default function FeedbackSubmissionPage() {
   const router = useRouter()
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   
   const [formData, setFormData] = useState({
@@ -86,8 +89,8 @@ export default function FeedbackSubmissionPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900">Submit Feedback or Complaint</h1>
-        <p className="text-slate-600 mt-2">Help us improve by sharing your feedback or reporting an issue</p>
+        <h1 className="text-3xl font-bold text-slate-900">{t.feedback.title}</h1>
+        <p className="text-slate-600 mt-2">{t.feedback.subtitle}</p>
       </div>
 
       <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -95,7 +98,7 @@ export default function FeedbackSubmissionPage() {
           {/* Type Selection */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-3">
-              Type <span className="text-red-500">*</span>
+              {t.common.status} <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-4">
               {(['feedback', 'complaint'] as const).map(type => (
@@ -108,20 +111,18 @@ export default function FeedbackSubmissionPage() {
                     onChange={e => handleChange('type', e.target.value)}
                     className="w-4 h-4 text-orange-600"
                   />
-                  <span className="text-sm text-slate-700 capitalize">{type}</span>
+                  <span className="text-sm text-slate-700 capitalize">
+                    {type === 'feedback' ? t.feedback.typeFeedback : t.feedback.typeComplaint}
+                  </span>
                 </label>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-2">
-              • <strong>Feedback:</strong> Suggestions for improvement
-              <br />• <strong>Complaint:</strong> Issue or concern that needs to be addressed
-            </p>
           </div>
 
           {/* Category */}
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-2">
-              Category <span className="text-red-500">*</span>
+              {t.feedback.category} <span className="text-red-500">*</span>
             </label>
             <select
               id="category"
@@ -139,7 +140,7 @@ export default function FeedbackSubmissionPage() {
           {/* Subject */}
           <div>
             <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-2">
-              Subject <span className="text-red-500">*</span>
+              {t.feedback.subject} <span className="text-red-500">*</span>
             </label>
             <Input
               id="subject"
@@ -154,7 +155,7 @@ export default function FeedbackSubmissionPage() {
           {/* Description */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
-              Description <span className="text-red-500">*</span>
+              {t.feedback.description} <span className="text-red-500">*</span>
             </label>
             <Textarea
               id="description"
@@ -177,9 +178,9 @@ export default function FeedbackSubmissionPage() {
                 className="w-4 h-4 text-blue-600 mt-1"
               />
               <div>
-                <span className="text-sm font-medium text-slate-700">Submit Anonymously</span>
+                <span className="text-sm font-medium text-slate-700">{t.feedback.anonymous}</span>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Your identity will be hidden from staff. However, you won&apos;t receive updates about your submission.
+                  {t.feedback.anonymousHint}
                 </p>
               </div>
             </label>
@@ -190,18 +191,19 @@ export default function FeedbackSubmissionPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
+              className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              {isLoading ? 'Submitting...' : 'Submit'}
+              {isLoading ? t.common.loading : t.feedback.submitBtn}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={isLoading}
+              className="cursor-pointer"
             >
-              Cancel
+              {t.common.cancel}
             </Button>
           </div>
         </form>

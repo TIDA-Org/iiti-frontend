@@ -255,13 +255,23 @@ export function PaymentsTable({
                   <TableCell className="text-sm">{formatDate(p.approved_at)}</TableCell>
                   {showUploadAction && (
                     <TableCell>
-                      {p.payment_status === 'pending' || p.payment_status === 'rejected' ? (
+                      {p.payment_status === 'rejected' || (p.payment_status as string) === 'reject' ? (
                         <Link
                           href={`/portal/payments/${p.id}`}
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors"
                         >
                           Upload Slip
                         </Link>
+                      ) : p.payment_status === 'pending' ? (
+                        <button
+                          type="button"
+                          disabled
+                          aria-disabled="true"
+                          title="Upload slip is disabled while payment is pending"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg cursor-not-allowed opacity-60"
+                        >
+                          Upload Slip
+                        </button>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}

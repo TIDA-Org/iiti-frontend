@@ -20,7 +20,10 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+import { useTranslation } from '@/lib/i18n/useTranslation'
+
 export default function PortalJobsPage() {
+  const { t } = useTranslation()
   const vacanciesApi = useApi(() => apiGetPublishedVacancies(), [])
   const myApplicationsApi = useApi(() => apiGetMyApplications(), [])
 
@@ -32,17 +35,17 @@ export default function PortalJobsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
-          Job Board
+          {t.jobs.title}
         </h1>
-        <p className="mt-1 text-sm text-stone-500">Browse active vacancies and track your own applications.</p>
+        <p className="mt-1 text-sm text-stone-500">{t.jobs.subtitle}</p>
       </div>
 
       <DataLoader isLoading={vacanciesApi.isLoading || myApplicationsApi.isLoading} error={vacanciesApi.error || myApplicationsApi.error} onRetry={() => { vacanciesApi.refetch(); myApplicationsApi.refetch() }}>
         {vacancies.length === 0 ? (
           <EmptyState
             icon={Briefcase}
-            title="No jobs available"
-            description="Published job listings will appear here once vacancies are open for students."
+            title={t.jobs.emptyTitle}
+            description={t.jobs.emptyDesc}
           />
         ) : (
           <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
@@ -56,20 +59,20 @@ export default function PortalJobsPage() {
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <h2 className="text-lg font-semibold text-stone-800">{vacancy.title}</h2>
                           <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                            Open
+                            {t.jobs.openStatus}
                           </span>
                           {application && (
                             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${applicationStyles[application.status] || 'bg-slate-100 text-slate-700'}`}>
-                              Applied · {application.status}
+                              {t.jobs.applied} · {application.status}
                             </span>
                           )}
                         </div>
 
                         <div className="text-sm font-medium text-orange-600">{vacancy.company_name}</div>
                         <div className="mt-2 flex flex-wrap gap-4 text-xs text-stone-500">
-                          <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{vacancy.location || 'Location not specified'}</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{vacancy.location || '—'}</span>
                           {vacancy.application_deadline && (
-                            <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Deadline: {formatDate(vacancy.application_deadline)}</span>
+                            <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{t.jobs.closingDate}: {formatDate(vacancy.application_deadline)}</span>
                           )}
                           {vacancy.salary_range && <span>{vacancy.salary_range}</span>}
                         </div>
@@ -81,7 +84,7 @@ export default function PortalJobsPage() {
 
                       <div className="flex shrink-0 flex-col gap-2 lg:items-end">
                         <Link href={`/portal/jobs/${vacancy.id}`} className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
-                          View Vacancy
+                          {t.common.viewDetails}
                           <ExternalLink className="h-4 w-4" />
                         </Link>
                       </div>

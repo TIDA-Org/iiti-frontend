@@ -69,11 +69,13 @@ const getDisplayedAmountPaid = (enrollment: {
 export default function AdminEnrollmentsPage() {
   const [search, setSearch] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<{ id: string; status: string } | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createCourseId, setCreateCourseId] = useState('')
   const [createBatches, setCreateBatches] = useState<BatchApiResponse[]>([])
   const [loadingCreateBatches, setLoadingCreateBatches] = useState(false)
+  const [trialSubCourseType, setTrialSubCourseType] = useState('')
 
   const [detail, setDetail] = useState<EnrollmentDetailApiResponse | null>(null)
   const [breakdown, setBreakdown] = useState<InstallmentBreakdownApiResponse | null>(null)
@@ -185,6 +187,7 @@ export default function AdminEnrollmentsPage() {
 
   const handleStatusChange = async (id: string, status: string) => {
     setUpdatingId(id)
+    setUpdatingStatus({ id, status })
     try {
       const updatedEnrollment = await apiUpdateEnrollmentStatus(id, status)
       setEnrollments((current) => current.map((item) => (item.id === id ? updatedEnrollment : item)))
@@ -201,6 +204,7 @@ export default function AdminEnrollmentsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to update enrollment status')
     } finally {
       setUpdatingId(null)
+      setUpdatingStatus(null)
     }
   }
 
@@ -222,11 +226,13 @@ export default function AdminEnrollmentsPage() {
         nvq_selected: formData.get('nvq_selected') === 'on',
         custom_fee: (formData.get('custom_fee') as string) ? Number(formData.get('custom_fee')) : null,
         notes: (formData.get('notes') as string) || null,
+        trial_sub_course_type: (formData.get('trial_sub_course_type') as string) || null,
       })
       setEnrollments((current) => [createdEnrollment, ...current])
       toast.success('Enrollment created successfully')
       setShowCreateForm(false)
       setCreateCourseId('')
+      setTrialSubCourseType('')
       form.reset()
       await refetch()
     } catch (err) {
@@ -380,7 +386,10 @@ export default function AdminEnrollmentsPage() {
                 name="course_id"
                 required
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                onChange={(e) => setCreateCourseId(e.target.value)}
+                onChange={(e) => {
+                  setCreateCourseId(e.target.value)
+                  setTrialSubCourseType('')
+                }}
               >
                 <option value="">Select course</option>
                 {courses.map((course) => (
@@ -419,6 +428,30 @@ export default function AdminEnrollmentsPage() {
               <label className="block text-xs font-medium text-slate-500 mb-1">Custom Fee</label>
               <input name="custom_fee" type="number" min={0} step="0.01" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
             </div>
+            {selectedCreateCourse && (
+              selectedCreateCourse.is_trial ||
+              selectedCreateCourse.course_type === 'trial' ||
+              selectedCreateCourse.course_type === 'trial_course' ||
+              selectedCreateCourse.name?.toLowerCase().includes('one-day')
+            ) && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-amber-700 mb-1">
+                  Operator Type * <span className="text-slate-500 font-normal">(required for One-Day Certification)</span>
+                </label>
+                <select
+                  name="trial_sub_course_type"
+                  required
+                  value={trialSubCourseType}
+                  onChange={(e) => setTrialSubCourseType(e.target.value)}
+                  className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-amber-50 focus:ring-2 focus:ring-amber-500 font-medium text-amber-900"
+                >
+                  <option value="">-- Select Operator Type --</option>
+                  <option value="forklift_operator">Forklift Operator</option>
+                  <option value="excavator_operator">Excavator Operator</option>
+                  <option value="backhoe_loader_operator">Backhoe Loader Operator</option>
+                </select>
+              </div>
+            )}
             <div className="md:col-span-2">
               <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                 <input name="nvq_selected" type="checkbox" className="h-4 w-4 rounded border-slate-300" />
@@ -474,7 +507,10 @@ export default function AdminEnrollmentsPage() {
                       <td className="px-5 py-3 text-slate-700 font-mono">{enrollment.total_fee_at_enrollment.toLocaleString()}</td>
                       <td className="px-5 py-3 text-slate-700 font-mono">{getDisplayedAmountPaid(enrollment).toLocaleString()}</td>
                       <td className="px-5 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[enrollment.enrollment_status] || 'bg-slate-100 text-slate-700'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${statusColor[enrollment.enrollment_status] || 'bg-slate-100 text-slate-700'}`}>
+                          {updatingStatus?.id === enrollment.id && (
+                            <Loader2 className="w-3 h-3 animate-spin text-current" />
+                          )}
                           {statusLabel[enrollment.enrollment_status] || enrollment.enrollment_status}
                         </span>
                       </td>
@@ -483,7 +519,7 @@ export default function AdminEnrollmentsPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleViewDetail(enrollment.id)}
-                            disabled={loadingDetailId === enrollment.id}
+                            disabled={loadingDetailId === enrollment.id || updatingStatus?.id === enrollment.id}
                             className="text-slate-500 hover:text-slate-700 disabled:opacity-50"
                             title="View details"
                           >
@@ -494,27 +530,39 @@ export default function AdminEnrollmentsPage() {
                           {canCreateEnrollment && (
                             <button
                               onClick={() => handleOpenRetake(enrollment)}
-                              className="text-blue-500 hover:text-blue-700"
+                              disabled={updatingStatus?.id === enrollment.id}
+                              className="text-blue-500 hover:text-blue-700 disabled:opacity-50"
                               title="Create retake"
                             >
                               <RotateCcw className="w-4 h-4" />
                             </button>
                           )}
                           {canEditEnrollment && (
-                            <select
-                              className="border border-slate-200 rounded-lg px-2 py-1 text-xs bg-white"
-                              value={enrollment.enrollment_status}
-                              disabled={updatingId === enrollment.id}
-                              onChange={(e) => handleStatusChange(enrollment.id, e.target.value)}
-                            >
-                              <option value="pending_payment">Pending Payment</option>
-                              <option value="active">Active</option>
-                              <option value="completed">Completed</option>
-                              <option value="withdrawn">Withdrawn</option>
-                              <option value="on_hold">On Hold</option>
-                              <option value="payment_overdue">Payment Overdue</option>
-                              <option value="expelled">Expelled</option>
-                            </select>
+                            <div className="inline-flex items-center gap-1.5">
+                              <select
+                                className={`border rounded-lg px-2 py-1 text-xs transition-all ${
+                                  updatingStatus?.id === enrollment.id
+                                    ? 'border-amber-400 bg-amber-50/60 text-slate-700 cursor-wait'
+                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                                }`}
+                                value={updatingStatus?.id === enrollment.id ? updatingStatus.status : enrollment.enrollment_status}
+                                disabled={updatingStatus?.id === enrollment.id}
+                                onChange={(e) => handleStatusChange(enrollment.id, e.target.value)}
+                              >
+                                <option value="pending_payment">Pending Payment</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="withdrawn">Withdrawn</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="payment_overdue">Payment Overdue</option>
+                                <option value="expelled">Expelled</option>
+                              </select>
+                              {updatingStatus?.id === enrollment.id && (
+                                <span className="inline-flex items-center text-amber-600" title="Updating status...">
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -548,6 +596,17 @@ export default function AdminEnrollmentsPage() {
               <div><span className="text-slate-400">Amount Paid:</span> <span className="text-slate-700">{formatLkr(getDisplayedAmountPaid(detail))}</span></div>
               <div><span className="text-slate-400">Total Fee:</span> <span className="text-slate-700">{formatLkr(detail.total_fee_at_enrollment)}</span></div>
               <div><span className="text-slate-400">Retake:</span> <span className="text-slate-700">{detail.is_retake ? 'Yes' : 'No'}</span></div>
+              {detail.trial_sub_course_type && (
+                <div className="sm:col-span-2">
+                  <span className="text-slate-400">Operator Type:</span>{' '}
+                  <span className="text-amber-700 font-semibold">
+                    {detail.trial_sub_course_type === 'forklift_operator' ? 'Forklift Operator'
+                      : detail.trial_sub_course_type === 'excavator_operator' ? 'Excavator Operator'
+                      : detail.trial_sub_course_type === 'backhoe_loader_operator' ? 'Backhoe Loader Operator'
+                      : detail.trial_sub_course_type}
+                  </span>
+                </div>
+              )}
               {detail.fee_breakdown && (
                 <div className="sm:col-span-2 bg-slate-50 border border-slate-100 rounded-lg p-3">
                   <p className="font-medium text-slate-700 mb-2">Fee Breakdown</p>
@@ -605,11 +664,15 @@ export default function AdminEnrollmentsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                        {breakdown.installments.map((inst: { installment_number: number; amount_due: number; due_date: string; status: string }) => (
+                        {breakdown.installments.map((inst) => (
                             <tr key={inst.installment_number}>
                               <td className="px-3 py-2 font-medium">{inst.installment_number}</td>
                               <td className="px-3 py-2">{formatLkr(inst.amount_due)}</td>
-                              <td className="px-3 py-2">{new Date(inst.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                              <td className="px-3 py-2">
+                                {inst.due_date
+                                  ? new Date(inst.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                  : '—'}
+                              </td>
                               <td className="px-3 py-2">
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                   inst.status === 'paid' ? 'bg-green-100 text-green-700'

@@ -1,22 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { apiGetStudents, StudentApiResponse, StudentListApiResponse } from '@/lib/api/students'
 import { useApi } from '@/hooks/useApi'
 import { PageHeader } from '@/components/admin/layout/PageHeader'
 import { DataLoader } from '@/components/shared/DataLoader'
 import { SearchInput } from '@/components/shared/SearchInput'
 import { formatDate } from '@/lib/utils'
-import { UserPlus, Eye } from 'lucide-react'
+import { UserPlus, Eye, Sparkles } from 'lucide-react'
 
-export default function AdminStudentsPage() {
+function StudentsContent() {
+  const searchParams = useSearchParams()
+  const initialRegType = searchParams.get('registration_type') || ''
+
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [regType, setRegType] = useState(initialRegType)
 
   const { data, isLoading, error, refetch } = useApi<StudentListApiResponse>(
-    () => apiGetStudents(page, 20, search || undefined),
-    [page, search],
+    () => apiGetStudents(page, 20, search || undefined, undefined, regType || undefined),
+    [page, search, regType],
   )
 
   const students = data?.items || []
@@ -27,16 +32,76 @@ export default function AdminStudentsPage() {
         title="Students"
         subtitle={data ? `${data.total} total students` : 'Loading...'}
         actions={
-          <Link href="/admin/students/new" className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+          <Link
+            href="/admin/students/new"
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+          >
             <UserPlus className="w-4 h-4" /> Register Student
           </Link>
         }
       />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search by name, NIC, Student ID, email..." className="max-w-sm" />
-          <span className="text-sm text-slate-400">{data?.total ?? 0} results</span>
+        {/* Search & Channel Filters */}
+        <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <SearchInput
+              value={search}
+              onChange={(val) => {
+                setSearch(val)
+                setPage(1)
+              }}
+              placeholder="Search by name, NIC, Student ID..."
+              className="max-w-sm"
+            />
+
+            {/* Registration Channel Tabs */}
+            <div className="flex items-center rounded-xl bg-slate-100 p-1 text-xs font-medium text-slate-600">
+              <button
+                type="button"
+                onClick={() => {
+                  setRegType('')
+                  setPage(1)
+                }}
+                className={`rounded-lg px-3 py-1.5 transition ${
+                  regType === '' ? 'bg-white text-slate-900 font-semibold shadow-2xs' : 'hover:text-slate-900'
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRegType('self_registered')
+                  setPage(1)
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
+                  regType === 'self_registered'
+                    ? 'bg-white text-cyan-800 font-semibold shadow-2xs'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                <Sparkles className="h-3 w-3 text-cyan-600" />
+                Online Self-Registered
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRegType('on_site')
+                  setPage(1)
+                }}
+                className={`rounded-lg px-3 py-1.5 transition ${
+                  regType === 'on_site' ? 'bg-white text-slate-900 font-semibold shadow-2xs' : 'hover:text-slate-900'
+                }`}
+              >
+                On-Site
+              </button>
+            </div>
+          </div>
+
+          <span className="text-sm text-slate-400 self-end sm:self-center">
+            {data?.total ?? 0} results
+          </span>
         </div>
 
         <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
@@ -46,6 +111,7 @@ export default function AdminStudentsPage() {
                 <tr>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Student ID</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Name</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Channel</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">NIC</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Photo Status</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase">Phone</th>
@@ -57,25 +123,58 @@ export default function AdminStudentsPage() {
               <tbody className="divide-y divide-slate-50">
                 {students.map((student: StudentApiResponse) => (
                   <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3 font-mono text-xs text-amber-600 font-medium">{student.student_number}</td>
+                    <td className="px-5 py-3 font-mono text-xs text-amber-600 font-medium">
+                      {student.student_number}
+                    </td>
                     <td className="px-5 py-3">
                       <div>
                         <p className="font-medium text-slate-800">{student.full_name}</p>
                         <p className="text-xs text-slate-400">{student.email || '-'}</p>
                       </div>
                     </td>
+                    <td className="px-5 py-3">
+                      {student.registration_type === 'self_registered' ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-semibold border border-cyan-200/80">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          Online
+                        </span>
+                      ) : (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+                          On-Site
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-slate-500 font-mono text-xs">{student.nic_number}</td>
                     <td className="px-5 py-3">
-                      {student.photo_status === 'approved' && <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Approved</span>}
-                      {student.photo_status === 'pending' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Pending Review</span>}
-                      {student.photo_status === 'rejected' && <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Rejected</span>}
-                      {!student.photo_status && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">No Photo</span>}
+                      {student.photo_status === 'approved' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                          Approved
+                        </span>
+                      )}
+                      {student.photo_status === 'pending' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+                          Pending Review
+                        </span>
+                      )}
+                      {student.photo_status === 'rejected' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                          Rejected
+                        </span>
+                      )}
+                      {!student.photo_status && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                          No Photo
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-slate-500">{student.phone_primary}</td>
                     <td className="px-5 py-3 text-slate-500">{student.district}</td>
                     <td className="px-5 py-3 text-slate-400 text-xs">{formatDate(student.created_at)}</td>
                     <td className="px-5 py-3">
-                      <Link href={`/admin/students/${student.id}`} className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium">
+                      <Link
+                        href={`/admin/students/${student.id}`}
+                        className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
+                      >
                         <Eye className="w-3.5 h-3.5" /> View
                       </Link>
                     </td>
@@ -89,15 +188,37 @@ export default function AdminStudentsPage() {
           </div>
           {data && data.pages > 1 && (
             <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Page {data.page} of {data.pages}</span>
+              <span className="text-xs text-slate-400">
+                Page {data.page} of {data.pages}
+              </span>
               <div className="flex gap-2">
-                <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors">Previous</button>
-                <button disabled={page >= data.pages} onClick={() => setPage(p => p + 1)} className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors">Next</button>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={page >= data.pages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+                >
+                  Next
+                </button>
               </div>
             </div>
           )}
         </DataLoader>
       </div>
     </div>
+  )
+}
+
+export default function AdminStudentsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-slate-400">Loading students workspace...</div>}>
+      <StudentsContent />
+    </Suspense>
   )
 }

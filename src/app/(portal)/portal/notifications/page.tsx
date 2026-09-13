@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
 import { NotificationApiResponse } from '@/types/notification'
-import { Bell, BellOff, MessageSquare, Mail, Zap, CheckCheck, X } from 'lucide-react'
+import { Bell, BellOff, MessageSquare, Mail, Zap, CheckCheck, X, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 function formatDate(dateStr: string) {
@@ -35,6 +35,7 @@ function statusDot(status: string) {
     case 'sent': return 'bg-green-500'
     case 'failed': return 'bg-red-500'
     case 'pending': return 'bg-amber-400'
+    case 'read': return 'bg-emerald-400'
     default: return 'bg-slate-300'
   }
 }
@@ -43,20 +44,47 @@ function statusLabel(status: string) {
   return { sent: 'Delivered', failed: 'Failed', pending: 'Pending', read: 'Read' }[status] ?? status
 }
 
-// ── Expanded Notification Card ────────────────────────────────────────────────
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 function NotificationCard({ notif, onClose }: { notif: NotificationApiResponse; onClose: () => void }) {
+  const { t } = useTranslation()
+
+  // Close on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 pointer-events-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <div className="flex items-center gap-2">
             <div className={cn('w-8 h-8 rounded-full flex items-center justify-center', channelBg(notif.channel))}>
               {channelIcon(notif.channel)}
             </div>
-            <span className="font-semibold text-sm text-stone-800 capitalize">{notif.channel} notification</span>
+            <span className="font-semibold text-sm text-stone-800">System Notification</span>
           </div>
-          <button onClick={onClose} className="p-1 text-stone-400 hover:text-stone-600">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose()
+            }}
+            className="p-1 text-stone-400 hover:text-stone-600 cursor-pointer rounded-md hover:bg-stone-100 transition-colors"
+            aria-label={t.common.close}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -75,10 +103,14 @@ function NotificationCard({ notif, onClose }: { notif: NotificationApiResponse; 
         </div>
         <div className="flex justify-end px-6 py-4 border-t border-stone-100">
           <button
-            onClick={onClose}
-            className="px-5 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose()
+            }}
+            className="px-5 py-2 text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors cursor-pointer shadow-sm"
           >
-            Close
+            {t.common.close}
           </button>
         </div>
       </div>
@@ -89,34 +121,46 @@ function NotificationCard({ notif, onClose }: { notif: NotificationApiResponse; 
 // ── Notifications Page ─────────────────────────────────────────────────────────
 
 export default function PortalNotificationsPage() {
+  const { t } = useTranslation()
   const {
     notifications,
-    unreadCount,
     isLoadingNotifications,
-    notificationsLoaded,
     loadNotifications,
     markAsRead,
     markAllAsRead,
   } = useStudentPortalStore()
 
+  const router = useRouter()
   const searchParams = useSearchParams()
   const highlightId = searchParams.get('highlight')
 
   const [selectedNotif, setSelectedNotif] = useState<NotificationApiResponse | null>(null)
   const highlightRef = useRef<HTMLButtonElement | null>(null)
+  const handledHighlightRef = useRef<string | null>(null)
 
-  // Load from API if not yet loaded
+  // Refresh notifications once when the notification view/cards are rendered on mount
   useEffect(() => {
-    if (!notificationsLoaded) {
-      loadNotifications()
-    }
-  }, [notificationsLoaded, loadNotifications])
+    loadNotifications(true)
+  }, [loadNotifications])
+
+  // Filter defensively to only system notifications
+  const systemNotifications = notifications.filter(n => n.channel === 'system')
+  const systemUnreadCount = systemNotifications.filter(n => n.status !== 'read').length
 
   // Auto-open the highlighted notification (from bell click)
   useEffect(() => {
-    if (highlightId && notificationsLoaded) {
-      const notif = notifications.find(n => n.id === highlightId)
+    if (!highlightId) {
+      handledHighlightRef.current = null
+      return
+    }
+
+    // If this highlightId has already been opened or dismissed, don't re-trigger
+    if (handledHighlightRef.current === highlightId) return
+
+    if (systemNotifications.length > 0) {
+      const notif = systemNotifications.find(n => n.id === highlightId)
       if (notif) {
+        handledHighlightRef.current = highlightId
         setSelectedNotif(notif)
         // Mark as read automatically when opened from bell
         if (notif.status !== 'read') {
@@ -126,7 +170,7 @@ export default function PortalNotificationsPage() {
         setTimeout(() => highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100)
       }
     }
-  }, [highlightId, notificationsLoaded, notifications, markAsRead])
+  }, [highlightId, systemNotifications, markAsRead])
 
   const handleOpen = async (notif: NotificationApiResponse) => {
     setSelectedNotif(notif)
@@ -135,46 +179,66 @@ export default function PortalNotificationsPage() {
     }
   }
 
+  const handleCloseModal = () => {
+    // Immediately mark as handled so the highlight effect does not re-open the modal
+    if (highlightId) {
+      handledHighlightRef.current = highlightId
+      router.replace('/portal/notifications', { scroll: false })
+    }
+    setSelectedNotif(null)
+  }
+
   return (
     <div>
       {selectedNotif && (
-        <NotificationCard notif={selectedNotif} onClose={() => setSelectedNotif(null)} />
+        <NotificationCard notif={selectedNotif} onClose={handleCloseModal} />
       )}
 
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-stone-800" style={{ fontFamily: 'Outfit, sans-serif' }}>
-            Notifications
+            {t.notifications.title}
           </h1>
           <p className="text-stone-500 text-sm mt-1">
-            {isLoadingNotifications ? 'Loading…' : `${unreadCount} unread · ${notifications.length} total`}
+            {isLoadingNotifications ? t.common.loading : `${systemUnreadCount} ${t.common.statusUnread} · ${systemNotifications.length} ${t.common.all}`}
           </p>
         </div>
-        {unreadCount > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={markAllAsRead}
-            className="inline-flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 font-medium border border-orange-200 hover:border-orange-300 px-4 py-2 rounded-lg transition-colors"
+            onClick={() => loadNotifications(true)}
+            disabled={isLoadingNotifications}
+            className="inline-flex items-center gap-1.5 text-sm text-stone-600 hover:text-stone-800 font-medium border border-stone-200 hover:border-stone-300 px-3 py-2 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            title="Refresh notifications"
           >
-            <CheckCheck className="w-4 h-4" />
-            Mark all as read
+            <RefreshCw className={cn('w-4 h-4', isLoadingNotifications && 'animate-spin')} />
+            <span>Refresh</span>
           </button>
-        )}
+          {systemUnreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="inline-flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 font-medium border border-orange-200 hover:border-orange-300 px-4 py-2 rounded-lg transition-colors cursor-pointer"
+            >
+              <CheckCheck className="w-4 h-4" />
+              {t.notifications.markAllRead}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-        {isLoadingNotifications ? (
+        {isLoadingNotifications && systemNotifications.length === 0 ? (
           <div className="flex items-center justify-center py-12 text-stone-400 text-sm gap-2">
             <Bell className="w-5 h-5 animate-pulse" />
-            Loading notifications…
+            {t.common.loading}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : systemNotifications.length === 0 ? (
           <div className="text-center py-12">
             <BellOff className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-            <p className="text-stone-400 text-sm">No notifications yet.</p>
+            <p className="text-stone-400 text-sm">{t.notifications.emptyDesc}</p>
           </div>
         ) : (
           <div className="divide-y divide-stone-50">
-            {notifications.map(notif => (
+            {systemNotifications.map(notif => (
               <button
                 key={notif.id}
                 ref={notif.id === highlightId ? highlightRef : null}
@@ -204,7 +268,7 @@ export default function PortalNotificationsPage() {
                       <span className={cn('w-1.5 h-1.5 rounded-full inline-block', statusDot(notif.status))} />
                       {statusLabel(notif.status)}
                     </span>
-                    <span className="text-xs text-stone-300 capitalize">{notif.channel}</span>
+                    <span className="text-xs text-stone-400">System</span>
                   </div>
                 </div>
 

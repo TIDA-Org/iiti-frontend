@@ -18,6 +18,7 @@ export interface NotificationApiResponse {
   failed_reason: string | null
   created_at: string
   sent_at: string | null
+  read_at: string | null
 }
 
 export interface NotificationListApiResponse {

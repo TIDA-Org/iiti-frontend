@@ -59,7 +59,13 @@ export async function apiSearchPaymentByReceiptNumber(
 export async function apiGetPaymentsForEnrollment(
   enrollmentId: string,
 ): Promise<PaymentApiResponse[]> {
-  return apiFetch(`/payments/enrollment/${enrollmentId}`)
+  return apiFetch(`/payments/enrollment/${enrollmentId}?_t=${Date.now()}`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+    },
+  })
 }
 
 /**
@@ -85,7 +91,13 @@ export async function apiUpdatePayment(
 export async function apiGetInstallmentBreakdown(
   enrollmentId: string,
 ): Promise<InstallmentBreakdownApiResponse> {
-  return apiFetch(`/payments/${enrollmentId}/installments`)
+  return apiFetch(`/payments/${enrollmentId}/installments?_t=${Date.now()}`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+    },
+  })
 }
 
 // ── Manual / Cash Payments ───────────────────────────────────────────────────

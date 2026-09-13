@@ -150,3 +150,23 @@ export async function apiCreateBatch(data: Record<string, unknown>): Promise<Bat
 export async function apiUpdateBatch(id: string, data: Record<string, unknown>): Promise<BatchApiResponse> {
   return apiFetch(`/courses/batches/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 }
+
+export interface CertificateSummaryTemplateApiResponse {
+  id: string
+  course_id: string
+  sub_course_type: string | null
+  summary_text: string
+  created_at: string
+  updated_at: string
+}
+
+export async function apiGetCertificateTemplates(courseId: string): Promise<CertificateSummaryTemplateApiResponse[]> {
+  return apiFetch(`/courses/${courseId}/certificate-templates`)
+}
+
+export async function apiUpsertCertificateTemplate(courseId: string, subType: string, summaryText: string): Promise<CertificateSummaryTemplateApiResponse> {
+  return apiFetch(`/courses/${courseId}/certificate-templates/${subType}`, {
+    method: 'PUT',
+    body: JSON.stringify({ summary_text: summaryText })
+  })
+}

@@ -13,18 +13,19 @@ import { ReceiptApiResponse } from '@/types/receipt'
 import {
   Wallet, TrendingDown, CheckCircle2, AlertCircle,
   Upload, X, Loader2, CreditCard, ChevronDown, ChevronUp,
-  ExternalLink, Eye, BookOpen,
+  ExternalLink, Eye, BookOpen, RefreshCw,
 } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { apiGetReceipts } from '@/lib/api/receipts'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 const MAX_INSTALLMENTS = 3
 
-function formatCurrency(amount: number) {
-  return `LKR ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function formatCurrency(amount: number, currency = 'LKR') {
+  return `${currency} ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function formatDate(dateStr: string | null | undefined) {
@@ -35,32 +36,32 @@ function formatDate(dateStr: string | null | undefined) {
 // ── Success Card (shown after payment submitted — stays until OK clicked) ──────
 
 function SuccessCard({ onDismiss }: { onDismiss: () => void }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col items-center justify-center gap-5 py-10 px-6 text-center">
       <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
         <CheckCircle2 className="w-9 h-9 text-green-600" />
       </div>
       <div>
-        <p className="font-bold text-slate-800 text-lg">Payment Submitted!</p>
+        <p className="font-bold text-slate-800 text-lg">{t.payments.paymentSuccessTitle}</p>
         <p className="text-sm text-slate-500 mt-2 max-w-sm">
-          Your bank slip has been uploaded. Status is now{' '}
-          <span className="font-semibold text-amber-600">Under Review</span> — staff will
-          verify and approve your payment shortly.
+          {t.payments.paymentSuccessMessage}
         </p>
       </div>
       <div className="mt-1 bg-amber-50 border border-amber-200 rounded-xl p-4 text-left text-sm text-amber-800 max-w-sm w-full">
-        <p className="font-semibold mb-1">What happens next?</p>
+        <p className="font-semibold mb-1">{t.payments.whatHappensNext}</p>
         <ol className="list-decimal list-inside space-y-1 text-xs text-amber-700">
-          <li>Staff reviews your bank deposit slip.</li>
-          <li>The payment is marked Completed once verified.</li>
-          <li>You&apos;ll receive an SMS notification when approved.</li>
+          <li>{t.payments.step1}</li>
+          <li>{t.payments.step2}</li>
+          <li>{t.payments.step3}</li>
         </ol>
       </div>
       <button
         onClick={onDismiss}
-        className="mt-2 px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm"
+        className="mt-2 px-8 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm cursor-pointer"
       >
-        OK, Got It
+        {t.common.okGotIt}
       </button>
     </div>
   )
@@ -72,13 +73,26 @@ interface PaymentFormProps {
   enrollment: EnrollmentApiResponse
   existingPayments: PaymentApiResponse[]
   remainingBalance: number
+  onPaymentSubmitted?: (payment: PaymentApiResponse, receipt: ReceiptApiResponse) => Promise<void> | void
   onSuccess: () => void
   onCancel: () => void
 }
 
-function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess, onCancel }: PaymentFormProps) {
-  const nextInstallment = existingPayments.length + 1
-  const remainingCount = Math.max(1, MAX_INSTALLMENTS - existingPayments.length)
+function PaymentForm({
+  enrollment,
+  existingPayments,
+  remainingBalance,
+  onPaymentSubmitted,
+  onSuccess,
+  onCancel,
+}: PaymentFormProps) {
+  const { t, isSinhala } = useTranslation()
+  const currencyLabel = isSinhala ? 'රු.' : 'LKR'
+
+  // Exclude advance deposits (installment_number=0) — they reduce balance but don't use a slot
+  const regularPayments = existingPayments.filter((p) => p.installment_number > 0)
+  const nextInstallment = regularPayments.length + 1
+  const remainingCount = Math.max(1, MAX_INSTALLMENTS - regularPayments.length)
   const suggested = remainingBalance > 0
     ? parseFloat((remainingBalance / remainingCount).toFixed(2))
     : 0
@@ -118,11 +132,11 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
     setFormError(null)
 
     if (isNaN(numAmount) || numAmount <= 0) {
-      setFormError('Please enter a valid amount greater than LKR 0.')
+      setFormError('Please enter a valid amount greater than 0.')
       return
     }
     if (numAmount > remainingBalance + 0.01) {
-      setFormError(`Amount cannot exceed the remaining balance of ${formatCurrency(remainingBalance)}.`)
+      setFormError(`Amount cannot exceed the remaining balance of ${formatCurrency(remainingBalance, currencyLabel)}.`)
       return
     }
     if (!bankName.trim()) { setFormError('Bank Name is required.'); return }
@@ -146,7 +160,16 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
         branch_name: branchName.trim(),
         transfer_date: transferDate,
       })
-      await apiUploadReceipt(payment.id, file)
+      const uploadedReceipt = await apiUploadReceipt(payment.id, file)
+
+      if (onPaymentSubmitted) {
+        try {
+          await onPaymentSubmitted(payment, uploadedReceipt)
+        } catch {
+          // non-blocking for success screen display
+        }
+      }
+
       setSuccess(true)
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Submission failed. Please try again.')
@@ -164,14 +187,14 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
       {/* Installment info banner */}
       <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
         <div>
-          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">You are paying</p>
+          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">{t.payments.makePayment}</p>
           <p className="font-bold text-slate-800 text-base mt-0.5">
-            Installment #{nextInstallment} of {MAX_INSTALLMENTS}
+            {t.payments.installmentNumber} #{nextInstallment} / {MAX_INSTALLMENTS}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-500">Remaining balance</p>
-          <p className="font-bold text-slate-800">{formatCurrency(remainingBalance)}</p>
+          <p className="text-xs text-slate-500">{t.payments.outstandingBalance}</p>
+          <p className="font-bold text-slate-800">{formatCurrency(remainingBalance, currencyLabel)}</p>
         </div>
       </div>
 
@@ -186,7 +209,7 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-            Paid Amount (LKR) <span className="text-red-500">*</span>
+            {t.payments.amountToPay} <span className="text-red-500">*</span>
           </label>
           <input
             type="number" step="0.01" min="1"
@@ -200,19 +223,19 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
             }`}
           />
           {amountExceeds && (
-            <p className="text-xs text-red-600 mt-1">Exceeds remaining balance ({formatCurrency(remainingBalance)})</p>
+            <p className="text-xs text-red-600 mt-1">{t.payments.outstandingBalance} ({formatCurrency(remainingBalance, currencyLabel)})</p>
           )}
         </div>
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-            Bank Reference / Slip No <span className="text-red-500">*</span>
+            {t.payments.bankReference} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={bankReferenceNo}
             onChange={(e) => setBankReferenceNo(e.target.value)}
             required
-            placeholder="e.g. REF-12345678"
+            placeholder={t.payments.bankReferencePlaceholder}
             className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
           />
         </div>
@@ -222,27 +245,27 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-            Bank Name <span className="text-red-500">*</span>
+            {t.payments.bankName} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
             required
-            placeholder="e.g. Commercial Bank"
+            placeholder={t.payments.bankNamePlaceholder}
             className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
           />
         </div>
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-            Branch Name <span className="text-red-500">*</span>
+            {t.payments.branchName} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={branchName}
             onChange={(e) => setBranchName(e.target.value)}
             required
-            placeholder="e.g. Colombo 03"
+            placeholder={t.payments.branchNamePlaceholder}
             className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
           />
         </div>
@@ -252,7 +275,7 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-            Transfer / Deposit Date <span className="text-red-500">*</span>
+            {t.payments.transferDate} <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -268,7 +291,7 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
       {/* File upload */}
       <div>
         <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
-          Bank Deposit Slip <span className="text-red-500">*</span>
+          {t.payments.uploadSlip} <span className="text-red-500">*</span>
         </label>
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -302,8 +325,8 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
                 <Upload className="w-5 h-5 text-amber-600" />
               </div>
-              <p className="text-sm font-semibold text-slate-700">Click or drag to upload slip</p>
-              <p className="text-xs text-slate-400">JPG, PNG, WEBP, or PDF · Max 10 MB</p>
+              <p className="text-sm font-semibold text-slate-700">{t.payments.dragDropHint} <span className="underline text-amber-600">{t.payments.browseFiles}</span></p>
+              <p className="text-xs text-slate-400">{t.payments.fileRequirements}</p>
             </>
           )}
         </div>
@@ -315,19 +338,19 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-50 cursor-pointer"
         >
-          <X className="w-4 h-4" /> Cancel
+          <X className="w-4 h-4" /> {t.common.cancel}
         </button>
         <button
           type="submit"
           disabled={submitting || amountExceeds}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {submitting ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</>
+            <><Loader2 className="w-4 h-4 animate-spin" /> {t.payments.submittingPayment}</>
           ) : (
-            <><Upload className="w-4 h-4" /> Submit Payment & Bank Slip</>
+            <><Upload className="w-4 h-4" /> {t.payments.submitPayment}</>
           )}
         </button>
       </div>
@@ -337,12 +360,12 @@ function PaymentForm({ enrollment, existingPayments, remainingBalance, onSuccess
 
 // ── Payment Records Table (Student View) ──────────────────────────────────────
 
-function paymentStatusLabel(status: string) {
+function paymentStatusLabel(status: string, t: any) {
   const labels: Record<string, string> = {
-    pending: 'Pending Upload',
-    under_review: 'Under Review',
-    completed: 'Paid',
-    rejected: 'Slip Rejected',
+    pending: t.common.statusPending,
+    under_review: t.common.statusUnderReview,
+    completed: t.common.statusCompleted,
+    rejected: t.common.statusRejected,
     refunded: 'Refunded',
   }
   return labels[status] ?? status
@@ -354,6 +377,7 @@ interface SlipViewerProps {
 }
 
 function SlipViewerButton({ paymentId, receipts }: SlipViewerProps) {
+  const { t } = useTranslation()
   const [url, setUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -378,10 +402,10 @@ function SlipViewerButton({ paymentId, receipts }: SlipViewerProps) {
     <button
       onClick={open}
       disabled={loading}
-      className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50"
+      className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
     >
       {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
-      View Slip
+      {t.payments.viewReceipt}
     </button>
   )
 }
@@ -393,19 +417,22 @@ interface StudentPaymentsTableProps {
 }
 
 function StudentPaymentsTable({ payments, receipts, isLoading }: StudentPaymentsTableProps) {
+  const { t, isSinhala } = useTranslation()
+  const currencyLabel = isSinhala ? 'රු.' : 'LKR'
+
   return (
     <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-32">Receipt #</TableHead>
-            <TableHead className="min-w-24">Installment</TableHead>
-            <TableHead className="min-w-36">Amount</TableHead>
-            <TableHead className="min-w-32">Due Date</TableHead>
-            <TableHead className="min-w-36">Status</TableHead>
-            <TableHead className="min-w-36">Paid At</TableHead>
-            <TableHead className="min-w-28">Slip</TableHead>
-            <TableHead className="min-w-36">Action</TableHead>
+            <TableHead className="min-w-32">{t.payments.receiptCol}</TableHead>
+            <TableHead className="min-w-24">{t.payments.installmentCol}</TableHead>
+            <TableHead className="min-w-36">{t.payments.amountCol}</TableHead>
+            <TableHead className="min-w-32">{t.payments.dueDateCol}</TableHead>
+            <TableHead className="min-w-36">{t.common.status}</TableHead>
+            <TableHead className="min-w-36">{t.payments.paidDateCol}</TableHead>
+            <TableHead className="min-w-28">{t.payments.receiptCol}</TableHead>
+            <TableHead className="min-w-36">{t.common.actions}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -414,24 +441,29 @@ function StudentPaymentsTable({ payments, receipts, isLoading }: StudentPayments
               <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <CreditCard className="w-4 h-4 animate-pulse" /> Loading payments...
+                    <CreditCard className="w-4 h-4 animate-pulse" /> {t.common.loading}
                   </span>
-                ) : 'No payment records found.'}
+                ) : t.payments.noPaymentsYet}
               </TableCell>
             </TableRow>
           ) : (
             payments.map((p) => (
               <TableRow key={p.id} className="align-middle">
                 <TableCell className="font-mono text-xs">{p.receipt_number}</TableCell>
-                <TableCell className="text-center">{p.installment_number} / {p.total_installments}</TableCell>
+                <TableCell className="text-center">
+                  {p.installment_number === 0
+                    ? <span className="text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">{t.payments.advanceDeposit}</span>
+                    : `${p.installment_number} / ${p.total_installments}`
+                  }
+                </TableCell>
                 <TableCell className="font-semibold">
-                  {p.currency} {p.amount.toLocaleString('en-LK', { minimumFractionDigits: 2 })}
+                  {currencyLabel} {p.amount.toLocaleString('en-LK', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-sm">{formatDate(p.due_date)}</TableCell>
                 <TableCell>
                   <StatusBadge status={p.payment_status} />
                   <span className="block text-xs text-muted-foreground mt-0.5">
-                    {paymentStatusLabel(p.payment_status)}
+                    {paymentStatusLabel(p.payment_status, t)}
                   </span>
                 </TableCell>
                 {/* Paid At — shows approved_at date */}
@@ -442,16 +474,27 @@ function StudentPaymentsTable({ payments, receipts, isLoading }: StudentPayments
                 </TableCell>
                 {/* Action column */}
                 <TableCell>
-                  {p.payment_status === 'pending' || p.payment_status === 'rejected' ? (
+                  {p.payment_status === 'rejected' || (p.payment_status as string) === 'reject' ? (
                     <a
                       href={`/portal/payments/${p.id}`}
                       className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      Upload Slip
+                      {t.payments.uploadSlip}
                     </a>
+                  ) : p.payment_status === 'pending' ? (
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      title="Upload slip is disabled while payment is pending"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg cursor-not-allowed opacity-60"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {t.payments.uploadSlip}
+                    </button>
                   ) : (
-                    <span className="text-xs text-muted-foreground">No action needed</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
               </TableRow>
@@ -472,10 +515,11 @@ interface EnrollmentCardProps {
 }
 
 function EnrollmentCard({ enrollment, isSelected, onClick }: EnrollmentCardProps) {
+  const { t } = useTranslation()
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${isSelected
+      className={`w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${isSelected
         ? 'border-amber-400 bg-amber-50'
         : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'
       }`}
@@ -486,7 +530,7 @@ function EnrollmentCard({ enrollment, isSelected, onClick }: EnrollmentCardProps
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-800 truncate">{enrollment.enrollment_number}</p>
-          <p className="text-xs text-slate-500 capitalize">{enrollment.payment_plan} payment</p>
+          <p className="text-xs text-slate-500 capitalize">{enrollment.payment_plan === 'full' ? t.payments.planFull : t.payments.planInstallment}</p>
         </div>
         {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-600 ml-auto shrink-0" />}
       </div>
@@ -497,6 +541,9 @@ function EnrollmentCard({ enrollment, isSelected, onClick }: EnrollmentCardProps
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PortalPaymentsPage() {
+  const { t, isSinhala } = useTranslation()
+  const currencyLabel = isSinhala ? 'රු.' : 'LKR'
+
   const [enrollments, setEnrollments] = useState<EnrollmentApiResponse[]>([])
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string | null>(null)
   const [paymentsByEnrollment, setPaymentsByEnrollment] = useState<Record<string, PaymentApiResponse[]>>({})
@@ -562,13 +609,40 @@ export default function PortalPaymentsPage() {
       ? Math.max(0, (selectedEnrollment.total_fee_at_enrollment || 0) - (selectedEnrollment.amount_paid || 0))
       : 0
 
-  const isMaxReached = payments.length >= MAX_INSTALLMENTS
+  // Only count regular installments (installment_number > 0) toward the 3-slot limit
+  const regularPayments = selectedEnrollmentId
+    ? (paymentsByEnrollment[selectedEnrollmentId] ?? []).filter((p) => p.installment_number > 0)
+    : []
+  const isMaxReached = regularPayments.length >= MAX_INSTALLMENTS
   const isFullyPaid = remainingBalance <= 0
   const canMakePayment = selectedEnrollment && !isMaxReached && !isFullyPaid
 
-  function handleSuccess() {
+  const handlePaymentSubmitted = async (newPayment: PaymentApiResponse, newReceipt: ReceiptApiResponse) => {
+    // 1. Optimistic update so the table immediately has the new row without delay
+    if (selectedEnrollmentId) {
+      setPaymentsByEnrollment((prev) => {
+        const existing = prev[selectedEnrollmentId] ?? []
+        if (existing.some((p) => p.id === newPayment.id)) return prev
+        return {
+          ...prev,
+          [selectedEnrollmentId]: [newPayment, ...existing],
+        }
+      })
+    }
+    if (newReceipt) {
+      setReceipts((prev) => {
+        if (prev.some((r) => r.id === newReceipt.id)) return prev
+        return [newReceipt, ...prev]
+      })
+    }
+
+    // 2. Fetch authoritative fresh data directly from DB
+    await loadData()
+  }
+
+  async function handleSuccess() {
     setShowForm(false)
-    loadData()
+    await loadData()
   }
 
   return (
@@ -576,9 +650,9 @@ export default function PortalPaymentsPage() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800">Payments & Installments</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">{t.payments.title}</h1>
           <p className="text-slate-500 text-xs md:text-sm mt-1">
-            Track your course fee, view receipts, and submit installment slips
+            {t.payments.subtitle}
           </p>
         </div>
 
@@ -589,10 +663,10 @@ export default function PortalPaymentsPage() {
             title={
               isFullyPaid ? 'Course fee fully paid' : isMaxReached ? 'Maximum installments reached' : ''
             }
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer"
           >
             <CreditCard className="w-4 h-4" />
-            Make Installment Payment
+            {t.payments.makePayment}
             {showForm ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         )}
@@ -609,7 +683,7 @@ export default function PortalPaymentsPage() {
       {enrollments.length > 1 && (
         <div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-            <ExternalLink className="w-3.5 h-3.5" /> Select Enrollment
+            <ExternalLink className="w-3.5 h-3.5" /> {t.common.filter}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {enrollments.map((e) => (
@@ -632,9 +706,9 @@ export default function PortalPaymentsPage() {
               <Wallet className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Course Fee</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.payments.totalFee}</p>
               <p className="text-lg font-bold text-slate-800 mt-0.5">
-                {formatCurrency(breakdown?.total_fee ?? selectedEnrollment?.total_fee_at_enrollment ?? 0)}
+                {formatCurrency(breakdown?.total_fee ?? selectedEnrollment?.total_fee_at_enrollment ?? 0, currencyLabel)}
               </p>
             </div>
           </div>
@@ -644,9 +718,9 @@ export default function PortalPaymentsPage() {
               <CheckCircle2 className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount Paid</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.payments.totalPaid}</p>
               <p className="text-lg font-bold text-green-700 mt-0.5">
-                {formatCurrency(breakdown?.total_paid ?? selectedEnrollment?.amount_paid ?? 0)}
+                {formatCurrency(breakdown?.total_paid ?? selectedEnrollment?.amount_paid ?? 0, currencyLabel)}
               </p>
             </div>
           </div>
@@ -658,9 +732,9 @@ export default function PortalPaymentsPage() {
                 : <CheckCircle2 className="w-5 h-5 text-green-600" />}
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Remaining Balance</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.payments.outstandingBalance}</p>
               <p className={`text-lg font-bold mt-0.5 ${remainingBalance > 0 ? 'text-amber-700' : 'text-green-700'}`}>
-                {formatCurrency(remainingBalance)}
+                {formatCurrency(remainingBalance, currencyLabel)}
               </p>
             </div>
           </div>
@@ -671,14 +745,14 @@ export default function PortalPaymentsPage() {
       {isFullyPaid && !isLoading && selectedEnrollment && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200 text-sm text-green-800">
           <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-          <span><strong>Course fee fully settled!</strong> No further payments are needed for this enrollment.</span>
+          <span><strong>{t.payments.slipApproved}!</strong> {t.common.statusCompleted}.</span>
         </div>
       )}
       {isMaxReached && !isFullyPaid && !isLoading && selectedEnrollment && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
           <span>
-            <strong>Maximum installments reached (3/3).</strong> Please contact the institute if you need assistance with the remaining balance.
+            <strong>{t.courses.maxInstallments} (3/3).</strong>
           </span>
         </div>
       )}
@@ -691,9 +765,9 @@ export default function PortalPaymentsPage() {
               <CreditCard className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-800">New Installment Payment</h2>
+              <h2 className="text-sm font-bold text-slate-800">{t.payments.paymentFormTitle}</h2>
               <p className="text-xs text-slate-500">
-                Installment {payments.length + 1} of {MAX_INSTALLMENTS} · Remaining: {formatCurrency(remainingBalance)}
+                {t.payments.installmentNumber} {regularPayments.length + 1} / {MAX_INSTALLMENTS} · {t.payments.outstandingBalance}: {formatCurrency(remainingBalance, currencyLabel)}
               </p>
             </div>
           </div>
@@ -702,6 +776,7 @@ export default function PortalPaymentsPage() {
               enrollment={selectedEnrollment}
               existingPayments={payments}
               remainingBalance={remainingBalance}
+              onPaymentSubmitted={handlePaymentSubmitted}
               onSuccess={handleSuccess}
               onCancel={() => setShowForm(false)}
             />
@@ -713,10 +788,21 @@ export default function PortalPaymentsPage() {
       {selectedEnrollment && (
         <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-700">Payment Records</h2>
-            <span className="text-xs bg-slate-100 text-slate-500 font-semibold px-2.5 py-1 rounded-full">
-              {payments.length} / {MAX_INSTALLMENTS} installments
-            </span>
+            <h2 className="text-sm font-semibold text-slate-700">{t.payments.paymentHistory}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-slate-100 text-slate-500 font-semibold px-2.5 py-1 rounded-full">
+                {regularPayments.length} / {MAX_INSTALLMENTS} {t.payments.installmentNumber}
+              </span>
+              <button
+                type="button"
+                onClick={() => loadData()}
+                disabled={isLoading}
+                title="Refresh payments"
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-amber-500' : ''}`} />
+              </button>
+            </div>
           </div>
           <StudentPaymentsTable payments={payments} receipts={receipts} isLoading={isLoading} />
         </div>
@@ -725,7 +811,7 @@ export default function PortalPaymentsPage() {
       {!selectedEnrollment && !isLoading && (
         <div className="py-16 text-center text-slate-400">
           <CreditCard className="w-10 h-10 mx-auto mb-4 opacity-40" />
-          <p className="text-sm">No active enrollments found.</p>
+          <p className="text-sm">{t.courses.emptyDesc}</p>
         </div>
       )}
     </div>

@@ -7,6 +7,9 @@ import { NotificationDropdown } from '@/components/shared/NotificationDropdown'
 import { Menu, ShoppingCart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
+import { useTranslation } from '@/lib/i18n/useTranslation'
+import { LanguageSwitcher } from '@/components/portal/layout/LanguageSwitcher'
+
 interface PortalTopbarProps {
   onToggleSidebar: () => void
 }
@@ -14,6 +17,7 @@ interface PortalTopbarProps {
 export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
   const pathname = usePathname()
   const { user } = useAuthStore()
+  const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
@@ -49,8 +53,25 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
     return () => clearInterval(interval)
   }, [])
 
-  const parts = pathname.split('/').filter(Boolean)
-  const currentPage = parts[parts.length - 1]?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Portal'
+  const getLocalizedTitle = () => {
+    if (pathname.includes('/portal/dashboard')) return t.nav.dashboard
+    if (pathname.includes('/portal/courses/')) return t.courses.courseDetails
+    if (pathname.includes('/portal/courses')) return t.nav.courses
+    if (pathname.includes('/portal/payments')) return t.nav.payments
+    if (pathname.includes('/portal/results')) return t.nav.results
+    if (pathname.includes('/portal/certificates')) return t.nav.certificates
+    if (pathname.includes('/portal/profile')) return t.nav.profile
+    if (pathname.includes('/portal/jobs')) return t.nav.jobs
+    if (pathname.includes('/portal/merchandise/orders')) return t.nav.orders
+    if (pathname.includes('/portal/merchandise/cart')) return t.merchandise.cart
+    if (pathname.includes('/portal/merchandise')) return t.nav.merchandise
+    if (pathname.includes('/portal/feedback/history')) return t.feedback.historyTitle
+    if (pathname.includes('/portal/feedback')) return t.nav.feedback
+    if (pathname.includes('/portal/notifications')) return t.nav.notifications
+    
+    const parts = pathname.split('/').filter(Boolean)
+    return parts[parts.length - 1]?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || t.nav.portalTitle
+  }
 
   const handleToggle = () => {
     setSidebarOpen(!sidebarOpen)
@@ -58,13 +79,13 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
   }
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-4 shrink-0">
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-3 md:gap-4 shrink-0">
       {/* Hamburger button for mobile */}
       {isMobile && (
         <button
           onClick={handleToggle}
           className="p-2 hover:bg-slate-100 rounded-lg transition-colors md:hidden"
-          aria-label="Toggle sidebar"
+          aria-label={t.nav.menu}
         >
           <Menu className="w-5 h-5 text-slate-600" />
         </button>
@@ -72,16 +93,19 @@ export function PortalTopbar({ onToggleSidebar }: PortalTopbarProps) {
 
       {/* Page title */}
       <div className="flex-1 min-w-0">
-        <h2 className="text-base font-semibold text-slate-700 truncate">{currentPage}</h2>
+        <h2 className="text-base font-semibold text-slate-800 truncate">{getLocalizedTitle()}</h2>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="flex items-center gap-2 md:gap-3 ml-auto">
+        {/* Language Switcher */}
+        <LanguageSwitcher compact={isMobile} />
+
         {/* Cart Link */}
         <Link
           href="/portal/merchandise/cart"
           className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          title="Shopping Cart"
+          title={t.nav.cartTooltip}
         >
           <ShoppingCart className="w-5 h-5 text-slate-600" />
           {cartCount > 0 && (

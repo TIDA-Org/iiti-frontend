@@ -6,7 +6,7 @@ import { PaymentsTable } from '@/components/admin/tables/PaymentsTable'
 import { PaymentApiResponse, PaymentListApiResponse } from '@/types/payment'
 import { apiGetPayments, apiGetPayment } from '@/lib/api/payments'
 import { Pagination } from '@/components/shared/Pagination'
-import { Receipt, Plus, Search, X, Loader2, AlertCircle } from 'lucide-react'
+import { Receipt, Plus, Search, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
@@ -44,6 +44,18 @@ export default function AdminPaymentsPage() {
       items: data.items.map((p) => (p.id === updated.id ? updated : p)),
     })
     if (searchResult?.id === updated.id) setSearchResult(updated)
+  }
+
+  const handleRefresh = async () => {
+    load(page)
+    if (searchResult?.id) {
+      try {
+        const detail = await apiGetPayment(searchResult.id)
+        setSearchResult(detail)
+      } catch {
+        // ignore
+      }
+    }
   }
 
   // Search by receipt number
@@ -95,6 +107,16 @@ export default function AdminPaymentsPage() {
         subtitle="All payment records and revenue tracking"
         actions={
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              title="Refresh payments"
+            >
+              <RefreshCw className={`w-4 h-4 text-slate-500 ${isLoading ? 'animate-spin text-amber-500' : ''}`} />
+              <span>Refresh</span>
+            </button>
             <Link
               href="/admin/payments/receipts"
               className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
@@ -181,11 +203,31 @@ export default function AdminPaymentsPage() {
         )}
       </div>
 
-      <PaymentsTable
-        payments={Array.isArray(data?.items) ? data.items : []}
-        isLoading={isLoading}
-        onPaymentUpdated={handleReceiptUpdated}
-      />
+      {/* Payment Details Table Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-800">Payment Details</h2>
+            <p className="text-xs text-slate-500">All recorded payments and installment transactions</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            title="Refresh payment details"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isLoading ? 'animate-spin text-amber-500' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <PaymentsTable
+          payments={Array.isArray(data?.items) ? data.items : []}
+          isLoading={isLoading}
+          onPaymentUpdated={handleReceiptUpdated}
+        />
+      </div>
 
       {data && data.pages > 1 && (
         <div className="mt-4">

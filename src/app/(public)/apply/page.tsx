@@ -51,6 +51,7 @@ const step1Schema = z.object({
 const step2Schema = z.object({
   courses: z.array(z.string()).min(1, 'Please select at least one course'),
   paymentMethod: z.enum(['full', 'installment']),
+  trialSubCourseType: z.string().optional(),
 })
 
 type Step1Input = z.input<typeof step1Schema>
@@ -84,6 +85,12 @@ const COPY: Record<Lang, Record<string, string>> = {
     continue: 'Continue',
     courseSelectionPayment: 'Course Selection & Payment',
     selectProgramme: 'Select Programme(s) *',
+    selectOperatorType: 'Select Operator Type *',
+    operatorTypeRequired: 'Please select an Operator Type for the One-Day Certification course.',
+    forkliftOperator: 'Forklift Operator',
+    excavatorOperator: 'Excavator Operator',
+    backhoeLoaderOperator: 'Backhoe Loader Operator',
+    operatorType: 'Operator Type:',
     paymentMethod: 'Payment Method *',
     fullPayment: 'Full Payment',
     fullPaymentDesc: 'Pay the full amount at once',
@@ -139,6 +146,12 @@ const COPY: Record<Lang, Record<string, string>> = {
     continue: 'ඉදිරියට',
     courseSelectionPayment: 'පාඨමාලා තේරීම සහ ගෙවීම',
     selectProgramme: 'පාඨමාලා(ව) තෝරන්න *',
+    selectOperatorType: 'යන්ත්‍ර ක්‍රියාකරු වර්ගය තෝරන්න *',
+    operatorTypeRequired: 'දින 1 සහතික පත්‍ර පාඨමාලාව සඳහා යන්ත්‍ර ක්‍රියාකරු වර්ගය තෝරන්න.',
+    forkliftOperator: 'ෆෝක්ලිෆ්ට් යන්ත්‍ර ක්‍රියාකරු (Forklift Operator)',
+    excavatorOperator: 'එක්ස්කැවේටර් යන්ත්‍ර ක්‍රියාකරු (Excavator Operator)',
+    backhoeLoaderOperator: 'බැක්හෝ ලෝඩර් යන්ත්‍ර ක්‍රියාකරු (Backhoe Loader Operator)',
+    operatorType: 'යන්ත්‍ර ක්‍රියාකරු වර්ගය:',
     paymentMethod: 'ගෙවීම් ක්‍රමය *',
     fullPayment: 'සම්පූර්ණ ගෙවීම',
     fullPaymentDesc: 'මුළු මුදල එකවර ගෙවන්න',
@@ -205,6 +218,15 @@ export default function ApplyPage() {
   const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema), defaultValues: { courses: [], paymentMethod: 'full' } })
 
   const nicValue = form1.watch('nic')
+  const selectedCourseIds = form2.watch('courses') || []
+
+  const selectedTrialCourse = useMemo(() => {
+    return courses.find(
+      (c) =>
+        selectedCourseIds.includes(c.id) &&
+        (c.is_trial || c.course_type === 'trial' || c.course_type === 'trial_course' || c.name?.toLowerCase().includes('one-day'))
+    )
+  }, [courses, selectedCourseIds])
 
   useEffect(() => {
     if (!nicValue || !isValidSriLankanNic(nicValue)) {
@@ -217,7 +239,14 @@ export default function ApplyPage() {
   }, [form1, nicValue])
 
   const onStep1 = (data: Step1Output) => { setStep1Data(data); setStep(2) }
-  const onStep2 = (data: Step2Data) => { setStep2Data(data); setStep(3) }
+  const onStep2 = (data: Step2Data) => {
+    if (selectedTrialCourse && !data.trialSubCourseType) {
+      form2.setError('trialSubCourseType', { message: t.operatorTypeRequired })
+      return
+    }
+    setStep2Data(data)
+    setStep(3)
+  }
 
   const onSubmit = async () => {
     if (!step1Data || !step2Data) return
@@ -249,6 +278,7 @@ export default function ApplyPage() {
         course_ids: step2Data.courses,
         payment_plan: step2Data.paymentMethod,
         nvq_selected: isDoingNvq,
+        trial_sub_course_type: step2Data.trialSubCourseType || null,
       })
 
       setRefNo(student.student_number || student.id)
@@ -285,7 +315,7 @@ export default function ApplyPage() {
           <div className="bg-stone-50 rounded-xl p-5 text-left text-sm space-y-2 mb-6">
             <p className="font-semibold text-stone-700 mb-3">{t.whatNext}</p>
             {[t.next1, t.next2, t.next3, t.next4].map((s, i) => (
-              <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center shrink-0">{i+1}</span><span className="text-stone-600">{s}</span></div>
+              <div key={i} className="flex gap-2.5"><span className="w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span><span className="text-stone-600">{s}</span></div>
             ))}
           </div>
           <Link href="/" className="inline-block w-full text-center bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors">{t.backHome}</Link>
@@ -314,9 +344,8 @@ export default function ApplyPage() {
               <div key={label} className="relative flex min-w-0 flex-col items-center px-1 text-center">
                 {i < 2 && (
                   <div
-                    className={`absolute left-[calc(50%+1rem)] right-[-50%] top-4 h-0.5 ${
-                      step > i + 1 ? 'bg-green-400' : 'bg-stone-200'
-                    }`}
+                    className={`absolute left-[calc(50%+1rem)] right-[-50%] top-4 h-0.5 ${step > i + 1 ? 'bg-green-400' : 'bg-stone-200'
+                      }`}
                   />
                 )}
 
@@ -453,6 +482,40 @@ export default function ApplyPage() {
                 {form2.formState.errors.courses && (
                   <p className={errorClass}><CircleAlert className="h-3.5 w-3.5" />{form2.formState.errors.courses.message}</p>
                 )}
+
+                {selectedTrialCourse && (
+                  <div className="mt-4 p-4 border border-amber-300 rounded-xl bg-amber-50/70">
+                    <label className="block text-sm font-semibold text-amber-900 mb-2">
+                      {t.selectOperatorType} <span className="text-xs font-normal text-amber-700">({lang === 'si' ? (selectedTrialCourse.name_si || selectedTrialCourse.name) : selectedTrialCourse.name})</span>
+                    </label>
+                    <div className="space-y-2">
+                      {[
+                        { v: 'forklift_operator', l: t.forkliftOperator },
+                        { v: 'excavator_operator', l: t.excavatorOperator },
+                        { v: 'backhoe_loader_operator', l: t.backhoeLoaderOperator },
+                      ].map((op) => (
+                        <label
+                          key={op.v}
+                          className="flex items-center gap-3 p-3 border border-amber-200 rounded-lg bg-white cursor-pointer hover:border-amber-400 transition-colors"
+                        >
+                          <input
+                            {...form2.register('trialSubCourseType')}
+                            type="radio"
+                            value={op.v}
+                            className="w-4 h-4 text-orange-500 border-amber-300"
+                          />
+                          <span className="text-sm font-medium text-stone-800">{op.l}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {form2.formState.errors.trialSubCourseType && (
+                      <p className={errorClass}>
+                        <CircleAlert className="h-3.5 w-3.5" />
+                        {form2.formState.errors.trialSubCourseType.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-3">{t.paymentMethod}</label>
@@ -498,10 +561,25 @@ export default function ApplyPage() {
                     <p className="font-semibold text-stone-700 text-sm">{t.courseSelectionCard}</p>
                     <button onClick={() => setStep(2)} className="text-xs text-orange-500 hover:text-orange-600">{t.edit}</button>
                   </div>
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-2 text-sm">
                     {step2Data.courses.map(cId => {
                       const c = courses.find(x => x.id === cId)
-                      return c ? <p key={cId} className="text-stone-700">{lang === 'si' ? (c.name_si || c.name) : c.name}</p> : null
+                      const isTrial = c && (c.is_trial || c.course_type === 'trial' || c.course_type === 'trial_course' || c.name?.toLowerCase().includes('one-day'))
+                      return c ? (
+                        <div key={cId} className="space-y-0.5">
+                          <p className="text-stone-700 font-medium">{lang === 'si' ? (c.name_si || c.name) : c.name}</p>
+                          {isTrial && step2Data.trialSubCourseType && (
+                            <p className="text-xs text-amber-800 font-medium pl-2 border-l-2 border-amber-400 bg-amber-50 py-0.5 px-1.5 rounded-r inline-block">
+                              {t.operatorType} {
+                                step2Data.trialSubCourseType === 'forklift_operator' ? t.forkliftOperator :
+                                  step2Data.trialSubCourseType === 'excavator_operator' ? t.excavatorOperator :
+                                    step2Data.trialSubCourseType === 'backhoe_loader_operator' ? t.backhoeLoaderOperator :
+                                      step2Data.trialSubCourseType
+                              }
+                            </p>
+                          )}
+                        </div>
+                      ) : null
                     })}
                     <p className="text-stone-500 mt-2">{t.payment} <span className="capitalize font-medium text-stone-700">{step2Data.paymentMethod}</span></p>
                   </div>

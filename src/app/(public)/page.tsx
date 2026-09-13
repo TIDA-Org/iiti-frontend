@@ -2,6 +2,7 @@ import { NewsBanner } from '@/components/website/home/NewsBanner'
 import { HeroSection } from '@/components/website/home/HeroSection'
 import { AccreditationBadges } from '@/components/website/home/AccreditationBadges'
 import { StatsSection } from '@/components/website/home/StatsSection'
+import { GoogleReviewSection } from '@/components/website/home/GoogleReviewSection'
 import { CoursesPreview } from '@/components/website/home/CoursesPreview'
 import { WhyChooseUs } from '@/components/website/home/WhyChooseUs'
 import { CertificatesSection } from '@/components/website/home/CertificatesSection'
@@ -17,6 +18,7 @@ export default function HomePage() {
         <HeroSection />
         <AccreditationBadges />
         <StatsSection />
+        <GoogleReviewSection />
         <CoursesPreview />
         <WhyChooseUs />
         <CertificatesSection />

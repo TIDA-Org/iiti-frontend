@@ -13,6 +13,10 @@ type RouteContext = {
   params: Promise<{ path: string[] }>
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
 const BACKEND_TIMEOUT_MS = 30000
 const VERIFY_TIMEOUT_MS = 30000
 const CERTIFICATE_RECREATE_TIMEOUT_MS = 60000
@@ -75,6 +79,9 @@ function toNextResponse(response: Response) {
   headers.delete('content-encoding')
   headers.delete('transfer-encoding')
   headers.delete('set-cookie')
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  headers.set('Pragma', 'no-cache')
+  headers.set('Expires', '0')
   return response.arrayBuffer().then((body) => new NextResponse(body, { status: response.status, headers }))
 }
 

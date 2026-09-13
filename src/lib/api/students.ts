@@ -53,6 +53,8 @@ export interface StudentApiResponse {
   emergency_contact_phone: string | null
   emergency_contact_rel: string | null
   preferred_language: string
+  registration_type?: 'self_registered' | 'on_site'
+  registered_by?: string | null
   is_legacy: boolean
   legacy_student_id: string | null
   whatsapp_in_group: boolean
@@ -68,6 +70,13 @@ export interface StudentListApiResponse {
   page: number
   per_page: number
   pages: number
+}
+
+export interface SelfRegistrationSummaryResponse {
+  new_count: number
+  total_self_registered: number
+  latest_registration_at: string | null
+  recent_students: StudentApiResponse[]
 }
 
 export interface StudentSelfRegisterRequest {
@@ -97,11 +106,44 @@ export async function apiGetStudents(
   perPage = 20,
   search?: string,
   photoStatus?: string,
+  registrationType?: string,
 ): Promise<StudentListApiResponse> {
   const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
   if (search) params.set('search', search)
   if (photoStatus) params.set('photo_status', photoStatus)
+  if (registrationType) params.set('registration_type', registrationType)
   return apiFetch(`/students?${params}`)
+}
+
+export async function apiGetSelfRegistrationSummary(
+  since?: string,
+): Promise<SelfRegistrationSummaryResponse> {
+  const params = new URLSearchParams()
+  if (since) params.set('since', since)
+  const qs = params.toString() ? `?${params.toString()}` : ''
+  return apiFetch(`/students/self-registrations/summary${qs}`)
+}
+
+const STORAGE_KEY_PREFIX = 'iiti_last_seen_self_reg_'
+
+export function getLastSeenSelfRegistrationTime(adminId?: string): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const key = `${STORAGE_KEY_PREFIX}${adminId || 'default'}`
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+export function setLastSeenSelfRegistrationTime(time: string, adminId?: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    const key = `${STORAGE_KEY_PREFIX}${adminId || 'default'}`
+    localStorage.setItem(key, time)
+  } catch {
+    // ignore
+  }
 }
 
 export async function apiGetStudent(id: string): Promise<StudentApiResponse> {
