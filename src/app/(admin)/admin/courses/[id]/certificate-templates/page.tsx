@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   apiGetCourse,
@@ -35,9 +35,11 @@ export default function CertificateTemplatesPage() {
   const [saving, setSaving] = useState<Record<string, boolean>>({})
 
   // Define the required templates based on course type
-  const requiredSubTypes = course?.is_trial
-    ? ['forklift_operator', 'excavator_operator', 'backhoe_loader_operator']
-    : ['default']
+  const requiredSubTypes = useMemo(() => {
+    return course?.is_trial
+      ? ['forklift_operator', 'excavator_operator', 'backhoe_loader_operator']
+      : ['default']
+  }, [course?.is_trial])
 
   // Initialize form state when templates load
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function CertificateTemplatesPage() {
       setOriginalText(initialMap)
       setEditText(initialMap)
     }
-  }, [templates, course?.is_trial])
+  }, [templates, requiredSubTypes])
 
   const handleSave = async (subType: string) => {
     setSaving(prev => ({ ...prev, [subType]: true }))

@@ -218,15 +218,16 @@ export default function ApplyPage() {
   const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema), defaultValues: { courses: [], paymentMethod: 'full' } })
 
   const nicValue = form1.watch('nic')
-  const selectedCourseIds = form2.watch('courses') || []
+  const watchedCourseIds = form2.watch('courses')
 
   const selectedTrialCourse = useMemo(() => {
+    const selectedCourseIds = watchedCourseIds || []
     return courses.find(
       (c) =>
         selectedCourseIds.includes(c.id) &&
         (c.is_trial || c.course_type === 'trial' || c.course_type === 'trial_course' || c.name?.toLowerCase().includes('one-day'))
     )
-  }, [courses, selectedCourseIds])
+  }, [courses, watchedCourseIds])
 
   useEffect(() => {
     if (!nicValue || !isValidSriLankanNic(nicValue)) {

@@ -136,7 +136,7 @@ export default function AdminRecordPaymentPage() {
       }
       setValue('manual_reason', 'Counter cash payment - Full Fee', { shouldValidate: true })
     }
-  }, [selectedEnrollmentId, enrollments, setValue])
+  }, [selectedEnrollmentId, enrollments, setValue, isAdvanceChecked])
 
   // Handle advance toggle
   const handleToggleAdvance = (checked: boolean) => {
