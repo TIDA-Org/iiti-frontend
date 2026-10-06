@@ -14,6 +14,7 @@ import {
   Wallet, TrendingDown, CheckCircle2, AlertCircle,
   Upload, X, Loader2, CreditCard, ChevronDown, ChevronUp,
   ExternalLink, Eye, BookOpen, RefreshCw,
+  Landmark, Copy, Check,
 } from 'lucide-react'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -538,6 +539,123 @@ function EnrollmentCard({ enrollment, isSelected, onClick }: EnrollmentCardProps
   )
 }
 
+// ── Institute Bank Account Details ───────────────────────────────────────────
+
+function InstituteBankDetails() {
+  const { t } = useTranslation()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (text: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-amber-200/90 shadow-xs overflow-hidden">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 px-5 py-3.5 sm:px-6 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+              {t.payments.bankDetailsTitle}
+            </h2>
+            <p className="text-xs text-amber-100">
+              {t.payments.bankDetailsSubtitle}
+            </p>
+          </div>
+        </div>
+        <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-white backdrop-blur-xs border border-white/20 shrink-0">
+          <CheckCircle2 className="w-3.5 h-3.5 text-amber-200" />
+          <span>Official Account</span>
+        </div>
+      </div>
+
+      {/* Details Grid */}
+      <div className="p-4 sm:p-5 bg-gradient-to-b from-amber-50/20 to-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Bank */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              {t.payments.bankLabel}
+            </span>
+            <div className="mt-1">
+              <p className="text-base font-bold text-slate-900">HNB Bank</p>
+              <p className="text-xs text-slate-500">Bank</p>
+            </div>
+          </div>
+
+          {/* Branch */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              {t.payments.branchLabel}
+            </span>
+            <div className="mt-1">
+              <p className="text-base font-bold text-slate-900">Cinnamon</p>
+              <p className="text-xs text-slate-500">Branch</p>
+            </div>
+          </div>
+
+          {/* Account Name */}
+          <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              {t.payments.accountName}
+            </span>
+            <div className="mt-1">
+              <p className="text-base font-bold text-slate-900">Imasha Enterprises</p>
+              <p className="text-xs text-slate-500">Beneficiary</p>
+            </div>
+          </div>
+
+          {/* Account Number */}
+          <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-300/90 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
+                {t.payments.accountNumber}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleCopy('076010136778')}
+                title="Copy account number"
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-800 hover:text-amber-950 bg-amber-100/80 hover:bg-amber-200 border border-amber-300/80 px-2 py-0.5 rounded-md transition-colors cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    <span className="text-emerald-700 font-semibold">{t.payments.copiedAccount}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>{t.payments.copyAccount}</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="mt-1">
+              <p className="text-lg font-mono font-bold text-slate-900 tracking-wider select-all">
+                076010136778
+              </p>
+              <p className="text-xs text-amber-700 font-medium">Account Number</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Notice */}
+        <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-600">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>{t.payments.bankNotice}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PortalPaymentsPage() {
@@ -678,6 +796,9 @@ export default function PortalPaymentsPage() {
           {error}
         </div>
       )}
+
+      {/* Institute Bank Account Details */}
+      <InstituteBankDetails />
 
       {/* Enrollment selector — shown only when student has multiple enrollments */}
       {enrollments.length > 1 && (

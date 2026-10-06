@@ -13,6 +13,34 @@ const HERO_IMAGES = [
   '/images/hero/DSC07644.jpg',
 ]
 
+const WHY_CHOOSE_US_ITEMS = [
+  '3 Programmes Available',
+  'NVQ Level 3 Certified',
+  '100% Placement Assistance',
+  'TVEC & ISO Accredited',
+]
+
+function WhyChooseCard() {
+  return (
+    <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm w-full">
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">
+          Why Choose Us
+        </h3>
+        <div className="w-12 h-1 bg-orange-500 rounded-full" />
+      </div>
+      <ul className="space-y-4">
+        {WHY_CHOOSE_US_ITEMS.map((item) => (
+          <li key={item} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
+            <CheckCircle className="w-5 h-5 text-orange-500 shrink-0" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function HeroSection() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
@@ -23,9 +51,10 @@ export function HeroSection() {
     return () => clearInterval(interval)
   }, [])
   return (
-    <section
-      className="relative flex min-h-[calc(100svh-7rem)] items-center overflow-hidden lg:min-h-[calc(100svh-6.75rem)]"
-    >
+    <>
+      <section
+        className="relative flex min-h-[calc(100svh-7rem)] items-center overflow-hidden lg:min-h-[calc(100svh-6.75rem)]"
+      >
       {/* Background Image Slideshow */}
       <div className="absolute inset-0 z-0">
         {HERO_IMAGES.map((image, index) => (
@@ -131,30 +160,7 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 }}
             className="hidden lg:flex justify-center -mt-12"
           >
-            <div
-              className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full"
-              style={{ transform: 'rotate(-2deg)' }}
-            >
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                  Why Choose Us
-                </h3>
-                <div className="w-12 h-1 bg-orange-500 rounded-full" />
-              </div>
-              <ul className="space-y-4">
-                {[
-                  '3 Programmes Available',
-                  'NVQ Level 3 Certified',
-                  '100% Placement Assistance',
-                  'TVEC & ISO Accredited',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-sm text-slate-700 font-medium">
-                    <CheckCircle className="w-5 h-5 text-orange-500 shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <WhyChooseCard />
           </motion.div>
         </div>
       </div>
@@ -184,5 +190,19 @@ export function HeroSection() {
         <ChevronDown className="w-6 h-6 text-white/40" />
       </motion.div>
     </section>
+
+    {/* Mobile view only — Why Choose Us card before Accreditations */}
+    <section className="lg:hidden bg-[#0A0A0A] py-10 px-4 sm:px-6 flex justify-center border-t border-white/10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="w-full max-w-sm flex justify-center"
+      >
+        <WhyChooseCard />
+      </motion.div>
+    </section>
+  </>
   )
 }

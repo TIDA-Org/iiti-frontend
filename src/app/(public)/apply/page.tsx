@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { CheckCircle, ArrowRight, ArrowLeft, CircleAlert } from 'lucide-react'
+import { CheckCircle, ArrowRight, ArrowLeft, CircleAlert, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
 import { SectionLabel } from '@/components/shared/SectionLabel'
@@ -26,7 +26,7 @@ const optionalEmailSchema = z
 
 const step1Schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
-  nameWithInitials: z.string().min(2, 'Name with initials is required'),
+  nameWithInitials: z.string().min(2, 'Name with initials(Certificate Display Name) is required'),
   nic: z
     .string()
     .trim()
@@ -46,17 +46,21 @@ const step1Schema = z.object({
   city: z.string().min(2, 'City is required'),
   district: z.string().refine((value) => DISTRICTS.includes(value), 'Please select a district'),
   province: z.string().refine((value) => PROVINCES.includes(value), 'Please select a province'),
+  isDoingNvq: z.boolean().default(false),
+  hasPreviousNvq: z.boolean().default(false),
 })
 
 const step2Schema = z.object({
   courses: z.array(z.string()).min(1, 'Please select at least one course'),
   paymentMethod: z.enum(['full', 'installment']),
   trialSubCourseType: z.string().optional(),
+  nvqSelected: z.boolean().default(false),
 })
 
 type Step1Input = z.input<typeof step1Schema>
 type Step1Output = z.output<typeof step1Schema>
-type Step2Data = z.infer<typeof step2Schema>
+type Step2Input = z.input<typeof step2Schema>
+type Step2Output = z.output<typeof step2Schema>
 type Lang = 'en' | 'si'
 
 const COPY: Record<Lang, Record<string, string>> = {
@@ -68,7 +72,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     reviewAndSubmit: 'Review & Submit',
     personalInformation: 'Personal Information',
     fullName: 'Full Name *',
-    nameWithInitials: 'Name with Initials *',
+    nameWithInitials: 'Name with Initials (Certificate Display Name) *',
     nicNumber: 'NIC Number *',
     dateOfBirth: 'Date of Birth *',
     gender: 'Gender *',
@@ -120,6 +124,19 @@ const COPY: Record<Lang, Record<string, string>> = {
     next4: 'Portal access credentials shared through your provided contact details',
     backHome: 'Back to Home',
     language: 'Language',
+    nvqInformation: 'NVQ Information & Background',
+    isDoingNvq: 'Student is doing NVQ',
+    isDoingNvqDesc: 'Is this person registered at our institute as an NVQ stream candidate?',
+    hasPreviousNvq: 'Student has previous NVQ',
+    hasPreviousNvqDesc: 'Did this person already hold an NVQ before coming to IITI?',
+    nvqSelected: 'NVQ selected for this enrollment',
+    nvqSelectedDesc: 'Is this specific course registration taking the NVQ exam & fee option?',
+    tickIfYes: '✓ If yes, tick the box. If not, leave it empty.',
+    nvqCandidate: 'NVQ Stream Candidate:',
+    previousNvq: 'Previous NVQ:',
+    nvqEnrollment: 'NVQ for this Enrollment:',
+    yes: 'Yes',
+    no: 'No',
   },
   si: {
     onlineApplication: 'මාර්ගගත අයදුම්පත',
@@ -129,7 +146,7 @@ const COPY: Record<Lang, Record<string, string>> = {
     reviewAndSubmit: 'සමාලෝචනය සහ යැවීම',
     personalInformation: 'පෞද්ගලික තොරතුරු',
     fullName: 'සම්පූර්ණ නම *',
-    nameWithInitials: 'මුල් අකුරු සමඟ නම *',
+    nameWithInitials: 'මුලකුරු සමඟ නම(සහතිකයේ දිස්වන නම) *',
     nicNumber: 'ජා.හැ. අංකය *',
     dateOfBirth: 'උපන් දිනය *',
     gender: 'ස්ත්‍රී/පුරුෂ භාවය *',
@@ -181,6 +198,19 @@ const COPY: Record<Lang, Record<string, string>> = {
     next4: 'ඔබ ලබාදුන් සම්බන්ධතා තොරතුරු හරහා පෝර්ටල් පිවිසුම් විස්තර ලබාදීම',
     backHome: 'මුල් පිටුවට',
     language: 'භාෂාව',
+    nvqInformation: 'NVQ තොරතුරු සහ පසුබිම',
+    isDoingNvq: 'NVQ හදාරන සිසුවෙකි (Student is doing NVQ)',
+    isDoingNvqDesc: 'ඔබ අප ආයතනයේ NVQ ධාරාව ඔස්සේ ලියාපදිංචි වන අපේක්ෂකයෙක්ද?',
+    hasPreviousNvq: 'මීට පෙර NVQ සුදුසුකම් ඇත (Previous NVQ)',
+    hasPreviousNvqDesc: 'ඔබ IITI වෙත පැමිණීමට පෙර NVQ සහතිකයක් ලබාගෙන තිබේද?',
+    nvqSelected: 'මෙම පාඨමාලාව සඳහා NVQ තෝරාගැනීම (NVQ for this enrollment)',
+    nvqSelectedDesc: 'මෙම විශේෂිත පාඨමාලා ලියාපදිංචිය සඳහා NVQ විභාග සහ ගාස්තු විකල්පය ලබාගන්නේද?',
+    tickIfYes: '✓ ඔව් නම් කොටුව සලකුණු කරන්න (✓). නැතහොත් හිස්ව තබන්න.',
+    nvqCandidate: 'NVQ ධාරාවේ අපේක්ෂක:',
+    previousNvq: 'පෙර NVQ සුදුසුකම්:',
+    nvqEnrollment: 'මෙම පාඨමාලාවට NVQ තෝරාගැනීම:',
+    yes: 'ඔව්',
+    no: 'නැත',
   },
 }
 
@@ -188,7 +218,7 @@ export default function ApplyPage() {
   const [lang, setLang] = useState<Lang>('en')
   const [step, setStep] = useState(1)
   const [step1Data, setStep1Data] = useState<Step1Output | null>(null)
-  const [step2Data, setStep2Data] = useState<Step2Data | null>(null)
+  const [step2Data, setStep2Data] = useState<Step2Output | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [refNo, setRefNo] = useState('')
@@ -214,8 +244,19 @@ export default function ApplyPage() {
     resolver: zodResolver(step1Schema),
     mode: 'onChange',
     reValidateMode: 'onChange',
+    defaultValues: {
+      isDoingNvq: false,
+      hasPreviousNvq: false,
+    },
   })
-  const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema), defaultValues: { courses: [], paymentMethod: 'full' } })
+  const form2 = useForm<Step2Input, unknown, Step2Output>({
+    resolver: zodResolver(step2Schema),
+    defaultValues: {
+      courses: [],
+      paymentMethod: 'full',
+      nvqSelected: false,
+    },
+  })
 
   const nicValue = form1.watch('nic')
   const watchedCourseIds = form2.watch('courses')
@@ -239,8 +280,14 @@ export default function ApplyPage() {
     form1.setValue('gender', details.gender, { shouldValidate: true })
   }, [form1, nicValue])
 
-  const onStep1 = (data: Step1Output) => { setStep1Data(data); setStep(2) }
-  const onStep2 = (data: Step2Data) => {
+  const onStep1 = (data: Step1Output) => {
+    setStep1Data(data)
+    if (data.isDoingNvq && !form2.getValues('nvqSelected')) {
+      form2.setValue('nvqSelected', true)
+    }
+    setStep(2)
+  }
+  const onStep2 = (data: Step2Output) => {
     if (selectedTrialCourse && !data.trialSubCourseType) {
       form2.setError('trialSubCourseType', { message: t.operatorTypeRequired })
       return
@@ -254,9 +301,6 @@ export default function ApplyPage() {
 
     setIsLoading(true)
     try {
-      const selectedCourses = courses.filter((course) => step2Data.courses.includes(course.id))
-      const isDoingNvq = selectedCourses.some((course) => course.course_type === 'nvq_course' || course.has_nvq_option)
-
       const student = await apiSelfRegisterStudent({
         full_name: step1Data.fullName,
         name_for_certificate: step1Data.nameWithInitials,
@@ -270,15 +314,15 @@ export default function ApplyPage() {
         phone_primary: normalizeSriLankanPhone(step1Data.phone),
         email: step1Data.email || null,
         preferred_language: lang,
-        is_doing_nvq: isDoingNvq,
-        has_previous_nvq: false,
+        is_doing_nvq: Boolean(step1Data.isDoingNvq),
+        has_previous_nvq: Boolean(step1Data.hasPreviousNvq),
       })
 
       await apiSelfEnrollStudent({
         student_id: student.id,
         course_ids: step2Data.courses,
         payment_plan: step2Data.paymentMethod,
-        nvq_selected: isDoingNvq,
+        nvq_selected: Boolean(step2Data.nvqSelected),
         trial_sub_course_type: step2Data.trialSubCourseType || null,
       })
 
@@ -457,6 +501,73 @@ export default function ApplyPage() {
                   )}
                 </div>
               </div>
+
+              {/* ── NVQ Background & Classification ── */}
+              <div className="pt-4 border-t border-stone-200">
+                <h3 className="text-sm font-semibold text-stone-800 mb-3">{t.nvqInformation}</h3>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 border border-stone-200 rounded-xl bg-stone-50/70 hover:bg-stone-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="isDoingNvq"
+                        type="checkbox"
+                        {...form1.register('isDoingNvq')}
+                        className="mt-1 h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="isDoingNvq" className="font-semibold text-sm text-stone-800 cursor-pointer">
+                            {t.isDoingNvq}
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-stone-400 hover:text-stone-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-stone-800 rounded-lg shadow-lg group-hover:block z-30">
+                              {t.isDoingNvqDesc}
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                          {t.isDoingNvqDesc}
+                        </p>
+                        <p className="text-[11px] font-medium text-orange-600 mt-1.5">
+                          {t.tickIfYes}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 border border-stone-200 rounded-xl bg-stone-50/70 hover:bg-stone-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="hasPreviousNvq"
+                        type="checkbox"
+                        {...form1.register('hasPreviousNvq')}
+                        className="mt-1 h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="hasPreviousNvq" className="font-semibold text-sm text-stone-800 cursor-pointer">
+                            {t.hasPreviousNvq}
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-stone-400 hover:text-stone-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-stone-800 rounded-lg shadow-lg group-hover:block z-30">
+                              {t.hasPreviousNvqDesc}
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                          {t.hasPreviousNvqDesc}
+                        </p>
+                        <p className="text-[11px] font-medium text-orange-600 mt-1.5">
+                          {t.tickIfYes}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <button type="submit" className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors mt-4">
                 {t.continue} <ArrowRight className="w-4 h-4" />
               </button>
@@ -518,6 +629,38 @@ export default function ApplyPage() {
                   </div>
                 )}
               </div>
+
+              {/* ── NVQ Selection for this Enrollment ── */}
+              <div className="p-4 border border-stone-200 rounded-xl bg-stone-50/70 hover:bg-stone-50 transition-colors">
+                <div className="flex items-start gap-2.5">
+                  <input
+                    id="nvqSelected"
+                    type="checkbox"
+                    {...form2.register('nvqSelected')}
+                    className="mt-1 h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <label htmlFor="nvqSelected" className="font-semibold text-sm text-stone-800 cursor-pointer">
+                        {t.nvqSelected}
+                      </label>
+                      <span className="group relative inline-flex items-center">
+                        <Info className="w-3.5 h-3.5 text-stone-400 hover:text-stone-600 cursor-help" />
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-stone-800 rounded-lg shadow-lg group-hover:block z-30">
+                          {t.nvqSelectedDesc}
+                        </span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                      {t.nvqSelectedDesc}
+                    </p>
+                    <p className="text-[11px] font-medium text-orange-600 mt-1.5">
+                      {t.tickIfYes}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-3">{t.paymentMethod}</label>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -555,6 +698,8 @@ export default function ApplyPage() {
                     <div><span className="text-stone-400">{t.phoneLabel} </span><span className="text-stone-700">{step1Data.phone}</span></div>
                     {step1Data.email ? <div><span className="text-stone-400">{t.emailLabel} </span><span className="text-stone-700">{step1Data.email}</span></div> : null}
                     <div><span className="text-stone-400">{t.cityLabel} </span><span className="text-stone-700">{step1Data.city}, {step1Data.district}</span></div>
+                    <div><span className="text-stone-400">{t.nvqCandidate} </span><span className="font-medium text-stone-700">{step1Data.isDoingNvq ? t.yes : t.no}</span></div>
+                    <div><span className="text-stone-400">{t.previousNvq} </span><span className="font-medium text-stone-700">{step1Data.hasPreviousNvq ? t.yes : t.no}</span></div>
                   </div>
                 </div>
                 <div className="bg-stone-50 rounded-xl p-4">
@@ -583,6 +728,7 @@ export default function ApplyPage() {
                       ) : null
                     })}
                     <p className="text-stone-500 mt-2">{t.payment} <span className="capitalize font-medium text-stone-700">{step2Data.paymentMethod}</span></p>
+                    <p className="text-stone-500">{t.nvqEnrollment} <span className="font-medium text-stone-700">{step2Data.nvqSelected ? t.yes : t.no}</span></p>
                   </div>
                 </div>
               </div>

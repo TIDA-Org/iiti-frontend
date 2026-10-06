@@ -65,7 +65,16 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: 'Call or WhatsApp',
-      lines: [settings.contactPhone, settings.mobilePhone].filter(Boolean),
+      lines: settings.allPhoneNumbers?.length
+        ? settings.allPhoneNumbers
+        : [
+            ...settings.contactPhone.split(/[/,]/),
+            settings.mobilePhone,
+            settings.whatsappNumber,
+            '070 375 5455',
+          ]
+            .map((p) => p?.trim())
+            .filter((num, idx, arr): num is string => Boolean(num) && arr.indexOf(num) === idx),
       accent: 'from-emerald-100 to-white',
     },
     {

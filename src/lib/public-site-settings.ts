@@ -10,6 +10,8 @@ export interface PublicSiteSettings {
   iafAccreditationUrl: string
   contactPhone: string
   mobilePhone: string
+  allPhoneNumbers: string[]
+  formattedPhoneDisplay: string
   contactEmail: string
   contactAddress: string
   googleMapsUrl: string
@@ -79,6 +81,21 @@ export function buildPublicSiteSettings(settings: SiteSettingApiResponse[] | nul
   const contactAddress = getNonEmptyValue(settingsByKey.contact_address?.value, INSTITUTE_INFO.address)
   const rawGoogleMapsValue = (settingsByKey.google_maps_url?.value || '').trim()
 
+  const contactPhone = getNonEmptyValue(settingsByKey.contact_phone?.value, INSTITUTE_INFO.telephone)
+  const mobilePhone = getNonEmptyValue(whatsappNumber, INSTITUTE_INFO.mobile)
+
+  const rawPhones = [
+    ...contactPhone.split(/[/,]/),
+    mobilePhone,
+    whatsappNumber,
+    INSTITUTE_INFO.mobile,
+  ]
+  const allPhoneNumbers = rawPhones
+    .map((p) => p.trim())
+    .filter((num, idx, arr): num is string => Boolean(num) && arr.indexOf(num) === idx)
+
+  const formattedPhoneDisplay = allPhoneNumbers.join(' / ')
+
   return {
     instituteName: getNonEmptyValue(settingsByKey.institute_name?.value, INSTITUTE_INFO.fullName),
     instituteNameSi: getNonEmptyValue(settingsByKey.institute_name_si?.value, INSTITUTE_INFO.fullName),
@@ -86,8 +103,10 @@ export function buildPublicSiteSettings(settings: SiteSettingApiResponse[] | nul
     tvecAccreditation: getNonEmptyValue(settingsByKey.tvec_accreditation?.value, INSTITUTE_INFO.tvecRegNo),
     isoCertification: getNonEmptyValue(settingsByKey.iso_certification?.value, INSTITUTE_INFO.isoNumber),
     iafAccreditationUrl: getNonEmptyValue(settingsByKey.accreditation_iaf_url?.value, 'https://share.google/HrwGK4EtObOC4Cxif'),
-    contactPhone: getNonEmptyValue(settingsByKey.contact_phone?.value, INSTITUTE_INFO.telephone),
-    mobilePhone: whatsappNumber,
+    contactPhone,
+    mobilePhone,
+    allPhoneNumbers,
+    formattedPhoneDisplay,
     contactEmail: getNonEmptyValue(settingsByKey.contact_email?.value, INSTITUTE_INFO.email),
     contactAddress,
     googleMapsUrl: rawGoogleMapsValue,

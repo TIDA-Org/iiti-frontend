@@ -144,7 +144,7 @@ export default function PortalProfilePage() {
                   })}
                 </div>
                 <div className="px-6 pb-6">
-                  <p className="text-xs text-stone-400">To update your personal details, please contact IITI reception: 0113 482 555</p>
+                  <p className="text-xs text-stone-400">To update your personal details, please contact IITI reception: 011-2345678 / 070 375 5455</p>
                 </div>
               </div>
 

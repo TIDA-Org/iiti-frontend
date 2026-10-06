@@ -8,10 +8,20 @@ import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSet
 
 export function ContactCta() {
   const { settings } = usePublicSiteSettings()
+  const phoneNumbers = settings.allPhoneNumbers?.length
+    ? settings.allPhoneNumbers
+    : [
+        ...settings.contactPhone.split(/[/,]/),
+        settings.mobilePhone,
+        settings.whatsappNumber,
+        '070 375 5455',
+      ]
+        .map((p) => p?.trim())
+        .filter((num, idx, arr): num is string => Boolean(num) && arr.indexOf(num) === idx)
+
   const contactItems = [
-    { type: 'phone', value: settings.contactPhone },
-    { type: 'phone', value: settings.whatsappNumber },
-    { type: 'address', value: settings.contactAddress },
+    ...phoneNumbers.map((phone) => ({ type: 'phone' as const, value: phone })),
+    { type: 'address' as const, value: settings.contactAddress },
   ].filter((item) => Boolean(item.value))
 
   return (

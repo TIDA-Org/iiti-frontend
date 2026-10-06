@@ -24,7 +24,7 @@ import {
   isValidSriLankanPhone,
   normalizeSriLankanPhone,
 } from '@/lib/validators'
-import { ArrowLeft, ArrowRight, CheckCircle, Pencil } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, Pencil, Info } from 'lucide-react'
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback
@@ -42,6 +42,18 @@ const normalizedOptionalPhone = z.union([
     .refine(isValidSriLankanPhone, 'Invalid phone format')
     .transform((v) => normalizeSriLankanPhone(v)),
 ])
+
+const OPERATOR_TYPES = [
+  { value: 'forklift_operator', label: 'Forklift Operator' },
+  { value: 'excavator_operator', label: 'Excavator Operator' },
+  { value: 'backhoe_loader_operator', label: 'Backhoe Loader Operator' },
+] as const
+
+const OPERATOR_TYPE_LABELS: Record<string, string> = {
+  forklift_operator: 'Forklift Operator',
+  excavator_operator: 'Excavator Operator',
+  backhoe_loader_operator: 'Backhoe Loader Operator',
+}
 
 const schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -91,6 +103,7 @@ const schema = z.object({
   durationOptionId: z.string().optional(),
   paymentPlan: z.enum(['full', 'installment'], { message: 'Please select a payment plan' }),
   nvqSelected: z.boolean().default(false),
+  trialSubCourseType: z.string().optional(),
   // initialPayment: advance payment recorded at registration (installment only)
   customFee: z.union([
     z.literal(''),
@@ -114,7 +127,7 @@ export default function AdminNewStudentPage() {
     [],
   )
 
-  const { register, handleSubmit, trigger, watch, setValue, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
+  const { register, handleSubmit, trigger, watch, setValue, setError, clearErrors, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -124,6 +137,7 @@ export default function AdminNewStudentPage() {
       customFee: '',
       batchId: '',
       durationOptionId: '',
+      trialSubCourseType: '',
       enrollmentNotes: '',
       email: '',
       phoneSecondary: '',
@@ -143,6 +157,13 @@ export default function AdminNewStudentPage() {
   const batchIdValue = formValues.batchId
   const durationOptionIdValue = formValues.durationOptionId
   const selectedCourse = courses?.find((course) => course.id === courseIdValue)
+  const isTrialCourse = Boolean(
+    selectedCourse &&
+      (selectedCourse.is_trial ||
+        selectedCourse.course_type === 'trial' ||
+        selectedCourse.course_type === 'trial_course' ||
+        selectedCourse.name?.toLowerCase().includes('one-day'))
+  )
   const selectedBatch = batches.find((b) => b.id === batchIdValue)
   const selectedDurationOption = selectedCourse?.duration_options?.find(
     (opt) => opt.id === Number(durationOptionIdValue)
@@ -176,7 +197,14 @@ export default function AdminNewStudentPage() {
       setBatches([])
       setValue('batchId', '', { shouldValidate: true })
       setValue('durationOptionId', '', { shouldValidate: true })
+      setValue('trialSubCourseType', '', { shouldValidate: false })
+      clearErrors('trialSubCourseType')
       return
+    }
+
+    if (!isTrialCourse) {
+      setValue('trialSubCourseType', '', { shouldValidate: false })
+      clearErrors('trialSubCourseType')
     }
 
     const loadBatches = async () => {
@@ -192,7 +220,7 @@ export default function AdminNewStudentPage() {
     }
 
     loadBatches()
-  }, [courseIdValue, setValue])
+  }, [courseIdValue, isTrialCourse, setValue, clearErrors])
 
   const inputClass = 'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white'
   const labelClass = 'block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide'
@@ -208,11 +236,23 @@ export default function AdminNewStudentPage() {
         'guarantor1Phone', 'guarantor2Phone',
       ] as const
     const ok = await trigger(fields)
+    if (step === 2 && isTrialCourse && !formValues.trialSubCourseType) {
+      setError('trialSubCourseType', {
+        type: 'manual',
+        message: 'Please select an Operator Type for the One-Day Certification course.',
+      })
+      return
+    }
     if (ok) setStep((s) => s + 1)
   }
 
   const onSubmit: SubmitHandler<FormOutput> = async (data) => {
     if (step !== 3) {
+      return
+    }
+    if (isTrialCourse && !data.trialSubCourseType) {
+      toast.error('Please select an Operator Type for the One-Day Certification course.')
+      setStep(2)
       return
     }
     setIsLoading(true)
@@ -266,6 +306,7 @@ export default function AdminNewStudentPage() {
           duration_option_id: data.durationOptionId ? Number(data.durationOptionId) : null,
           payment_plan: data.paymentPlan,
           nvq_selected: data.nvqSelected,
+          trial_sub_course_type: isTrialCourse ? data.trialSubCourseType || null : null,
           // custom_fee intentionally omitted — course's standard fee is always used
           notes: data.enrollmentNotes || null,
         })
@@ -367,15 +408,69 @@ export default function AdminNewStudentPage() {
                 <div><label className={labelClass}>Emergency Contact Phone</label><input {...register('emergencyContactPhone')} className={inputClass} placeholder="0771234567 or +94771234567" />{errors.emergencyContactPhone && <p className="text-red-500 text-xs mt-1">{errors.emergencyContactPhone.message}</p>}</div>
               </div>
               <div><label className={labelClass}>Emergency Contact Relationship</label><input {...register('emergencyContactRel')} className={inputClass} />{errors.emergencyContactRel && <p className="text-red-500 text-xs mt-1">{errors.emergencyContactRel.message}</p>}</div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input type="checkbox" {...register('isDoingNvq')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  Student is doing NVQ
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input type="checkbox" {...register('hasPreviousNvq')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  Student has previous NVQ
-                </label>
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">NVQ Information</h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="isDoingNvq"
+                        type="checkbox"
+                        {...register('isDoingNvq')}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="isDoingNvq" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                            Student is doing NVQ
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                              Is this person registered at our institute as an NVQ stream candidate?
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          Is this person registered at our institute as an NVQ stream candidate?
+                        </p>
+                        <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                          ✓ If yes: tick mark. If not: leave empty.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="hasPreviousNvq"
+                        type="checkbox"
+                        {...register('hasPreviousNvq')}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="hasPreviousNvq" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                            Student has previous NVQ
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                              Did this person already hold an NVQ before coming to IITI?
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          Did this person already hold an NVQ before coming to IITI?
+                        </p>
+                        <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                          ✓ If yes: tick mark. If not: leave empty.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -415,6 +510,35 @@ export default function AdminNewStudentPage() {
                   </select>
                   {errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId.message}</p>}
                 </div>
+
+                {isTrialCourse && (
+                  <div className="mt-4 p-4 border border-amber-300 rounded-xl bg-amber-50/70">
+                    <label className="block text-xs font-semibold text-amber-900 mb-2 uppercase tracking-wide">
+                      Select Operator Type * <span className="text-xs font-normal normal-case text-amber-700">({selectedCourse?.name})</span>
+                    </label>
+                    <div className="space-y-2">
+                      {OPERATOR_TYPES.map((op) => (
+                        <label
+                          key={op.value}
+                          className="flex items-center gap-3 p-3 border border-amber-200 rounded-lg bg-white cursor-pointer hover:border-amber-400 transition-colors"
+                        >
+                          <input
+                            {...register('trialSubCourseType', {
+                              onChange: () => clearErrors('trialSubCourseType'),
+                            })}
+                            type="radio"
+                            value={op.value}
+                            className="w-4 h-4 text-amber-600 border-amber-300 focus:ring-amber-500 cursor-pointer"
+                          />
+                          <span className="text-sm font-medium text-slate-800">{op.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.trialSubCourseType && (
+                      <p className="text-red-500 text-xs mt-2">{errors.trialSubCourseType.message}</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid sm:grid-cols-2 gap-4 mt-3">
                   <div>
@@ -461,9 +585,34 @@ export default function AdminNewStudentPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
-                  <input id="nvqSelected" type="checkbox" {...register('nvqSelected')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  <label htmlFor="nvqSelected" className="text-sm text-slate-700">NVQ selected for this enrollment</label>
+                <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors mt-3">
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      id="nvqSelected"
+                      type="checkbox"
+                      {...register('nvqSelected')}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <label htmlFor="nvqSelected" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                          NVQ selected for this enrollment
+                        </label>
+                        <span className="group relative inline-flex items-center">
+                          <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                          <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                            Is this specific course registration taking the NVQ exam & fee option?
+                          </span>
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Is this specific course registration taking the NVQ exam & fee option?
+                      </p>
+                      <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                        ✓ If yes: tick mark. If not: leave empty.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-3">
@@ -626,6 +775,16 @@ export default function AdminNewStudentPage() {
                       {selectedCourse ? selectedCourse.name : '—'}
                     </span>
                   </div>
+                  {isTrialCourse && (
+                    <div>
+                      <span className="text-xs text-slate-400 block">Operator Type</span>
+                      <span className="inline-block mt-0.5 text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded">
+                        {formValues.trialSubCourseType
+                          ? OPERATOR_TYPE_LABELS[formValues.trialSubCourseType] || formValues.trialSubCourseType
+                          : 'Not Selected'}
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-xs text-slate-400 block">Batch</span>
                     <span className="font-medium text-slate-800">

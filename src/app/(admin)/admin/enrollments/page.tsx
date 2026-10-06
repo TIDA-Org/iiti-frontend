@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   BatchApiResponse,
   CourseApiResponse,
@@ -26,7 +26,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { useApi } from '@/hooks/useApi'
 import { usePermissionAccess } from '@/hooks/usePermissionAccess'
 import { formatDate } from '@/lib/utils'
-import { ClipboardList, Eye, Loader2, Plus, RotateCcw, X } from 'lucide-react'
+import { ClipboardList, Eye, Loader2, Plus, RefreshCw, RotateCcw, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const statusLabel: Record<string, string> = {
@@ -93,6 +93,7 @@ export default function AdminEnrollmentsPage() {
   const [students, setStudents] = useState<StudentApiResponse[]>([])
   const [studentsLoading, setStudentsLoading] = useState(false)
   const [studentsError, setStudentsError] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { hasPermission } = usePermissionAccess()
 
   const canCreateEnrollment = hasPermission('enrollments.create')
@@ -135,34 +136,55 @@ export default function AdminEnrollmentsPage() {
     })
   }, [enrollments, search, studentNameById, studentNicById, courseNameById])
 
-  useEffect(() => {
-    const loadStudents = async () => {
-      setStudentsLoading(true)
-      setStudentsError(null)
-      try {
-        let page = 1
-        const allStudents: StudentApiResponse[] = []
+  const loadStudents = useCallback(async () => {
+    setStudentsLoading(true)
+    setStudentsError(null)
+    try {
+      let page = 1
+      const allStudents: StudentApiResponse[] = []
 
-        while (true) {
-          // Backend enforces per_page <= 100
-          const response = await apiGetStudents(page, 100)
-          allStudents.push(...response.items)
+      while (true) {
+        // Backend enforces per_page <= 100
+        const response = await apiGetStudents(page, 100)
+        allStudents.push(...response.items)
 
-          if (page >= response.pages || response.items.length === 0) break
-          page += 1
-        }
-
-        setStudents(allStudents)
-      } catch (err) {
-        setStudentsError(err instanceof Error ? err.message : 'Failed to load students')
-        setStudents([])
-      } finally {
-        setStudentsLoading(false)
+        if (page >= response.pages || response.items.length === 0) break
+        page += 1
       }
-    }
 
-    loadStudents()
+      setStudents(allStudents)
+    } catch (err) {
+      setStudentsError(err instanceof Error ? err.message : 'Failed to load students')
+      setStudents([])
+    } finally {
+      setStudentsLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadStudents()
+  }, [loadStudents])
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([refetch(), loadStudents()])
+      if (detail?.id) {
+        try {
+          const updatedDetail = await apiGetEnrollment(detail.id)
+          setDetail(updatedDetail)
+        } catch {
+          // ignore detail refresh error
+        }
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to refresh enrollments')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const isBusy = isLoading || isRefreshing
 
   useEffect(() => {
     if (!createCourseId) {
@@ -321,15 +343,27 @@ export default function AdminEnrollmentsPage() {
         title="Enrollments"
         subtitle={data ? `${enrollments.length} enrollment records` : 'Loading...'}
         actions={
-          canCreateEnrollment ? (
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowCreateForm((v) => !v)}
-              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              type="button"
+              onClick={handleRefresh}
+              disabled={isBusy}
+              className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:border-slate-300 rounded-xl shadow-xs transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              title="Refresh enrollments"
             >
-              {showCreateForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {showCreateForm ? 'Cancel' : 'New Enrollment'}
+              <RefreshCw className={`w-4 h-4 text-slate-500 ${isBusy ? 'animate-spin text-amber-500' : ''}`} />
+              <span>Refresh</span>
             </button>
-          ) : null
+            {canCreateEnrollment && (
+              <button
+                onClick={() => setShowCreateForm((v) => !v)}
+                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              >
+                {showCreateForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {showCreateForm ? 'Cancel' : 'New Enrollment'}
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -472,11 +506,23 @@ export default function AdminEnrollmentsPage() {
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+        <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <SearchInput value={search} onChange={setSearch} placeholder="Search by enrollment, student name, NIC, or course..." className="max-w-sm" />
-          <span className="text-sm text-slate-400">{filteredEnrollments.length} results</span>
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <span className="text-sm text-slate-400">{filteredEnrollments.length} results</span>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isBusy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg shadow-xs transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              title="Refresh enrollments"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isBusy ? 'animate-spin text-amber-500' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
-        <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
+        <DataLoader isLoading={isBusy} error={error} onRetry={handleRefresh}>
           {filteredEnrollments.length === 0 ? (
             <EmptyState icon={ClipboardList} title="No enrollments yet" description={search ? "No enrollment records match your search." : "No enrollment records are available right now."} />
           ) : (
