@@ -138,6 +138,16 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
   const curriculumTopics = useMemo(() => getCurriculumTopics(localizedDetails), [localizedDetails])
   const detailSections = useMemo(() => parseDetailSections(localizedDetails), [localizedDetails])
   const availableDurations = course.duration_options.filter((option) => option.is_available)
+  const phoneDisplay =
+    settings.formattedPhoneDisplay ||
+    [
+      ...settings.contactPhone.split(/[/,]/),
+      settings.mobilePhone,
+      '070 375 5455',
+    ]
+      .map((p) => p?.trim())
+      .filter((num, idx, arr): num is string => Boolean(num) && arr.indexOf(num) === idx)
+      .join(' / ')
 
   return (
     <div>
@@ -458,7 +468,7 @@ export function CourseApiDetailContent({ course }: CourseApiDetailContentProps) 
 
             <div className="rounded-xl border border-stone-200 bg-white p-5">
               <p className={cn('mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500', getCourseTextClass(lang), lang === 'si' && 'tracking-normal')} lang={lang === 'si' ? 'si' : undefined}>{copy.needHelp}</p>
-              <p className={cn('text-sm text-stone-600', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.helpCopy.replace('{phone}', settings.contactPhone)}</p>
+              <p className={cn('text-sm text-stone-600', getCourseTextClass(lang))} lang={lang === 'si' ? 'si' : undefined}>{copy.helpCopy.replace('{phone}', phoneDisplay)}</p>
             </div>
           </div>
         </div>

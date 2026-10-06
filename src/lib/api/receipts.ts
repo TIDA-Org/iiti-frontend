@@ -3,6 +3,7 @@ import type {
   ReceiptApiResponse,
   ReceiptListApiResponse,
   ReceiptVerifyPayload,
+  ReceiptUpdatePayload,
 } from '@/types/receipt'
 
 // ── Receipt Operations ───────────────────────────────────────────────────────
@@ -40,6 +41,20 @@ export async function apiVerifyReceipt(
 }
 
 /**
+ * Update receipt details (amount on slip, bank reference number).
+ * PATCH /api/v1/payments/receipts/{receipt_id}
+ */
+export async function apiUpdateReceipt(
+  receiptId: string,
+  data: ReceiptUpdatePayload,
+): Promise<ReceiptApiResponse> {
+  return apiFetch(`/payments/receipts/${receiptId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+/**
  * Get all receipts for a specific payment.
  * GET /api/v1/payments/receipts/?payment_id=&page=&per_page=
  */
@@ -61,7 +76,13 @@ export async function apiGetReceipts(
   page = 1,
   perPage = 100,
 ): Promise<ReceiptListApiResponse> {
-  return apiFetch(`/payments/receipts/?page=${page}&per_page=${perPage}`)
+  return apiFetch(`/payments/receipts/?page=${page}&per_page=${perPage}&_t=${Date.now()}`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+    },
+  })
 }
 
 /**

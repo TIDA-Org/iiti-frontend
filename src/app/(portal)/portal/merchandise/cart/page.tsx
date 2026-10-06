@@ -11,6 +11,7 @@ import { DataLoader } from '@/components/shared/DataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ShoppingBag, ShoppingCart, Plus, Minus, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface CartItem {
   itemId: string
@@ -19,6 +20,7 @@ interface CartItem {
 }
 
 export default function StudentMerchandiseCartPage() {
+  const { t, isSinhala } = useTranslation()
   const [cart, setCart] = useState<Map<string, CartItem>>(new Map())
   const [selectedItem, setSelectedItem] = useState<MerchandiseItemApiResponse | null>(null)
   const [addingQty, setAddingQty] = useState(1)
@@ -67,7 +69,8 @@ export default function StudentMerchandiseCartPage() {
     newCart.set(cartKey, newCartItem)
     setCart(newCart)
 
-    toast.success(`${selectedItem.name} added to cart`)
+    const itemName = isSinhala && selectedItem.name_si ? selectedItem.name_si : selectedItem.name
+    toast.success(`${itemName} ${t.merchandise.addedToCart}`)
     setSelectedItem(null)
     setAddingQty(1)
     setAddingVariants({})
@@ -95,7 +98,7 @@ export default function StudentMerchandiseCartPage() {
 
   const handleSubmitOrder = async () => {
     if (cart.size === 0) {
-      toast.error('Cart is empty')
+      toast.error(t.merchandise.cartEmptyMsg)
       return
     }
 
@@ -112,7 +115,7 @@ export default function StudentMerchandiseCartPage() {
         notes: orderNotes || null,
       })
 
-      toast.success('Order placed successfully!')
+      toast.success(t.merchandise.orderPlacedSuccess)
       setCart(new Map())
       localStorage.removeItem('merch_cart')
       setOrderNotes('')
@@ -139,8 +142,8 @@ export default function StudentMerchandiseCartPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Merchandise Store</h1>
-        <p className="mt-1 text-slate-600">Browse and order merchandise items</p>
+        <h1 className="text-3xl font-bold text-slate-900">{t.merchandise.title}</h1>
+        <p className="mt-1 text-slate-600">{t.merchandise.subtitle}</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -148,80 +151,85 @@ export default function StudentMerchandiseCartPage() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Available Items</h2>
+              <h2 className="font-semibold text-slate-900">{t.merchandise.availableItems}</h2>
             </div>
             <DataLoader isLoading={isLoading} error={error} onRetry={refetch}>
               {items.length === 0 ? (
                 <div className="p-6">
                   <EmptyState
                     icon={ShoppingBag}
-                    title="No items available"
-                    description="No merchandise items are currently available for order."
+                    title={t.merchandise.noItemsAvailable}
+                    description={t.merchandise.noItemsDesc}
                   />
                 </div>
               ) : (
                 <div className="grid gap-4 p-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
-                  {items.map((item: MerchandiseItemApiResponse) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setSelectedItem(item)
-                        setAddingQty(1)
-                        setAddingVariants({})
-                      }}
-                      className="text-left bg-white rounded-xl shadow-sm hover:shadow-lg border border-slate-100 overflow-hidden transition-all duration-200 hover:border-orange-200 group"
-                    >
-                      {/* Image Container */}
-                      <div className="relative bg-slate-100 h-48 overflow-hidden">
-                        {item.image_url && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.image_url}
-                            alt={item.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                        )}
-                        {/* Stock Badge */}
-                        <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                          item.stock_qty > 0 
-                            ? 'bg-green-500' 
-                            : 'bg-red-500'
-                        }`}>
-                          {item.stock_qty > 0 ? `${item.stock_qty} in stock` : 'Out of stock'}
-                        </div>
-                      </div>
+                  {items.map((item: MerchandiseItemApiResponse) => {
+                    const displayName = isSinhala && item.name_si ? item.name_si : item.name
+                    const secondaryName = isSinhala && item.name_si ? item.name : item.name_si
 
-                      {/* Content Container */}
-                      <div className="p-4 space-y-3">
-                        {/* Title */}
-                        <div>
-                          <h3 className="font-bold text-slate-900 text-base line-clamp-2 group-hover:text-orange-600 transition-colors">
-                            {item.name}
-                          </h3>
-                          {item.name_si && (
-                            <p className="text-xs text-slate-500 mt-1">{item.name_si}</p>
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setSelectedItem(item)
+                          setAddingQty(1)
+                          setAddingVariants({})
+                        }}
+                        className="text-left bg-white rounded-xl shadow-sm hover:shadow-lg border border-slate-100 overflow-hidden transition-all duration-200 hover:border-orange-200 group"
+                      >
+                        {/* Image Container */}
+                        <div className="relative bg-slate-100 h-48 overflow-hidden">
+                          {item.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.image_url}
+                              alt={displayName}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
                           )}
-                        </div>
-
-                        {/* Description */}
-                        {item.description && (
-                          <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>
-                        )}
-
-                        {/* Price & Action */}
-                        <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-2">
-                          <div>
-                            <p className="text-xs text-slate-500 font-medium">Price</p>
-                            <p className="text-lg font-bold text-orange-600">LKR {item.price.toFixed(2)}</p>
+                          {/* Stock Badge */}
+                          <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold text-white ${
+                            item.stock_qty > 0 
+                              ? 'bg-green-500' 
+                              : 'bg-red-500'
+                          }`}>
+                            {item.stock_qty > 0 ? `${item.stock_qty} ${t.merchandise.inStock}` : t.merchandise.outOfStock}
                           </div>
-                          <button className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-3 py-1.5 rounded-lg font-medium text-sm transition-all duration-150 flex items-center gap-1 shadow-md hover:shadow-lg shrink-0">
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Add</span>
-                          </button>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+
+                        {/* Content Container */}
+                        <div className="p-4 space-y-3">
+                          {/* Title */}
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-base line-clamp-2 group-hover:text-orange-600 transition-colors">
+                              {displayName}
+                            </h3>
+                            {secondaryName && (
+                              <p className="text-xs text-slate-500 mt-1">{secondaryName}</p>
+                            )}
+                          </div>
+
+                          {/* Description */}
+                          {item.description && (
+                            <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>
+                          )}
+
+                          {/* Price & Action */}
+                          <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-2">
+                            <div>
+                              <p className="text-xs text-slate-500 font-medium">{t.merchandise.price}</p>
+                              <p className="text-lg font-bold text-orange-600">{t.common.currency} {item.price.toFixed(2)}</p>
+                            </div>
+                            <span className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-3 py-1.5 rounded-lg font-medium text-sm transition-all duration-150 flex items-center gap-1 shadow-md hover:shadow-lg shrink-0">
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>{t.merchandise.add}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </DataLoader>
@@ -234,7 +242,7 @@ export default function StudentMerchandiseCartPage() {
           {selectedItem && (
             <div className="bg-white rounded-xl border-2 border-orange-300 p-5 sticky top-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-slate-900">Add to Cart</h3>
+                <h3 className="font-semibold text-slate-900">{t.merchandise.addToCart}</h3>
                 <button
                   onClick={() => setSelectedItem(null)}
                   className="text-slate-400 hover:text-slate-600"
@@ -245,9 +253,16 @@ export default function StudentMerchandiseCartPage() {
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{selectedItem.name}</p>
-                  {selectedItem.name_si && <p className="text-xs text-slate-600">{selectedItem.name_si}</p>}
-                  <p className="text-lg font-bold text-orange-600 mt-2">LKR {selectedItem.price.toFixed(2)}</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {isSinhala && selectedItem.name_si ? selectedItem.name_si : selectedItem.name}
+                  </p>
+                  {isSinhala && selectedItem.name_si && selectedItem.name && (
+                    <p className="text-xs text-slate-600">{selectedItem.name}</p>
+                  )}
+                  {!isSinhala && selectedItem.name_si && (
+                    <p className="text-xs text-slate-600">{selectedItem.name_si}</p>
+                  )}
+                  <p className="text-lg font-bold text-orange-600 mt-2">{t.common.currency} {selectedItem.price.toFixed(2)}</p>
                   {selectedItem.description && (
                     <p className="text-xs text-slate-600 mt-2">{selectedItem.description}</p>
                   )}
@@ -286,7 +301,7 @@ export default function StudentMerchandiseCartPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-2">Quantity</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-2">{t.merchandise.quantity}</label>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setAddingQty(Math.max(1, addingQty - 1))}
@@ -310,7 +325,7 @@ export default function StudentMerchandiseCartPage() {
                       <Plus className="w-3 h-3" />
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Available: {selectedItem.stock_qty}</p>
+                  <p className="text-xs text-slate-500 mt-1">{t.merchandise.available}: {selectedItem.stock_qty}</p>
                 </div>
 
                 <button
@@ -319,7 +334,7 @@ export default function StudentMerchandiseCartPage() {
                   className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  Add to Cart
+                  {t.merchandise.addToCart}
                 </button>
               </div>
             </div>
@@ -329,13 +344,13 @@ export default function StudentMerchandiseCartPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-5 sticky top-6">
             <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
-              Shopping Cart ({cartItemCount})
+              {t.merchandise.cart} ({cartItemCount})
             </h3>
 
             {cartItems.length === 0 ? (
               <div className="py-8 text-center">
                 <ShoppingCart className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">Your cart is empty</p>
+                <p className="text-sm text-slate-500">{t.merchandise.cartEmptyMsg}</p>
               </div>
             ) : (
               <>
@@ -343,12 +358,13 @@ export default function StudentMerchandiseCartPage() {
                   {cartItems.map((cartItem) => {
                     const item = items.find((i: MerchandiseItemApiResponse) => i.id === cartItem.itemId)
                     if (!item) return null
+                    const name = isSinhala && item.name_si ? item.name_si : item.name
                     return (
                       <div key={cartItem.itemId} className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                          <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
                           <p className="text-xs text-slate-600">
-                            {cartItem.quantity} × LKR {item.price.toFixed(2)}
+                            {cartItem.quantity} × {t.common.currency} {item.price.toFixed(2)}
                           </p>
                           {cartItem.variantSelected && (
                             <p className="text-xs text-slate-500 mt-1">
@@ -361,7 +377,7 @@ export default function StudentMerchandiseCartPage() {
                         <div className="text-right flex items-center gap-2">
                           <div>
                             <p className="text-xs text-slate-500">
-                              LKR {(item.price * cartItem.quantity).toFixed(2)}
+                              {t.common.currency} {(item.price * cartItem.quantity).toFixed(2)}
                             </p>
                           </div>
                           <button
@@ -378,11 +394,11 @@ export default function StudentMerchandiseCartPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-2">Notes (Optional)</label>
+                    <label className="block text-xs font-medium text-slate-500 mb-2">{t.merchandise.orderNotes}</label>
                     <textarea
                       value={orderNotes}
                       onChange={(e) => setOrderNotes(e.target.value)}
-                      placeholder="Special requests or notes..."
+                      placeholder={t.merchandise.notesPlaceholder}
                       rows={2}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
@@ -390,12 +406,12 @@ export default function StudentMerchandiseCartPage() {
 
                   <div className="bg-slate-100 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-slate-600">Total Items:</span>
+                      <span className="text-sm text-slate-600">{t.merchandise.totalItems}:</span>
                       <span className="font-semibold text-slate-900">{cartItemCount}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">Total:</span>
-                      <span className="text-xl font-bold text-blue-600">LKR {cartTotal.toFixed(2)}</span>
+                      <span className="text-sm font-medium text-slate-700">{t.merchandise.total}:</span>
+                      <span className="text-xl font-bold text-blue-600">{t.common.currency} {cartTotal.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -405,7 +421,7 @@ export default function StudentMerchandiseCartPage() {
                     className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" />
-                    {submitting ? 'Placing Order...' : 'Place Order'}
+                    {submitting ? t.merchandise.placingOrder : t.merchandise.placeOrder}
                   </button>
                 </div>
               </>
@@ -416,3 +432,4 @@ export default function StudentMerchandiseCartPage() {
     </div>
   )
 }
+

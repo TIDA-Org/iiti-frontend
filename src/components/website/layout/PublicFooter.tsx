@@ -10,7 +10,10 @@ import { getPublicCourseHref } from '@/lib/public-course-routes'
 import { usePublicSiteSettings } from '@/components/website/layout/PublicSiteSettingsProvider'
 
 function buildWhatsAppHref(value: string) {
-  const normalized = value.replace(/\D/g, '')
+  let normalized = value.replace(/\D/g, '')
+  if (normalized.startsWith('0')) {
+    normalized = '94' + normalized.slice(1)
+  }
   return normalized ? `https://wa.me/${normalized}` : '#'
 }
 
@@ -49,6 +52,17 @@ export function PublicFooter() {
         }
       : null,
   ].filter((item): item is SocialLink => item !== null)
+
+  const phoneNumbers = settings.allPhoneNumbers?.length
+    ? settings.allPhoneNumbers
+    : [
+        ...settings.contactPhone.split(/[/,]/),
+        settings.mobilePhone,
+        settings.whatsappNumber,
+        '070 375 5455',
+      ]
+        .map((p) => p?.trim())
+        .filter((num, idx, arr): num is string => Boolean(num) && arr.indexOf(num) === idx)
 
   return (
     <footer style={{ backgroundColor: '#0A0A0A' }} className="text-stone-400">
@@ -152,16 +166,12 @@ export function PublicFooter() {
                 <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{settings.contactAddress}</span>
               </li>
-              <li className="flex gap-2.5 text-sm">
-                <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <span>{settings.contactPhone}</span>
-              </li>
-              {settings.whatsappNumber && (
-                <li className="flex gap-2.5 text-sm">
+              {phoneNumbers.map((phone) => (
+                <li key={phone} className="flex gap-2.5 text-sm">
                   <Phone className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                  <span>{settings.whatsappNumber}</span>
+                  <span>{phone}</span>
                 </li>
-              )}
+              ))}
               <li className="flex gap-2.5 text-sm">
                 <Mail className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                 <span>{settings.contactEmail}</span>

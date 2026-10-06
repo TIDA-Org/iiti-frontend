@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,7 +13,8 @@ import {
   apiGetBatches,
   apiGetCourses,
 } from '@/lib/api/courses'
-import { apiCreateEnrollment } from '@/lib/api/enrollments'
+import { apiCreateEnrollment, apiUpdateEnrollmentStatus } from '@/lib/api/enrollments'
+import { apiCreateManualPayment } from '@/lib/api/payments'
 import { apiCreateStudent } from '@/lib/api/students'
 import { useApi } from '@/hooks/useApi'
 import { DISTRICTS, PROVINCES } from '@/lib/constants'
@@ -23,10 +24,14 @@ import {
   isValidSriLankanPhone,
   normalizeSriLankanPhone,
 } from '@/lib/validators'
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, Pencil, Info } from 'lucide-react'
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback
+}
+
+function formatCurrency(amount: number, currency = 'LKR') {
+  return `${currency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 const normalizedOptionalPhone = z.union([
@@ -37,6 +42,18 @@ const normalizedOptionalPhone = z.union([
     .refine(isValidSriLankanPhone, 'Invalid phone format')
     .transform((v) => normalizeSriLankanPhone(v)),
 ])
+
+const OPERATOR_TYPES = [
+  { value: 'forklift_operator', label: 'Forklift Operator' },
+  { value: 'excavator_operator', label: 'Excavator Operator' },
+  { value: 'backhoe_loader_operator', label: 'Backhoe Loader Operator' },
+] as const
+
+const OPERATOR_TYPE_LABELS: Record<string, string> = {
+  forklift_operator: 'Forklift Operator',
+  excavator_operator: 'Excavator Operator',
+  backhoe_loader_operator: 'Backhoe Loader Operator',
+}
 
 const schema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -86,9 +103,11 @@ const schema = z.object({
   durationOptionId: z.string().optional(),
   paymentPlan: z.enum(['full', 'installment'], { message: 'Please select a payment plan' }),
   nvqSelected: z.boolean().default(false),
+  trialSubCourseType: z.string().optional(),
+  // initialPayment: advance payment recorded at registration (installment only)
   customFee: z.union([
     z.literal(''),
-    z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid fee amount'),
+    z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid amount — use digits only (e.g. 5000 or 5000.00)'),
   ]),
   enrollmentNotes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
 })
@@ -108,7 +127,7 @@ export default function AdminNewStudentPage() {
     [],
   )
 
-  const { register, handleSubmit, trigger, watch, setValue, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
+  const { register, handleSubmit, trigger, watch, setValue, setError, clearErrors, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(schema),
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -118,6 +137,7 @@ export default function AdminNewStudentPage() {
       customFee: '',
       batchId: '',
       durationOptionId: '',
+      trialSubCourseType: '',
       enrollmentNotes: '',
       email: '',
       phoneSecondary: '',
@@ -130,27 +150,61 @@ export default function AdminNewStudentPage() {
     },
   })
 
-  const nicValue = watch('nic')
-  const courseIdValue = watch('courseId')
+  const formValues = watch()
+  const nicValue = formValues.nic
+  const courseIdValue = formValues.courseId
+  const paymentPlanValue = formValues.paymentPlan
+  const batchIdValue = formValues.batchId
+  const durationOptionIdValue = formValues.durationOptionId
   const selectedCourse = courses?.find((course) => course.id === courseIdValue)
+  const isTrialCourse = Boolean(
+    selectedCourse &&
+      (selectedCourse.is_trial ||
+        selectedCourse.course_type === 'trial' ||
+        selectedCourse.course_type === 'trial_course' ||
+        selectedCourse.name?.toLowerCase().includes('one-day'))
+  )
+  const selectedBatch = batches.find((b) => b.id === batchIdValue)
+  const selectedDurationOption = selectedCourse?.duration_options?.find(
+    (opt) => opt.id === Number(durationOptionIdValue)
+  )
+  const lastProcessedNicRef = useRef<string>('')
 
   useEffect(() => {
-    if (!nicValue || !isValidSriLankanNic(nicValue)) {
-      setValue('dateOfBirth', '', { shouldValidate: true })
+    const trimmedNic = nicValue?.trim().toUpperCase() || ''
+    if (!trimmedNic || !isValidSriLankanNic(trimmedNic)) {
       return
     }
 
-    const details = extractSriLankanNicDetails(nicValue)
-    setValue('dateOfBirth', details.dateOfBirth, { shouldValidate: true })
-    setValue('gender', details.gender, { shouldValidate: true })
+    // Only update dateOfBirth and gender when a new valid NIC is entered
+    if (trimmedNic !== lastProcessedNicRef.current) {
+      lastProcessedNicRef.current = trimmedNic
+      const details = extractSriLankanNicDetails(trimmedNic)
+      setValue('dateOfBirth', details.dateOfBirth, { shouldValidate: true })
+      setValue('gender', details.gender, { shouldValidate: true })
+    }
   }, [nicValue, setValue])
+
+  // Clear advance payment amount whenever user switches back to Full Payment
+  useEffect(() => {
+    if (paymentPlanValue === 'full') {
+      setValue('customFee', '', { shouldValidate: false })
+    }
+  }, [paymentPlanValue, setValue])
 
   useEffect(() => {
     if (!courseIdValue) {
       setBatches([])
       setValue('batchId', '', { shouldValidate: true })
       setValue('durationOptionId', '', { shouldValidate: true })
+      setValue('trialSubCourseType', '', { shouldValidate: false })
+      clearErrors('trialSubCourseType')
       return
+    }
+
+    if (!isTrialCourse) {
+      setValue('trialSubCourseType', '', { shouldValidate: false })
+      clearErrors('trialSubCourseType')
     }
 
     const loadBatches = async () => {
@@ -166,7 +220,7 @@ export default function AdminNewStudentPage() {
     }
 
     loadBatches()
-  }, [courseIdValue, setValue])
+  }, [courseIdValue, isTrialCourse, setValue, clearErrors])
 
   const inputClass = 'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white'
   const labelClass = 'block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide'
@@ -174,18 +228,33 @@ export default function AdminNewStudentPage() {
   const nextStep = async () => {
     const fields = step === 1
       ? [
-          'fullName', 'nameWithInitials', 'nic', 'dateOfBirth', 'gender', 'phone', 'phoneSecondary', 'email',
-          'preferredLanguage', 'isDoingNvq', 'hasPreviousNvq', 'emergencyContactPhone',
-        ] as const
+        'fullName', 'nameWithInitials', 'nic', 'dateOfBirth', 'gender', 'phone', 'phoneSecondary', 'email',
+        'preferredLanguage', 'isDoingNvq', 'hasPreviousNvq', 'emergencyContactPhone',
+      ] as const
       : [
-          'addressLine1', 'city', 'district', 'province', 'courseId', 'paymentPlan', 'customFee',
-          'guarantor1Phone', 'guarantor2Phone',
-        ] as const
+        'addressLine1', 'city', 'district', 'province', 'courseId', 'paymentPlan', 'customFee',
+        'guarantor1Phone', 'guarantor2Phone',
+      ] as const
     const ok = await trigger(fields)
+    if (step === 2 && isTrialCourse && !formValues.trialSubCourseType) {
+      setError('trialSubCourseType', {
+        type: 'manual',
+        message: 'Please select an Operator Type for the One-Day Certification course.',
+      })
+      return
+    }
     if (ok) setStep((s) => s + 1)
   }
 
   const onSubmit: SubmitHandler<FormOutput> = async (data) => {
+    if (step !== 3) {
+      return
+    }
+    if (isTrialCourse && !data.trialSubCourseType) {
+      toast.error('Please select an Operator Type for the One-Day Certification course.')
+      setStep(2)
+      return
+    }
     setIsLoading(true)
     try {
       const guarantors: Array<{ guarantor_order: number; full_name: string; phone?: string | null; relationship_to?: string | null }> = []
@@ -230,17 +299,38 @@ export default function AdminNewStudentPage() {
       })
 
       try {
-        await apiCreateEnrollment({
+        const enrollment = await apiCreateEnrollment({
           student_id: student.id,
           course_id: data.courseId,
           batch_id: data.batchId || null,
           duration_option_id: data.durationOptionId ? Number(data.durationOptionId) : null,
           payment_plan: data.paymentPlan,
           nvq_selected: data.nvqSelected,
-          custom_fee: data.customFee ? Number(data.customFee) : null,
+          trial_sub_course_type: isTrialCourse ? data.trialSubCourseType || null : null,
+          // custom_fee intentionally omitted — course's standard fee is always used
           notes: data.enrollmentNotes || null,
         })
-        toast.success('Student and enrollment created successfully!')
+
+        // Record advance payment if provided (installment plan only)
+        const advanceAmount = data.customFee ? Number(data.customFee) : 0
+        if (data.paymentPlan === 'installment' && advanceAmount > 0) {
+          try {
+            await apiCreateManualPayment({
+              enrollment_id: enrollment.id,
+              amount: advanceAmount,
+              manual_reason: 'Initial advance payment at registration',
+              is_advance: true,
+            })
+            await apiUpdateEnrollmentStatus(enrollment.id, 'active')
+            toast.success('Student enrolled and initial payment recorded!')
+          } catch (paymentError: unknown) {
+            toast.warning(
+              getErrorMessage(paymentError, 'Enrolled successfully, but failed to record the initial payment. Please add it manually.')
+            )
+          }
+        } else {
+          toast.success('Student and enrollment created successfully!')
+        }
       } catch (enrollmentError: unknown) {
         toast.warning(getErrorMessage(enrollmentError, 'Student created, but enrollment creation failed.'))
       }
@@ -269,7 +359,15 @@ export default function AdminNewStudentPage() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && step < 3 && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+            e.preventDefault()
+            nextStep()
+          }
+        }}
+      >
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           {step === 1 && (
             <div className="space-y-4">
@@ -280,8 +378,17 @@ export default function AdminNewStudentPage() {
                 <div><label className={labelClass}>NIC Number *</label><input {...register('nic')} className={inputClass} placeholder="200012345V or 200012345678" />{errors.nic && <p className="text-red-500 text-xs mt-1">{errors.nic.message}</p>}</div>
                 <div>
                   <label className={labelClass}>Date of Birth *</label>
-                  <input {...register('dateOfBirth')} type="date" readOnly className={`${inputClass} bg-slate-50`} />
-                  <p className="text-slate-400 text-xs mt-1">Auto-calculated from NIC.</p>
+                  <input
+                    {...register('dateOfBirth')}
+                    type="date"
+                    className={`${inputClass} cursor-pointer`}
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker?.()
+                      } catch {}
+                    }}
+                  />
+                  <p className="text-slate-400 text-xs mt-1">Auto-calculated from NIC — you can change it if needed.</p>
                   {errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth.message}</p>}
                 </div>
                 <div><label className={labelClass}>Gender *</label><select {...register('gender')} className={inputClass}><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>{errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>}</div>
@@ -301,15 +408,69 @@ export default function AdminNewStudentPage() {
                 <div><label className={labelClass}>Emergency Contact Phone</label><input {...register('emergencyContactPhone')} className={inputClass} placeholder="0771234567 or +94771234567" />{errors.emergencyContactPhone && <p className="text-red-500 text-xs mt-1">{errors.emergencyContactPhone.message}</p>}</div>
               </div>
               <div><label className={labelClass}>Emergency Contact Relationship</label><input {...register('emergencyContactRel')} className={inputClass} />{errors.emergencyContactRel && <p className="text-red-500 text-xs mt-1">{errors.emergencyContactRel.message}</p>}</div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input type="checkbox" {...register('isDoingNvq')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  Student is doing NVQ
-                </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input type="checkbox" {...register('hasPreviousNvq')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  Student has previous NVQ
-                </label>
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">NVQ Information</h4>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="isDoingNvq"
+                        type="checkbox"
+                        {...register('isDoingNvq')}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="isDoingNvq" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                            Student is doing NVQ
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                              Is this person registered at our institute as an NVQ stream candidate?
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          Is this person registered at our institute as an NVQ stream candidate?
+                        </p>
+                        <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                          ✓ If yes: tick mark. If not: leave empty.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start gap-2.5">
+                      <input
+                        id="hasPreviousNvq"
+                        type="checkbox"
+                        {...register('hasPreviousNvq')}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <label htmlFor="hasPreviousNvq" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                            Student has previous NVQ
+                          </label>
+                          <span className="group relative inline-flex items-center">
+                            <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                              Did this person already hold an NVQ before coming to IITI?
+                            </span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          Did this person already hold an NVQ before coming to IITI?
+                        </p>
+                        <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                          ✓ If yes: tick mark. If not: leave empty.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -350,6 +511,35 @@ export default function AdminNewStudentPage() {
                   {errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId.message}</p>}
                 </div>
 
+                {isTrialCourse && (
+                  <div className="mt-4 p-4 border border-amber-300 rounded-xl bg-amber-50/70">
+                    <label className="block text-xs font-semibold text-amber-900 mb-2 uppercase tracking-wide">
+                      Select Operator Type * <span className="text-xs font-normal normal-case text-amber-700">({selectedCourse?.name})</span>
+                    </label>
+                    <div className="space-y-2">
+                      {OPERATOR_TYPES.map((op) => (
+                        <label
+                          key={op.value}
+                          className="flex items-center gap-3 p-3 border border-amber-200 rounded-lg bg-white cursor-pointer hover:border-amber-400 transition-colors"
+                        >
+                          <input
+                            {...register('trialSubCourseType', {
+                              onChange: () => clearErrors('trialSubCourseType'),
+                            })}
+                            type="radio"
+                            value={op.value}
+                            className="w-4 h-4 text-amber-600 border-amber-300 focus:ring-amber-500 cursor-pointer"
+                          />
+                          <span className="text-sm font-medium text-slate-800">{op.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.trialSubCourseType && (
+                      <p className="text-red-500 text-xs mt-2">{errors.trialSubCourseType.message}</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid sm:grid-cols-2 gap-4 mt-3">
                   <div>
                     <label className={labelClass}>Batch (Optional)</label>
@@ -380,16 +570,49 @@ export default function AdminNewStudentPage() {
                     </select>
                     {errors.paymentPlan && <p className="text-red-500 text-xs mt-1">{errors.paymentPlan.message}</p>}
                   </div>
-                  <div>
-                    <label className={labelClass}>Custom Fee (Optional)</label>
-                    <input {...register('customFee')} className={inputClass} placeholder="e.g. 45000" />
-                    {errors.customFee && <p className="text-red-500 text-xs mt-1">{errors.customFee.message}</p>}
-                  </div>
+                  {paymentPlanValue === 'installment' && (
+                    <div>
+                      <label className={labelClass}>Initial Advance Payment (Optional)</label>
+                      <input
+                        {...register('customFee')}
+                        className={inputClass}
+                        placeholder="e.g. 5000"
+                        inputMode="numeric"
+                      />
+                      <p className="text-slate-400 text-xs mt-1">Amount collected at registration as first installment.</p>
+                      {errors.customFee && <p className="text-red-500 text-xs mt-1">{errors.customFee.message}</p>}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
-                  <input id="nvqSelected" type="checkbox" {...register('nvqSelected')} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                  <label htmlFor="nvqSelected" className="text-sm text-slate-700">NVQ selected for this enrollment</label>
+                <div className="p-3.5 border border-slate-200 rounded-xl bg-slate-50/60 hover:bg-slate-50 transition-colors mt-3">
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      id="nvqSelected"
+                      type="checkbox"
+                      {...register('nvqSelected')}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <label htmlFor="nvqSelected" className="font-semibold text-sm text-slate-700 cursor-pointer">
+                          NVQ selected for this enrollment
+                        </label>
+                        <span className="group relative inline-flex items-center">
+                          <Info className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                          <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-64 p-2 text-xs leading-relaxed text-white bg-slate-800 rounded-lg shadow-lg group-hover:block z-30">
+                            Is this specific course registration taking the NVQ exam & fee option?
+                          </span>
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        Is this specific course registration taking the NVQ exam & fee option?
+                      </p>
+                      <p className="text-[11px] font-medium text-amber-600 mt-1.5">
+                        ✓ If yes: tick mark. If not: leave empty.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-3">
@@ -402,28 +625,244 @@ export default function AdminNewStudentPage() {
           )}
 
           {step === 3 && (
-            <div>
-              <h3 className="font-semibold text-slate-700 mb-4">Review Details</h3>
-              <div className="bg-amber-50 rounded-xl p-4 mb-4">
-                <p className="text-sm text-amber-800 font-medium">Please verify all information before registering the student.</p>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-base font-semibold text-slate-800">Review Student & Enrollment Details</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Please review all entered details before finalizing registration. Click Edit on any section to make changes.
+                </p>
               </div>
-              <p className="text-sm text-slate-500">Student profile and enrollment will be created according to backend student and enrollment modules.</p>
+
+              {/* Personal Information Card */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Personal Information</h4>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <span className="text-xs text-slate-400 block">Full Name</span>
+                    <span className="font-medium text-slate-800">{formValues.fullName || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Name for Certificate</span>
+                    <span className="font-medium text-slate-800">{formValues.nameWithInitials || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">NIC Number</span>
+                    <span className="font-medium text-slate-800 font-mono">{formValues.nic || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Date of Birth</span>
+                    <span className="font-medium text-slate-800">{formValues.dateOfBirth || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Gender</span>
+                    <span className="font-medium text-slate-800 capitalize">{formValues.gender || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Primary Phone</span>
+                    <span className="font-medium text-slate-800 font-mono">{formValues.phone || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Secondary Phone</span>
+                    <span className="font-medium text-slate-800 font-mono">{formValues.phoneSecondary || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Email</span>
+                    <span className="font-medium text-slate-800">{formValues.email || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Preferred Language</span>
+                    <span className="font-medium text-slate-800">
+                      {formValues.preferredLanguage === 'si' ? 'Sinhala (si)' : 'English (en)'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">NVQ Background</span>
+                    <span className="font-medium text-slate-800">
+                      {[
+                        formValues.isDoingNvq ? 'Currently doing NVQ' : null,
+                        formValues.hasPreviousNvq ? 'Has previous NVQ' : null,
+                      ].filter(Boolean).join(', ') || 'None'}
+                    </span>
+                  </div>
+                  {(formValues.emergencyContactName || formValues.emergencyContactPhone || formValues.emergencyContactRel) && (
+                    <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+                      <span className="text-xs text-slate-400 block">Emergency Contact</span>
+                      <span className="font-medium text-slate-800">
+                        {formValues.emergencyContactName || '—'}
+                        {formValues.emergencyContactRel ? ` (${formValues.emergencyContactRel})` : ''}
+                        {formValues.emergencyContactPhone ? ` • ${formValues.emergencyContactPhone}` : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Address & Guarantors Card */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Address & Guarantors</h4>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div className="sm:col-span-2">
+                    <span className="text-xs text-slate-400 block">Address</span>
+                    <span className="font-medium text-slate-800">
+                      {[formValues.addressLine1, formValues.addressLine2, formValues.city, formValues.district, formValues.province]
+                        .filter(Boolean)
+                        .join(', ') || '—'}
+                    </span>
+                  </div>
+                  {formValues.guarantor1Name && (
+                    <div>
+                      <span className="text-xs text-slate-400 block">Guarantor 1</span>
+                      <span className="font-medium text-slate-800">
+                        {formValues.guarantor1Name}
+                        {formValues.guarantor1Rel ? ` (${formValues.guarantor1Rel})` : ''}
+                        {formValues.guarantor1Phone ? ` • ${formValues.guarantor1Phone}` : ''}
+                      </span>
+                    </div>
+                  )}
+                  {formValues.guarantor2Name && (
+                    <div>
+                      <span className="text-xs text-slate-400 block">Guarantor 2</span>
+                      <span className="font-medium text-slate-800">
+                        {formValues.guarantor2Name}
+                        {formValues.guarantor2Rel ? ` (${formValues.guarantor2Rel})` : ''}
+                        {formValues.guarantor2Phone ? ` • ${formValues.guarantor2Phone}` : ''}
+                      </span>
+                    </div>
+                  )}
+                  {!formValues.guarantor1Name && !formValues.guarantor2Name && (
+                    <div className="sm:col-span-2">
+                      <span className="text-xs text-slate-400 block">Guarantors</span>
+                      <span className="text-slate-400 italic">None provided</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Course & Enrollment Details Card */}
+              <div className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Course & Enrollment Details</h4>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                  <div>
+                    <span className="text-xs text-slate-400 block">Course</span>
+                    <span className="font-medium text-slate-800">
+                      {selectedCourse ? selectedCourse.name : '—'}
+                    </span>
+                  </div>
+                  {isTrialCourse && (
+                    <div>
+                      <span className="text-xs text-slate-400 block">Operator Type</span>
+                      <span className="inline-block mt-0.5 text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded">
+                        {formValues.trialSubCourseType
+                          ? OPERATOR_TYPE_LABELS[formValues.trialSubCourseType] || formValues.trialSubCourseType
+                          : 'Not Selected'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-xs text-slate-400 block">Batch</span>
+                    <span className="font-medium text-slate-800">
+                      {selectedBatch
+                        ? `${selectedBatch.batch_code} (${selectedBatch.start_date} to ${selectedBatch.end_date})`
+                        : 'None / Not Assigned'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Duration Option</span>
+                    <span className="font-medium text-slate-800">
+                      {selectedDurationOption
+                        ? selectedDurationOption.label || `${selectedDurationOption.duration_value} ${selectedDurationOption.duration_unit}`
+                        : 'Standard Course Duration'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 block">Payment Plan</span>
+                    <span className="font-medium text-slate-800 capitalize">
+                      {formValues.paymentPlan === 'installment' ? 'Installment Plan' : 'Full Payment'}
+                    </span>
+                  </div>
+                  {formValues.paymentPlan === 'installment' && (
+                    <div>
+                      <span className="text-xs text-slate-400 block">Initial Advance Payment</span>
+                      <span className="font-semibold text-amber-600">
+                        {formValues.customFee && Number(formValues.customFee) > 0
+                          ? formatCurrency(Number(formValues.customFee))
+                          : 'None (No advance deposit at registration)'}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-xs text-slate-400 block">NVQ Selection</span>
+                    <span className="font-medium text-slate-800">
+                      {formValues.nvqSelected ? 'Yes — NVQ selected for this enrollment' : 'No'}
+                    </span>
+                  </div>
+                  {formValues.enrollmentNotes && (
+                    <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+                      <span className="text-xs text-slate-400 block">Enrollment Notes</span>
+                      <span className="font-medium text-slate-800 whitespace-pre-wrap">{formValues.enrollmentNotes}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
 
         <div className="flex gap-3 mt-4">
           {step > 1 && (
-            <button type="button" onClick={() => setStep((s) => s - 1)} className="flex items-center gap-2 border border-slate-200 text-slate-600 px-5 py-2.5 rounded-lg font-semibold text-sm hover:border-slate-300">
+            <button
+              key="btn-back"
+              type="button"
+              onClick={() => setStep((s) => s - 1)}
+              className="flex items-center gap-2 border border-slate-200 text-slate-600 px-5 py-2.5 rounded-lg font-semibold text-sm hover:border-slate-300"
+            >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
           )}
           {step < 3 ? (
-            <button type="button" onClick={nextStep} className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors">
+            <button
+              key="btn-continue"
+              type="button"
+              onClick={nextStep}
+              className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors"
+            >
               Continue <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button type="submit" disabled={isLoading} className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors">
+            <button
+              key="btn-register"
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+              disabled={isLoading}
+              className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white py-2.5 rounded-lg font-semibold text-sm transition-colors"
+            >
               {isLoading ? 'Registering...' : 'Register Student'}
             </button>
           )}

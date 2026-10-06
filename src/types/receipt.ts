@@ -20,7 +20,14 @@ export interface ReceiptApiResponse {
   uploaded_at: string
   // Enriched from payment join
   receipt_number: string | null
+  enrollment_id?: string | null
   enrollment_number: string | null
+  student_name?: string | null
+  student_number?: string | null
+  course_name?: string | null
+  installment_number?: number | null
+  total_installments?: number | null
+  payment_amount?: number | null
 }
 
 export interface ReceiptListApiResponse {
@@ -34,5 +41,12 @@ export interface ReceiptListApiResponse {
 export interface ReceiptVerifyPayload {
   is_approved: boolean
   bank_reference_no?: string
+  amount_on_slip?: number
   rejection_reason?: string
 }
+
+export interface ReceiptUpdatePayload {
+  amount_on_slip?: number
+  bank_reference_no?: string
+}
+

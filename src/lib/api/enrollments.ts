@@ -33,12 +33,14 @@ export interface EnrollmentApiResponse {
   amount_paid: number
   is_retake: boolean
   retake_of: string | null
+  trial_sub_course_type: string | null
   created_at: string
   updated_at: string
   student?: EnrollmentStudentApiResponse | null
   course?: EnrollmentCourseApiResponse | null
   result?: ResultApiResponse | null
 }
+
 
 export interface EnrollmentDetailApiResponse extends EnrollmentApiResponse {
   fee_breakdown: Record<string, unknown> | null
@@ -49,6 +51,8 @@ export interface SelfEnrollmentRequest {
   course_ids: string[]
   payment_plan: 'full' | 'installment'
   nvq_selected?: boolean
+  trial_sub_course_type?: string | null
+  trial_sub_course_types?: Record<string, string>
 }
 
 export async function apiCreateEnrollment(data: Record<string, unknown>): Promise<EnrollmentApiResponse> {

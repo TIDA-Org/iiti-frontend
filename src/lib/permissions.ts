@@ -8,7 +8,7 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'view:audit_logs', 'manage:migration', 'view:reports', 'manage:licenses',
     // Backend permission codes
     'payments.view', 'payments.create', 'payments.update',
-    'payments.verify_receipt', 'payments.reject_receipt',
+    'payments.verify_receipt', 'payments.reject_receipt', 'payments.view_receipt',
     'notifications.view', 'notifications.update',
   ],
   admin: [
@@ -17,7 +17,7 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'manage:offers', 'manage:intakes', 'view:reports', 'manage:licenses',
     // Backend permission codes
     'payments.view', 'payments.create', 'payments.update',
-    'payments.verify_receipt', 'payments.reject_receipt',
+    'payments.verify_receipt', 'payments.reject_receipt', 'payments.view_receipt',
     'notifications.view', 'notifications.update',
   ],
   front_desk: [
@@ -25,13 +25,14 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'manage:payments', 'view:courses', 'view:reports',
     // Backend permission codes
     'payments.view', 'payments.create', 'payments.update',
-    'payments.verify_receipt', 'payments.reject_receipt',
+    'payments.verify_receipt', 'payments.reject_receipt', 'payments.view_receipt',
     'notifications.view',
   ],
   student: [
     'view:portal', 'view:own_courses', 'view:own_payments',
     'view:own_results', 'view:own_certificates', 'view:vacancies', 'view:own_licenses',
     // Backend permission codes
+    'payments.view', 'payments.view_receipt',
     'notifications.view',
   ],
 }

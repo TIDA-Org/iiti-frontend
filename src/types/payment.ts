@@ -45,8 +45,10 @@ export interface PaymentListApiResponse {
 export interface InstallmentSchedule {
   installment_number: number
   amount_due: number
-  due_date: string
-  status: 'paid' | 'pending' | 'overdue'
+  due_date: string | null
+  status: 'paid' | 'pending' | 'overdue' | 'under_review' | 'rejected' | string
+  paid_amount?: number | null
+  expected_amount?: number | null
 }
 
 export interface InstallmentBreakdownApiResponse {
@@ -55,6 +57,8 @@ export interface InstallmentBreakdownApiResponse {
   total_paid: number
   remaining_balance: number
   installments: InstallmentSchedule[]
+  due_date_calculation_failed?: boolean
+  due_date_failure_reason?: string | null
 }
 
 export interface PaymentCreatePayload {
@@ -79,6 +83,8 @@ export interface ManualPaymentCreatePayload {
   amount: number
   manual_reason: string
   notes?: string
+  /** When true, stored at installment_number=0 — does NOT consume one of the 3 installment slots */
+  is_advance?: boolean
 }
 
 export interface PaymentUpdatePayload {

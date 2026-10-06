@@ -28,7 +28,7 @@ export const INSTITUTE_INFO = {
   fullName: 'Imasha International Training Institute (Pvt) Ltd',
   shortName: 'IITI',
   address: '673/15, Arawwala, Pannipitiya, Sri Lanka',
-  telephone: '0113 482 555',
+  telephone: '011-2345678',
   mobile: '070 375 5455',
   tvecRegNo: 'P01/1003',
   isoNumber: '1224Q503425',

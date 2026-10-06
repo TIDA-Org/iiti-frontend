@@ -14,19 +14,8 @@ import { useAuthStore } from '@/store/authStore'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
 import Image from 'next/image';
 
-const NAV_ITEMS = [
-  { href: '/portal/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/portal/courses', label: 'My Courses', icon: BookOpen },
-  { href: '/portal/payments', label: 'Payments', icon: CreditCard },
-  { href: '/portal/results', label: 'Results', icon: FileText },
-  { href: '/portal/certificates', label: 'Certificates', icon: Award },
-  { href: '/portal/profile', label: 'My Profile', icon: User },
-  { href: '/portal/jobs', label: 'Job Board', icon: Briefcase },
-  { href: '/portal/merchandise/cart', label: 'Merchandise', icon: ShoppingBag },
-  { href: '/portal/merchandise/orders', label: 'My Orders', icon: PackageCheck },
-  { href: '/portal/feedback/history', label: 'Feedback & Complaints', icon: MessageSquare },
-  { href: '/portal/notifications', label: 'Notifications', icon: Bell },
-]
+import { useTranslation } from '@/lib/i18n/useTranslation'
+import { LanguageSwitcher } from '@/components/portal/layout/LanguageSwitcher'
 
 interface PortalSidebarProps {
   isOpen: boolean
@@ -46,9 +35,24 @@ export function PortalSidebar({
   const pathname = usePathname()
   const { user, logout } = useAuthStore()
   const { unreadCount } = useStudentPortalStore()
+  const { t } = useTranslation()
   const router = useRouter()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+
+  const navItems = [
+    { href: '/portal/dashboard', label: t.nav.dashboard, icon: LayoutDashboard },
+    { href: '/portal/courses', label: t.nav.courses, icon: BookOpen },
+    { href: '/portal/payments', label: t.nav.payments, icon: CreditCard },
+    { href: '/portal/results', label: t.nav.results, icon: FileText },
+    { href: '/portal/certificates', label: t.nav.certificates, icon: Award },
+    { href: '/portal/profile', label: t.nav.profile, icon: User },
+    { href: '/portal/jobs', label: t.nav.jobs, icon: Briefcase },
+    { href: '/portal/merchandise/cart', label: t.nav.merchandise, icon: ShoppingBag },
+    { href: '/portal/merchandise/orders', label: t.nav.orders, icon: PackageCheck },
+    { href: '/portal/feedback/history', label: t.nav.feedback, icon: MessageSquare },
+    { href: '/portal/notifications', label: t.nav.notifications, icon: Bell },
+  ]
 
   const handleLogout = async () => {
     setLoggingOut(true)
@@ -81,8 +85,8 @@ export function PortalSidebar({
     >
       {isMobile && (
         <div className="flex items-center justify-between px-5 h-14 border-b border-slate-100 shrink-0 md:hidden">
-          <span className="font-semibold text-slate-700">Menu</span>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg" aria-label="Close sidebar">
+          <span className="font-semibold text-slate-700">{t.nav.menu}</span>
+          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg" aria-label={t.common.close}>
             <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
@@ -104,29 +108,35 @@ export function PortalSidebar({
           )}
         />
 
-
         {(!collapsed || isMobile) && (
           <div className="flex-1 min-w-0">
-            <div className="text-slate-800 font-bold text-sm truncate">IITI Portal</div>
-            <div className="text-slate-400 text-xs">Student</div>
+            <div className="text-slate-800 font-bold text-sm truncate">{t.nav.portalTitle}</div>
+            <div className="text-slate-400 text-xs">{t.nav.studentRole}</div>
           </div>
         )}
         {!isMobile && (
           <button
             onClick={onToggleCollapse}
             className="hidden md:inline-flex text-slate-400 hover:text-slate-700 transition-colors shrink-0 p-1 hover:bg-slate-100 rounded"
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? t.nav.expandSidebar : t.nav.collapseSidebar}
+            aria-label={collapsed ? t.nav.expandSidebar : t.nav.collapseSidebar}
           >
             {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         )}
       </div>
 
+      {/* Mobile Language Switcher */}
+      {isMobile && (
+        <div className="px-4 py-2 border-b border-slate-100 md:hidden flex justify-center">
+          <LanguageSwitcher className="w-full justify-center py-1" />
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="py-4 px-3 shrink-0">
+      <nav className="py-4 px-3 shrink-0 overflow-y-auto max-h-[calc(100vh-12rem)]">
         <ul className="space-y-0.5">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon
             const active = pathname === item.href || pathname.startsWith(item.href + '/')
             return (
@@ -146,7 +156,7 @@ export function PortalSidebar({
                   )}
                 >
                   <Icon className={cn('w-4 h-4 shrink-0', active && 'text-orange-500')} />
-                  {(!collapsed || isMobile) && <span className="flex-1">{item.label}</span>}
+                  {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
                   {item.href === '/portal/notifications' && unreadCount > 0 && (!collapsed || isMobile) && (
                     <span className="w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                       {unreadCount}
@@ -169,7 +179,7 @@ export function PortalSidebar({
             href="/portal/profile"
             onClick={handleNavClick}
             className="flex items-center gap-3 flex-1 min-w-0 group hover:opacity-80 transition-opacity"
-            title="View My Profile"
+            title={t.nav.viewProfile}
           >
             <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0 group-hover:ring-2 group-hover:ring-orange-300">
               <span className="text-orange-600 text-sm font-bold">{user ? getInitials(user.name) : 'S'}</span>
@@ -183,7 +193,7 @@ export function PortalSidebar({
           </Link>
           <button
             onClick={() => setLogoutDialogOpen(true)}
-            title="Sign Out"
+            title={t.nav.signOut}
             className={cn(
               'text-slate-400 hover:text-red-500 transition-colors shrink-0',
               !isMobile && collapsed ? 'p-1.5 rounded-lg hover:bg-red-50' : 'p-1'
@@ -199,7 +209,11 @@ export function PortalSidebar({
         onOpenChange={setLogoutDialogOpen}
         onConfirm={handleLogout}
         loading={loggingOut}
-        portalLabel="Student Portal"
+        portalLabel={t.nav.portalTitle}
+        title={t.common.logoutConfirmTitle}
+        description={t.common.logoutConfirmDesc}
+        confirmText={t.common.logoutConfirmBtn}
+        cancelText={t.common.cancel}
       />
     </aside>
   )

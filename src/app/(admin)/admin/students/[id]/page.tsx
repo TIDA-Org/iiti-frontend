@@ -460,6 +460,17 @@ export default function AdminStudentDetailPage({ params }: Props) {
                           <div>
                             <p className="text-xs text-slate-400">Course</p>
                             <p className="font-medium text-slate-700">{courseName}</p>
+                            {enrollment.trial_sub_course_type && (
+                              <p className="text-xs font-semibold text-amber-700 mt-0.5">
+                                {enrollment.trial_sub_course_type === 'forklift_operator'
+                                  ? 'Forklift Operator'
+                                  : enrollment.trial_sub_course_type === 'excavator_operator'
+                                  ? 'Excavator Operator'
+                                  : enrollment.trial_sub_course_type === 'backhoe_loader_operator'
+                                  ? 'Backhoe Loader Operator'
+                                  : enrollment.trial_sub_course_type}
+                              </p>
+                            )}
                             <p className="text-xs text-slate-500 mt-0.5">Batch {batchCode}</p>
                           </div>
                           <div>

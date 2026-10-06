@@ -7,6 +7,7 @@ import { PageLoader } from '@/components/shared/PageLoader'
 import { PlusCircle, Eye, MessageCircle, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 const STATUS_CONFIG: Record<FeedbackStatus, { bg: string; text: string; icon: any }> = {
   pending: { bg: 'bg-blue-50', text: 'text-blue-700', icon: Clock },
@@ -21,6 +22,7 @@ const TYPE_COLORS = {
 }
 
 export default function FeedbackHistoryPage() {
+  const { t } = useTranslation()
   const [feedbacks, setFeedbacks] = useState<FeedbackComplaint[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +47,22 @@ export default function FeedbackHistoryPage() {
 
   if (isLoading) return <PageLoader />
 
+  const getStatusLabel = (status: FeedbackStatus) => {
+    switch (status) {
+      case 'pending': return t.feedback.statusPending
+      case 'reviewing': return t.feedback.statusReviewing
+      case 'resolved': return t.feedback.statusResolved
+      case 'closed': return t.feedback.statusClosed
+      default: return status
+    }
+  }
+
+  const getTypeLabel = (type: string) => {
+    if (type === 'feedback') return t.feedback.typeFeedback
+    if (type === 'complaint') return t.feedback.typeComplaint
+    return type
+  }
+
   const pendingCount = feedbacks.filter(f => f.status === 'pending').length
   const respondedCount = feedbacks.filter(f => f.admin_response).length
 
@@ -52,29 +70,29 @@ export default function FeedbackHistoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Feedback & Complaints</h1>
-          <p className="text-slate-600 mt-2">View your submitted feedback and complaint history</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t.feedback.historyTitle}</h1>
+          <p className="text-slate-600 mt-2">{t.feedback.historySubtitle}</p>
         </div>
         <Link
           href="/portal/feedback"
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm"
         >
           <PlusCircle className="w-4 h-4" />
-          New Feedback
+          {t.feedback.newFeedback}
         </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-sm text-slate-600 mb-1">Total Submissions</div>
+          <div className="text-sm text-slate-600 mb-1">{t.feedback.totalSubmissions}</div>
           <div className="text-2xl font-bold text-slate-900">{feedbacks.length}</div>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-sm text-slate-600 mb-1">Pending Response</div>
+          <div className="text-sm text-slate-600 mb-1">{t.feedback.pendingResponse}</div>
           <div className="text-2xl font-bold text-blue-600">{pendingCount}</div>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-sm text-slate-600 mb-1">Responded</div>
+          <div className="text-sm text-slate-600 mb-1">{t.feedback.responded}</div>
           <div className="text-2xl font-bold text-green-600">{respondedCount}</div>
         </div>
       </div>
@@ -88,13 +106,13 @@ export default function FeedbackHistoryPage() {
       {feedbacks.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center">
           <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-700 mb-2">No feedback yet</h3>
-          <p className="text-slate-600 mb-4">Share your feedback or report an issue to help us improve</p>
+          <h3 className="text-lg font-medium text-slate-700 mb-2">{t.feedback.noFeedbackYet}</h3>
+          <p className="text-slate-600 mb-4">{t.feedback.shareFeedbackHint}</p>
           <Link
             href="/portal/feedback"
             className="inline-block px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
           >
-            Submit Feedback
+            {t.feedback.submitBtn}
           </Link>
         </div>
       ) : (
@@ -114,14 +132,14 @@ export default function FeedbackHistoryPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge className={typeColor}>
-                        {feedback.type === 'feedback' ? '💡' : '⚠️'} {feedback.type}
+                        {feedback.type === 'feedback' ? '💡' : '⚠️'} {getTypeLabel(feedback.type)}
                       </Badge>
                       <span className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1 ${statusConfig.bg} ${statusConfig.text}`}>
                         <StatusIcon className="w-3 h-3" />
-                        {feedback.status}
+                        {getStatusLabel(feedback.status)}
                       </span>
                       {feedback.is_anonymous && (
-                        <Badge variant="outline">Anonymous</Badge>
+                        <Badge variant="outline">{t.feedback.anonymousBadge}</Badge>
                       )}
                     </div>
                     <h3 className="text-base font-semibold text-slate-900 mb-1 truncate">
@@ -136,7 +154,7 @@ export default function FeedbackHistoryPage() {
                       {feedback.admin_response && (
                         <span className="flex items-center gap-1 text-green-600 font-medium">
                           <MessageCircle className="w-3 h-3" />
-                          Admin responded
+                          {t.feedback.adminResponded}
                         </span>
                       )}
                     </div>
@@ -153,7 +171,7 @@ export default function FeedbackHistoryPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedFeedback(null)}>
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Feedback Details</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t.feedback.feedbackDetails}</h2>
               <button
                 onClick={() => setSelectedFeedback(null)}
                 className="text-slate-400 hover:text-slate-600"
@@ -164,51 +182,51 @@ export default function FeedbackHistoryPage() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-600 uppercase">Type</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase">{t.feedback.type}</label>
                 <Badge className={TYPE_COLORS[selectedFeedback.type as keyof typeof TYPE_COLORS]}>
-                  {selectedFeedback.type}
+                  {getTypeLabel(selectedFeedback.type)}
                 </Badge>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 uppercase">Status</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase">{t.common.status}</label>
                 <div className={`mt-1 px-3 py-2 rounded-md inline-flex items-center gap-1 ${STATUS_CONFIG[selectedFeedback.status].bg} ${STATUS_CONFIG[selectedFeedback.status].text}`}>
                   {(() => {
                     const IconComponent = STATUS_CONFIG[selectedFeedback.status].icon
                     return <IconComponent className="w-4 h-4" />
                   })()}
-                  {selectedFeedback.status}
+                  {getStatusLabel(selectedFeedback.status)}
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 uppercase">Category</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase">{t.feedback.category}</label>
                 <p className="mt-1 text-slate-700">{selectedFeedback.category}</p>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 uppercase">Subject</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase">{t.feedback.subject}</label>
                 <p className="mt-1 text-slate-700">{selectedFeedback.subject}</p>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 uppercase">Description</label>
+                <label className="text-xs font-semibold text-slate-600 uppercase">{t.feedback.description}</label>
                 <p className="mt-1 text-slate-700 whitespace-pre-wrap">{selectedFeedback.description}</p>
               </div>
 
               {selectedFeedback.admin_response && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <label className="text-xs font-semibold text-green-700 uppercase">Admin Response</label>
+                  <label className="text-xs font-semibold text-green-700 uppercase">{t.feedback.adminResponse}</label>
                   <p className="mt-2 text-slate-700 whitespace-pre-wrap">{selectedFeedback.admin_response}</p>
                   <p className="mt-2 text-xs text-slate-500">
-                    Responded on {new Date(selectedFeedback.admin_responded_at!).toLocaleDateString()}
+                    {t.feedback.respondedOn} {new Date(selectedFeedback.admin_responded_at!).toLocaleDateString()}
                   </p>
                 </div>
               )}
 
               <div className="text-xs text-slate-500">
-                <p>Submitted: {new Date(selectedFeedback.created_at).toLocaleString()}</p>
-                <p>Last updated: {new Date(selectedFeedback.updated_at).toLocaleString()}</p>
+                <p>{t.feedback.submittedOn}: {new Date(selectedFeedback.created_at).toLocaleString()}</p>
+                <p>{t.feedback.lastUpdated}: {new Date(selectedFeedback.updated_at).toLocaleString()}</p>
               </div>
             </div>
           </div>

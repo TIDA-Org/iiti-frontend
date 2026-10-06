@@ -17,6 +17,10 @@ interface LogoutConfirmDialogProps {
   onConfirm: () => void | Promise<void>
   loading?: boolean
   portalLabel: string
+  title?: string
+  description?: string
+  confirmText?: string
+  cancelText?: string
 }
 
 export function LogoutConfirmDialog({
@@ -25,6 +29,10 @@ export function LogoutConfirmDialog({
   onConfirm,
   loading = false,
   portalLabel,
+  title = 'Are you sure?',
+  description,
+  confirmText = 'Yes, log out',
+  cancelText = 'Cancel',
 }: LogoutConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,7 +46,7 @@ export function LogoutConfirmDialog({
               <ShieldAlert className="h-5 w-5 text-orange-500" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-semibold text-slate-900">Are you sure?</DialogTitle>
+              <DialogTitle className="text-xl font-semibold text-slate-900">{title}</DialogTitle>
               <p className="mt-1 text-sm text-slate-600">You are about to leave the {portalLabel}.</p>
             </div>
           </div>
@@ -47,13 +55,13 @@ export function LogoutConfirmDialog({
         <div className="bg-white">
           <DialogHeader className="px-6 pt-5">
             <DialogDescription className="text-sm leading-relaxed text-slate-600">
-              Logging out will end your current session and return you to the login screen. Make sure any recent work is saved before continuing.
+              {description || 'Logging out will end your current session and return you to the login screen. Make sure any recent work is saved before continuing.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Cancel
+              {cancelText}
             </Button>
             <Button
               variant="default"
@@ -62,7 +70,7 @@ export function LogoutConfirmDialog({
               disabled={loading}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-              {loading ? 'Signing out...' : 'Yes, log out'}
+              {loading ? '...' : confirmText}
             </Button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -16,7 +17,14 @@ import { EnrollmentTrendChart } from '@/components/admin/dashboard/EnrollmentTre
 import { RecentActivityFeed } from '@/components/admin/dashboard/RecentActivityFeed'
 import { PendingApprovalsWidget } from '@/components/admin/dashboard/PendingApprovalsWidget'
 import { UpcomingIntakesWidget } from '@/components/admin/dashboard/UpcomingIntakesWidget'
-import { apiGetStudents } from '@/lib/api/students'
+import { NewRegistrationsAlert } from '@/components/admin/dashboard/NewRegistrationsAlert'
+import {
+  apiGetStudents,
+  apiGetSelfRegistrationSummary,
+  getLastSeenSelfRegistrationTime,
+  setLastSeenSelfRegistrationTime,
+  SelfRegistrationSummaryResponse,
+} from '@/lib/api/students'
 import { apiGetResults } from '@/lib/api/results'
 import { apiGetCertificates } from '@/lib/api/certificates'
 import { useApi } from '@/hooks/useApi'
@@ -26,19 +34,44 @@ export default function AdminDashboardPage() {
   const { user } = useAuthStore()
   const role = user?.role
 
+  const [lastSeenTime, setLastSeenTime] = useState<string | null>(null)
+  const [isDismissed, setIsDismissed] = useState(false)
+
+  // Initialize lastSeenTime once user is available
+  useEffect(() => {
+    if (user?.id) {
+      setLastSeenTime(getLastSeenSelfRegistrationTime(user.id))
+    }
+  }, [user?.id])
+
   const { data: studentsData } = useApi(() => apiGetStudents(1, 1), [])
   const { data: resultsData } = useApi(() => apiGetResults(1, 1), [])
   const { data: certsData } = useApi(() => apiGetCertificates(1, 1), [])
+
+  // Check self-registration summary when dashboard renders
+  const { data: selfRegData } = useApi<SelfRegistrationSummaryResponse>(
+    () => apiGetSelfRegistrationSummary(lastSeenTime || undefined),
+    [lastSeenTime],
+  )
+
+  const handleDismissAlert = () => {
+    const timestamp = selfRegData?.latest_registration_at || new Date().toISOString()
+    setLastSeenSelfRegistrationTime(timestamp, user?.id)
+    setLastSeenTime(timestamp)
+    setIsDismissed(true)
+  }
 
   const totalStudents = studentsData?.total ?? 0
   const totalResults = resultsData?.total ?? 0
   const totalCertificates = certsData?.total ?? 0
   const activeOperations = role === 'front_desk' ? 'Core' : 'Full'
+  const newSelfRegCount = (!isDismissed && selfRegData?.new_count) ? selfRegData.new_count : 0
 
   const summaryCards = [
     {
       label: 'Total Students',
       value: totalStudents,
+      badge: newSelfRegCount > 0 ? `+${newSelfRegCount} new online` : undefined,
       href: '/admin/students',
       icon: Users,
       iconColor: 'text-sky-600',
@@ -86,6 +119,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
+      {/* Hero Header */}
       <section className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-linear-to-br from-slate-900 via-slate-800 to-sky-900 px-5 py-6 text-white shadow-[0_30px_70px_-35px_rgba(15,23,42,0.9)] md:px-8 md:py-8">
         <div className="absolute inset-y-0 right-0 w-1/2 bg-linear-to-l from-cyan-300/10 to-transparent" />
         <div className="absolute -right-12 top-8 h-40 w-40 rounded-full bg-sky-400/15 blur-3xl" />
@@ -125,6 +159,16 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
+      {/* New Self Registration Alert Banner */}
+      {newSelfRegCount > 0 && (
+        <NewRegistrationsAlert
+          count={newSelfRegCount}
+          students={selfRegData?.recent_students}
+          onDismiss={handleDismissAlert}
+        />
+      )}
+
+      {/* Summary KPI Cards */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon
@@ -139,7 +183,14 @@ export default function AdminDashboardPage() {
                 <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconBg} shadow-sm`}>
                   <Icon className={`h-5 w-5 ${card.iconColor}`} />
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-slate-900">{card.value}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-2xl font-bold tracking-tight text-slate-900">{card.value}</div>
+                  {card.badge && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200 shadow-2xs">
+                      {card.badge}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-1 text-sm font-medium text-slate-700">{card.label}</div>
                 <div className="mt-2 text-xs leading-relaxed text-slate-500">{card.helper}</div>
               </div>
@@ -207,7 +258,7 @@ export default function AdminDashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">Approvals and review actions requiring attention.</p>
               </div>
               <div className="p-2 md:p-3">
-                <PendingApprovalsWidget />
+                <PendingApprovalsWidget students={selfRegData?.recent_students || []} />
               </div>
             </div>
 
@@ -232,7 +283,7 @@ export default function AdminDashboardPage() {
               <p className="mt-1 text-sm text-slate-500">Approvals and review actions requiring attention.</p>
             </div>
             <div className="p-2 md:p-3">
-              <PendingApprovalsWidget />
+              <PendingApprovalsWidget students={selfRegData?.recent_students || []} />
             </div>
           </div>
 

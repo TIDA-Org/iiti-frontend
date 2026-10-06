@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Bell, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStudentPortalStore } from '@/store/studentPortalStore'
@@ -22,25 +22,32 @@ export function NotificationDropdown() {
     markAsRead,
   } = useStudentPortalStore()
 
+  const [open, setOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
-  // Load notifications when component mounts (before user clicks)
+  // Load notifications once when component mounts
   useEffect(() => {
-    if (!notificationsLoaded) {
-      loadNotifications()
-    }
-  }, [notificationsLoaded, loadNotifications])
+    loadNotifications()
+  }, [loadNotifications])
 
-  const recent = notifications.slice(0, 5)
+  // Automatically close dropdown whenever route/pathname changes
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
-  const handleNotificationClick = async (id: string) => {
-    // Mark as read and navigate to the notifications page with the notification highlighted
-    await markAsRead(id)
+  const systemNotifications = notifications.filter(n => n.channel === 'system')
+  const recent = systemNotifications.slice(0, 5)
+
+  const handleNotificationClick = (id: string) => {
+    // Immediately close dropdown to prevent backdrop/focus trapping
+    setOpen(false)
+    markAsRead(id)
     router.push(`/portal/notifications?highlight=${id}`)
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative" />}>
         {isLoadingNotifications ? (
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -64,7 +71,10 @@ export function NotificationDropdown() {
               </span>
             )}
             <button
-              onClick={() => router.push('/portal/notifications')}
+              onClick={() => {
+                setOpen(false)
+                router.push('/portal/notifications')
+              }}
               className="text-xs text-amber-600 hover:text-amber-800 font-medium"
             >
               View all →
@@ -95,7 +105,7 @@ export function NotificationDropdown() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium truncate ${notif.status === 'read' ? 'text-stone-600' : 'text-stone-900'}`}>
-                      {notif.subject ?? 'SMS Notification'}
+                      {notif.subject ?? 'Notification'}
                     </p>
                     <p className="text-xs text-stone-400 mt-0.5 truncate">{notif.message}</p>
                     <p className="text-xs text-stone-400 mt-1">{formatDate(notif.created_at)}</p>
@@ -106,13 +116,16 @@ export function NotificationDropdown() {
           )}
         </div>
 
-        {notifications.length > 5 && (
+        {systemNotifications.length > 5 && (
           <div className="px-4 py-2 border-t border-stone-100 text-center">
             <button
-              onClick={() => router.push('/portal/notifications')}
+              onClick={() => {
+                setOpen(false)
+                router.push('/portal/notifications')
+              }}
               className="text-xs text-amber-600 hover:text-amber-800 font-medium"
             >
-              See all {notifications.length} notifications →
+              See all {systemNotifications.length} notifications →
             </button>
           </div>
         )}

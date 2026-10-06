@@ -9,7 +9,7 @@ interface StudentPortalState {
   isLoadingNotifications: boolean
   notificationsLoaded: boolean
 
-  loadNotifications: () => Promise<void>
+  loadNotifications: (force?: boolean) => Promise<void>
   markAsRead: (id: string) => Promise<void>
   markAllAsRead: () => Promise<void>
 }
@@ -20,13 +20,14 @@ export const useStudentPortalStore = create<StudentPortalState>((set, get) => ({
   isLoadingNotifications: false,
   notificationsLoaded: false,
 
-  loadNotifications: async () => {
+  loadNotifications: async (force = false) => {
     if (get().isLoadingNotifications) return
+    if (get().notificationsLoaded && !force) return
     set({ isLoadingNotifications: true })
     try {
       const profile = await apiGetMyProfile()
-      const data = await apiGetStudentNotifications(profile.id)
-      const notifs = Array.isArray(data) ? data : []
+      const data = await apiGetStudentNotifications(profile.id, 'system')
+      const notifs = Array.isArray(data) ? data.filter(n => n.channel === 'system') : []
       set({
         notifications: notifs,
         unreadCount: notifs.filter(n => n.status !== 'read').length,

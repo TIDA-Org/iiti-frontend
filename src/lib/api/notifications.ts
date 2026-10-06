@@ -12,8 +12,10 @@ import type {
  */
 export async function apiGetStudentNotifications(
   studentId: string,
+  channel?: string,
 ): Promise<NotificationApiResponse[]> {
-  return apiFetch(`/notifications/student/${studentId}`)
+  const query = channel ? `?channel=${encodeURIComponent(channel)}` : ''
+  return apiFetch(`/notifications/student/${studentId}${query}`)
 }
 
 /**
